@@ -8,7 +8,12 @@ import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Application from 'expo-application';
 import type * as PurchasesNamespace from 'react-native-purchases';
-import type { CustomerInfo, PurchasesError, PurchasesOfferings, PurchasesPackage } from 'react-native-purchases';
+import type {
+  CustomerInfo,
+  PurchasesError,
+  PurchasesOfferings,
+  PurchasesPackage,
+} from 'react-native-purchases';
 import type { DataSource } from '@da/api-client';
 import type { EntitlementState } from '@da/domain';
 import { env } from '@/lib/env';
@@ -66,7 +71,10 @@ export async function configurePurchases(appUserId?: string | null): Promise<boo
 }
 
 /** Logs the signed-in user into RevenueCat and links the app user id to the profile. */
-export async function identifyPurchasesUser(userId: string, ds?: DataSource): Promise<CustomerInfo | null> {
+export async function identifyPurchasesUser(
+  userId: string,
+  ds?: DataSource,
+): Promise<CustomerInfo | null> {
   if (!(await configurePurchases(userId))) return null;
   const mod = loadPurchases();
   if (!mod) return null;
@@ -93,7 +101,8 @@ export async function resetPurchasesUser(): Promise<void> {
   try {
     await mod.default.logOut();
   } catch (e) {
-    if (asPurchasesError(e).code !== mod.PURCHASES_ERROR_CODE.LOG_OUT_ANONYMOUS_USER_ERROR) captureError(e, { where: 'resetPurchasesUser' });
+    if (asPurchasesError(e).code !== mod.PURCHASES_ERROR_CODE.LOG_OUT_ANONYMOUS_USER_ERROR)
+      captureError(e, { where: 'resetPurchasesUser' });
   }
 }
 
@@ -107,7 +116,10 @@ export interface ProOfferings {
 }
 
 /** Picks the monthly / annual packages by product id (falls back to package type). Pure. */
-export function selectProPackages(offerings: PurchasesOfferings | null, productIds: { monthly: string; annual: string }): ProOfferings {
+export function selectProPackages(
+  offerings: PurchasesOfferings | null,
+  productIds: { monthly: string; annual: string },
+): ProOfferings {
   const packages = offerings?.current?.availablePackages ?? [];
   const byId = (id: string) => packages.find((p) => p.product.identifier === id) ?? null;
   const byType = (type: string) => packages.find((p) => String(p.packageType) === type) ?? null;
@@ -127,7 +139,10 @@ export async function getProOfferings(): Promise<ProOfferings | null> {
   const mod = loadPurchases();
   if (!mod) return null;
   try {
-    return selectProPackages(await mod.default.getOfferings(), { monthly: env.rcProductMonthly, annual: env.rcProductAnnual });
+    return selectProPackages(await mod.default.getOfferings(), {
+      monthly: env.rcProductMonthly,
+      annual: env.rcProductAnnual,
+    });
   } catch (e) {
     captureError(e, { where: 'getProOfferings' });
     return null;
@@ -154,8 +169,10 @@ export async function purchasePro(pkg: PurchasesPackage): Promise<PurchaseResult
     return { outcome: isProActive(customerInfo) ? 'purchased' : 'pending', customerInfo };
   } catch (e) {
     const err = asPurchasesError(e);
-    if (err.userCancelled || err.code === mod.PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) return { outcome: 'cancelled', customerInfo: null };
-    if (err.code === mod.PURCHASES_ERROR_CODE.PAYMENT_PENDING_ERROR) return { outcome: 'pending', customerInfo: null };
+    if (err.userCancelled || err.code === mod.PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR)
+      return { outcome: 'cancelled', customerInfo: null };
+    if (err.code === mod.PURCHASES_ERROR_CODE.PAYMENT_PENDING_ERROR)
+      return { outcome: 'pending', customerInfo: null };
     captureError(e, { where: 'purchasePro', code: err.code ?? 'unknown' });
     return { outcome: 'failed', customerInfo: null };
   }
@@ -192,14 +209,25 @@ export async function getCustomerInfo(): Promise<CustomerInfo | null> {
 }
 
 /** Store-derived entitlement fields (the backend remains the source of truth once the webhook lands). */
-export function entitlementFromCustomerInfo(info: CustomerInfo | null | undefined): Pick<EntitlementState, 'plan' | 'isPro' | 'isTrial' | 'expiresAt' | 'source'> {
+export function entitlementFromCustomerInfo(
+  info: CustomerInfo | null | undefined,
+): Pick<EntitlementState, 'plan' | 'isPro' | 'isTrial' | 'expiresAt' | 'source'> {
   const ent = info?.entitlements.active[env.rcEntitlementId];
-  if (!ent?.isActive) return { plan: 'free', isPro: false, isTrial: false, expiresAt: null, source: 'none' };
-  return { plan: 'pro', isPro: true, isTrial: ent.periodType === 'TRIAL', expiresAt: ent.expirationDate ?? null, source: 'revenuecat' };
+  if (!ent?.isActive)
+    return { plan: 'free', isPro: false, isTrial: false, expiresAt: null, source: 'none' };
+  return {
+    plan: 'pro',
+    isPro: true,
+    isTrial: ent.periodType === 'TRIAL',
+    expiresAt: ent.expirationDate ?? null,
+    source: 'revenuecat',
+  };
 }
 
 /** Subscribes to customer-info updates; returns the unsubscribe function. */
-export function addProStatusListener(listener: (isPro: boolean, info: CustomerInfo) => void): () => void {
+export function addProStatusListener(
+  listener: (isPro: boolean, info: CustomerInfo) => void,
+): () => void {
   const mod = loadPurchases();
   if (!mod || !configured) return () => undefined;
   const wrapped = (info: CustomerInfo) => listener(isProActive(info), info);

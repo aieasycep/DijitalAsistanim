@@ -16,7 +16,13 @@ export type MailProvider = 'gmail' | 'outlook';
 export type HandoffTarget =
   | { kind: 'url'; url: string }
   | { kind: 'email'; provider: MailProvider; webUrl?: string | null }
-  | { kind: 'compose'; to: string[]; subject?: string; body?: string; provider?: MailProvider | 'system' }
+  | {
+      kind: 'compose';
+      to: string[];
+      subject?: string;
+      body?: string;
+      provider?: MailProvider | 'system';
+    }
   | { kind: 'meeting'; url: string }
   | { kind: 'directions'; location: string }
   | { kind: 'whatsapp'; text: string; phone?: string }
@@ -30,24 +36,55 @@ export interface HandoffResult {
   reason?: 'invalid' | 'unavailable' | 'failed';
 }
 
-const ALLOWED_SCHEMES = new Set(['https', 'http', 'mailto', 'tel', 'sms', 'maps', 'geo', 'comgooglemaps', 'googlegmail', 'ms-outlook', 'msteams', 'zoomus', 'whatsapp', 'googlemeet']);
+const ALLOWED_SCHEMES = new Set([
+  'https',
+  'http',
+  'mailto',
+  'tel',
+  'sms',
+  'maps',
+  'geo',
+  'comgooglemaps',
+  'googlegmail',
+  'ms-outlook',
+  'msteams',
+  'zoomus',
+  'whatsapp',
+  'googlemeet',
+]);
 const URL_RE = /^([a-z][a-z0-9+.-]*):(?:\/\/([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?$/i;
 
 function hostOf(url: string): string | null {
   const m = URL_RE.exec(url);
   if (!m) return null;
   const authority = m[2] ?? '';
-  const host = authority.replace(/^[^@]*@/, '').replace(/:\d+$/, '').toLowerCase();
+  const host = authority
+    .replace(/^[^@]*@/, '')
+    .replace(/:\d+$/, '')
+    .toLowerCase();
   return host || null;
 }
 
 function isPrivateHost(host: string): boolean {
-  if (host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal') || host === '[::1]') return true;
+  if (
+    host === 'localhost' ||
+    host.endsWith('.local') ||
+    host.endsWith('.internal') ||
+    host === '[::1]'
+  )
+    return true;
   const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
   if (!m) return false;
   const a = Number(m[1]);
   const b = Number(m[2]);
-  return a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168)
+  );
 }
 
 /** Allow-listed schemes only; web URLs need a public host; control characters are rejected. */
@@ -69,8 +106,19 @@ export function isSafeHandoffUrl(url: string | null | undefined): boolean {
 export function detectMeetingProvider(url: string | null | undefined): MeetingProvider {
   const host = url ? (hostOf(url) ?? '') : '';
   if (host === 'meet.google.com') return 'google_meet';
-  if (host === 'teams.microsoft.com' || host === 'teams.live.com' || host.endsWith('.teams.microsoft.com')) return 'teams';
-  if (host === 'zoom.us' || host.endsWith('.zoom.us') || host === 'zoom.com' || host.endsWith('.zoom.com')) return 'zoom';
+  if (
+    host === 'teams.microsoft.com' ||
+    host === 'teams.live.com' ||
+    host.endsWith('.teams.microsoft.com')
+  )
+    return 'teams';
+  if (
+    host === 'zoom.us' ||
+    host.endsWith('.zoom.us') ||
+    host === 'zoom.com' ||
+    host.endsWith('.zoom.com')
+  )
+    return 'zoom';
   return 'other';
 }
 
@@ -97,7 +145,10 @@ function mailtoUrl(to: string[], subject?: string, body?: string): string {
   const q: string[] = [];
   if (subject) q.push(`subject=${enc(subject)}`);
   if (body) q.push(`body=${enc(body)}`);
-  return `mailto:${to.map((t) => t.trim()).filter(Boolean).join(',')}${q.length ? `?${q.join('&')}` : ''}`;
+  return `mailto:${to
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .join(',')}${q.length ? `?${q.join('&')}` : ''}`;
 }
 
 function meetingCandidates(url: string): string[] {
@@ -125,7 +176,11 @@ export function buildHandoffUrls(target: HandoffTarget): string[] {
       break;
     case 'email':
       if (target.webUrl) list.push(target.webUrl);
-      else list.push(target.provider === 'gmail' ? 'googlegmail://' : 'ms-outlook://', providerMailUrl(null, target.provider));
+      else
+        list.push(
+          target.provider === 'gmail' ? 'googlegmail://' : 'ms-outlook://',
+          providerMailUrl(null, target.provider),
+        );
       break;
     case 'compose': {
       const to = target.to.map((t) => t.trim()).filter(Boolean);
@@ -148,7 +203,10 @@ export function buildHandoffUrls(target: HandoffTarget): string[] {
     }
     case 'whatsapp': {
       const phone = target.phone ? target.phone.replace(/[^\d]/g, '') : '';
-      list.push(`whatsapp://send?text=${enc(target.text)}${phone ? `&phone=${phone}` : ''}`, `https://wa.me/${phone}?text=${enc(target.text)}`);
+      list.push(
+        `whatsapp://send?text=${enc(target.text)}${phone ? `&phone=${phone}` : ''}`,
+        `https://wa.me/${phone}?text=${enc(target.text)}`,
+      );
       break;
     }
     case 'phone':

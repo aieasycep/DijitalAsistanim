@@ -20,9 +20,18 @@ type ShareIntentOptions = NonNullable<Parameters<typeof useShareIntent>[0]>;
 import { env } from '@/lib/env';
 import { captureError } from '@/lib/monitoring';
 import { useSessionStore } from '@/store/session';
-import { mapShareIntentToCapture, peekPendingShareCapture, setPendingShareCapture, shareIntentSignature } from '@/services/shareCapture';
+import {
+  mapShareIntentToCapture,
+  peekPendingShareCapture,
+  setPendingShareCapture,
+  shareIntentSignature,
+} from '@/services/shareCapture';
 
-export { clearPendingShareCapture, consumePendingShareCapture, peekPendingShareCapture } from '@/services/shareCapture';
+export {
+  clearPendingShareCapture,
+  consumePendingShareCapture,
+  peekPendingShareCapture,
+} from '@/services/shareCapture';
 export type { PendingShareCapture, ShareCaptureItem } from '@/services/shareCapture';
 
 /** The native module is absent in Expo Go, on web and in Jest. */
@@ -33,7 +42,12 @@ export function isShareIntentDisabled(): boolean {
 }
 
 export function shareIntentOptions(): ShareIntentOptions {
-  return { disabled: isShareIntentDisabled(), resetOnBackground: false, scheme: env.appScheme, debug: false };
+  return {
+    disabled: isShareIntentDisabled(),
+    resetOnBackground: false,
+    scheme: env.appScheme,
+    debug: false,
+  };
 }
 
 export function useShareIntentCapture(): void {

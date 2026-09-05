@@ -27,12 +27,22 @@ export const useSessionStore = create<SessionState>((set) => ({
   entitlement: null,
   onboardingCompleted: false,
   setSession: (session) => set({ session, status: session ? 'signedIn' : 'signedOut' }),
-  setProfile: (profile) => set({ profile, onboardingCompleted: Boolean(profile?.onboardingCompletedAt) }),
+  setProfile: (profile) =>
+    set({ profile, onboardingCompleted: Boolean(profile?.onboardingCompletedAt) }),
   setPreferences: (preferences) => set({ preferences }),
   setEntitlement: (entitlement) => set({ entitlement }),
   setOnboardingCompleted: (onboardingCompleted) => set({ onboardingCompleted }),
-  reset: () => set({ status: 'signedOut', session: null, profile: null, preferences: null, entitlement: null, onboardingCompleted: false }),
+  reset: () =>
+    set({
+      status: 'signedOut',
+      session: null,
+      profile: null,
+      preferences: null,
+      entitlement: null,
+      onboardingCompleted: false,
+    }),
 }));
 
 export const selectIsPro = (s: SessionState): boolean => Boolean(s.entitlement?.isPro);
-export const selectFirstName = (s: SessionState): string => s.profile?.firstName || s.profile?.displayName?.split(' ')[0] || '';
+export const selectFirstName = (s: SessionState): string =>
+  s.profile?.firstName || s.profile?.displayName?.split(' ')[0] || '';

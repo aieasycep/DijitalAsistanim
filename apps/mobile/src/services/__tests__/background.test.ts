@@ -3,7 +3,10 @@ import type { DataSource } from '@da/api-client';
 import type { TodayFeed } from '@da/domain';
 
 jest.mock('@/lib/monitoring', () => ({ captureError: jest.fn() }));
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(n), randomUUID: () => '00000000-0000-4000-8000-000000000000' }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(n),
+  randomUUID: () => '00000000-0000-4000-8000-000000000000',
+}));
 jest.mock('@/lib/datasource', () => ({
   getDataSource: () => {
     throw new Error('runBackgroundSync must receive an explicit data source in tests');
@@ -15,7 +18,11 @@ jest.mock('@/lib/queryClient', () => {
 });
 jest.mock('@/services/widgets', () => ({ syncWidgetsFromToday: jest.fn(async () => null) }));
 
-const mockTaskState = { defined: new Map<string, () => Promise<unknown>>(), registered: false, available: true };
+const mockTaskState = {
+  defined: new Map<string, () => Promise<unknown>>(),
+  registered: false,
+  available: true,
+};
 jest.mock('expo-task-manager', () => ({
   defineTask: jest.fn((name: string, executor: () => Promise<unknown>) => {
     mockTaskState.defined.set(name, executor);
@@ -64,9 +71,21 @@ const today: TodayFeed = {
   offline: false,
 };
 
-function fakeDs(signedIn: boolean, getToday: () => Promise<TodayFeed> = async () => today): DataSource {
+function fakeDs(
+  signedIn: boolean,
+  getToday: () => Promise<TodayFeed> = async () => today,
+): DataSource {
   return {
-    auth: { getSession: async () => (signedIn ? { user: { id: 'u1', provider: 'demo' }, accessToken: 't', expiresAt: '2030-01-01T00:00:00Z' } : null) },
+    auth: {
+      getSession: async () =>
+        signedIn
+          ? {
+              user: { id: 'u1', provider: 'demo' },
+              accessToken: 't',
+              expiresAt: '2030-01-01T00:00:00Z',
+            }
+          : null,
+    },
     feed: { getToday },
   } as unknown as DataSource;
 }
@@ -109,11 +128,15 @@ describe('background sync', () => {
 
   it('registers once and unregisters cleanly', async () => {
     expect(await background.registerBackgroundSync()).toBe(true);
-    expect(BackgroundTask.registerTaskAsync).toHaveBeenCalledWith(background.BACKGROUND_SYNC_TASK, { minimumInterval: background.BACKGROUND_SYNC_MIN_INTERVAL_MINUTES });
+    expect(BackgroundTask.registerTaskAsync).toHaveBeenCalledWith(background.BACKGROUND_SYNC_TASK, {
+      minimumInterval: background.BACKGROUND_SYNC_MIN_INTERVAL_MINUTES,
+    });
     expect(await background.registerBackgroundSync()).toBe(true);
     expect(BackgroundTask.registerTaskAsync).toHaveBeenCalledTimes(1);
     await background.unregisterBackgroundSync();
-    expect(BackgroundTask.unregisterTaskAsync).toHaveBeenCalledWith(background.BACKGROUND_SYNC_TASK);
+    expect(BackgroundTask.unregisterTaskAsync).toHaveBeenCalledWith(
+      background.BACKGROUND_SYNC_TASK,
+    );
     expect(await TaskManager.isTaskRegisteredAsync(background.BACKGROUND_SYNC_TASK)).toBe(false);
   });
 

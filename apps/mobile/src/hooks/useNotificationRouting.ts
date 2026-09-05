@@ -49,7 +49,10 @@ export function routeNotificationResponse(response: Notifications.NotificationRe
   const link = parseDeepLink(meta.deepLink);
   if (!link) return false;
   if (deepLinkKind(link) === 'email' || meta.insightKind) {
-    track('insight_opened', { kind: meta.insightKind ?? 'email', badge: meta.badge ?? (meta.category ?? 'unknown') });
+    track('insight_opened', {
+      kind: meta.insightKind ?? 'email',
+      badge: meta.badge ?? meta.category ?? 'unknown',
+    });
   }
   openDeepLink(meta.deepLink);
   return true;
@@ -82,7 +85,8 @@ export function useNotificationRouting(): void {
   useEffect(() => {
     let subscription: { remove: () => void } | null = null;
     try {
-      subscription = Notifications.addNotificationResponseReceivedListener(routeNotificationResponse);
+      subscription =
+        Notifications.addNotificationResponseReceivedListener(routeNotificationResponse);
     } catch (e) {
       captureError(e, { where: 'useNotificationRouting.listener' });
     }

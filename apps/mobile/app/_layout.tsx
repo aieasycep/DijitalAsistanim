@@ -5,7 +5,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold } from '@expo-google-fonts/geist';
-import { Lora_400Regular, Lora_400Regular_Italic, Lora_500Medium, Lora_600SemiBold } from '@expo-google-fonts/lora';
+import {
+  Lora_400Regular,
+  Lora_400Regular_Italic,
+  Lora_500Medium,
+  Lora_600SemiBold,
+} from '@expo-google-fonts/lora';
 import { useIsDark, useTheme } from '@da/ui';
 import { AppProviders } from '@/providers/AppProviders';
 import { setupI18n } from '@/lib/i18n';
@@ -50,7 +55,8 @@ function RootNavigator() {
     if (status === 'signedIn') {
       const needsOnboarding = profile !== null && !onboardingCompleted;
       if (needsOnboarding && !inOnboarding) router.replace('/(onboarding)/connect');
-      else if (!needsOnboarding && (inAuth || group === '(marketing)')) router.replace('/(tabs)/today');
+      else if (!needsOnboarding && (inAuth || group === '(marketing)'))
+        router.replace('/(tabs)/today');
     }
   }, [status, onboardingCompleted, profile, segments, router]);
 
@@ -68,12 +74,24 @@ function RootNavigator() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="briefing/[kind]" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="briefing/audio" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen
+          name="briefing/[kind]"
+          options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="briefing/audio"
+          options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+        />
         <Stack.Screen name="capture/index" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="voice" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen
+          name="voice"
+          options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+        />
         <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="reminder" options={{ presentation: 'transparentModal', animation: 'fade' }} />
+        <Stack.Screen
+          name="reminder"
+          options={{ presentation: 'transparentModal', animation: 'fade' }}
+        />
         <Stack.Screen name="search" options={{ animation: 'fade' }} />
       </Stack>
       <AudioMiniPlayer />

@@ -32,12 +32,18 @@ export function deviceProvider(platform: string = Platform.OS): 'apple' | 'devic
   return platform === 'ios' ? 'apple' : 'device';
 }
 
-export function deviceSourceType(platform: string = Platform.OS): 'apple_calendar' | 'device_calendar' {
+export function deviceSourceType(
+  platform: string = Platform.OS,
+): 'apple_calendar' | 'device_calendar' {
   return platform === 'ios' ? 'apple_calendar' : 'device_calendar';
 }
 
 export function deviceCalendarDisplayName(platform: string = Platform.OS): string {
-  return t(platform === 'ios' ? 'settings.integrationsScreen.providers.apple_calendar' : 'settings.integrationsScreen.providers.device_calendar');
+  return t(
+    platform === 'ios'
+      ? 'settings.integrationsScreen.providers.apple_calendar'
+      : 'settings.integrationsScreen.providers.device_calendar',
+  );
 }
 
 export async function getCalendarPermission(): Promise<PermissionOutcome> {
@@ -91,7 +97,11 @@ function mapStatus(status: unknown): CalendarEvent['status'] {
 }
 
 /** Maps a native event to the domain shape used by `upsertDeviceEvents`. Pure. */
-export function mapDeviceEvent(event: Calendar.Event, accountId: string, platform: string = Platform.OS): DeviceEventInput | null {
+export function mapDeviceEvent(
+  event: Calendar.Event,
+  accountId: string,
+  platform: string = Platform.OS,
+): DeviceEventInput | null {
   const startAt = toIso(event.startDate);
   const endAt = toIso(event.endDate) ?? startAt;
   if (!startAt || !endAt) return null;
@@ -110,7 +120,9 @@ export function mapDeviceEvent(event: Calendar.Event, accountId: string, platfor
     startAt,
     endAt,
     allDay: Boolean(event.allDay),
-    attendees: organizerEmail ? [{ email: organizerEmail, name: event.organizer?.name ?? null, isOrganizer: true }] : [],
+    attendees: organizerEmail
+      ? [{ email: organizerEmail, name: event.organizer?.name ?? null, isOrganizer: true }]
+      : [],
     organizerIsUser: event.organizer?.isCurrentUser ?? organizerEmail === null,
     status: mapStatus(event.status),
     providerUpdatedAt: toIso(event.lastModifiedDate),
@@ -146,8 +158,16 @@ export async function readDeviceEvents(input: ReadDeviceEventsInput): Promise<De
 }
 
 /** Registers the selected device calendars as a connected account (provider `apple` / `device`). */
-export async function registerDeviceCalendarAccount(ds: DataSource, calendarIds: string[], displayName?: string): Promise<ConnectedAccount> {
-  return ds.accounts.registerDeviceCalendar({ provider: deviceProvider(), displayName: displayName ?? deviceCalendarDisplayName(), calendarIds });
+export async function registerDeviceCalendarAccount(
+  ds: DataSource,
+  calendarIds: string[],
+  displayName?: string,
+): Promise<ConnectedAccount> {
+  return ds.accounts.registerDeviceCalendar({
+    provider: deviceProvider(),
+    displayName: displayName ?? deviceCalendarDisplayName(),
+    calendarIds,
+  });
 }
 
 export interface SyncDeviceCalendarOptions {
@@ -157,7 +177,12 @@ export interface SyncDeviceCalendarOptions {
 }
 
 /** Reads a window of device events and uploads them in chunks. Returns how many were uploaded. */
-export async function syncDeviceCalendar(ds: DataSource, accountId: string, calendarIds: string[], opts: SyncDeviceCalendarOptions = {}): Promise<{ uploaded: number }> {
+export async function syncDeviceCalendar(
+  ds: DataSource,
+  accountId: string,
+  calendarIds: string[],
+  opts: SyncDeviceCalendarOptions = {},
+): Promise<{ uploaded: number }> {
   const now = opts.now ?? new Date();
   const from = new Date(now.getTime() - (opts.pastDays ?? 7) * 86_400_000);
   const to = new Date(now.getTime() + (opts.futureDays ?? 30) * 86_400_000);
@@ -172,7 +197,10 @@ export async function syncDeviceCalendar(ds: DataSource, accountId: string, cale
 }
 
 /** Writes an approved `calendar_create` payload into a device calendar. Returns the native event id. */
-export async function createDeviceEvent(payload: CalendarCreatePayload, calendarId?: string): Promise<string | null> {
+export async function createDeviceEvent(
+  payload: CalendarCreatePayload,
+  calendarId?: string,
+): Promise<string | null> {
   try {
     const targetId = calendarId ?? (await Calendar.getDefaultCalendarAsync()).id;
     return await Calendar.createEventAsync(targetId, {

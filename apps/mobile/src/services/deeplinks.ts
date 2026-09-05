@@ -5,7 +5,13 @@
  * Contract: packages/domain/src/deeplinks.ts (DeepLinks). Unknown paths and malformed ids are rejected
  * (`null`) so nothing outside the contract can drive navigation.
  */
-import { BRIEFING_KINDS, DEEP_LINK_SCHEME, FLOW_FILTERS, type BriefingKind, type FlowFilter } from '@da/domain';
+import {
+  BRIEFING_KINDS,
+  DEEP_LINK_SCHEME,
+  FLOW_FILTERS,
+  type BriefingKind,
+  type FlowFilter,
+} from '@da/domain';
 import { env } from '@/lib/env';
 
 export interface ParsedDeepLink {
@@ -133,14 +139,16 @@ function extractAppPath(raw: RawUrl): { path: string; query: string; fragment: s
     if (raw.scheme !== 'https') return null;
     const host = raw.host.toLowerCase().replace(/:\d+$/, '');
     if (!allowedUniversalHosts().has(host)) return null;
-    if (raw.path === '/app' || raw.path === '/app/') return { path: '/today', query: raw.query, fragment: raw.fragment };
+    if (raw.path === '/app' || raw.path === '/app/')
+      return { path: '/today', query: raw.query, fragment: raw.fragment };
     if (!raw.path.startsWith('/app/')) return null;
     return { path: raw.path.slice(4), query: raw.query, fragment: raw.fragment };
   }
   if (appSchemes().has(raw.scheme)) {
     if (EXPO_DEV_HOSTS.has(raw.host.toLowerCase())) return null;
     const devIdx = raw.path.indexOf('/--/');
-    if (devIdx !== -1) return { path: raw.path.slice(devIdx + 3), query: raw.query, fragment: raw.fragment };
+    if (devIdx !== -1)
+      return { path: raw.path.slice(devIdx + 3), query: raw.query, fragment: raw.fragment };
     // `scheme://host/path` — the host is the first path segment; share-extension payloads (`dataUrl=`) fall through as unknown.
     const path = `/${raw.host}${raw.path}`.replace(/\/{2,}/g, '/');
     return { path, query: raw.query, fragment: raw.fragment };
@@ -154,13 +162,24 @@ function segmentsOf(path: string): string[] | null {
   const segments: string[] = [];
   for (const seg of trimmed.split('/')) {
     const decoded = safeDecode(seg);
-    if (decoded === null || decoded === '' || decoded === '.' || decoded === '..' || decoded.includes('/')) return null;
+    if (
+      decoded === null ||
+      decoded === '' ||
+      decoded === '.' ||
+      decoded === '..' ||
+      decoded.includes('/')
+    )
+      return null;
     segments.push(decoded);
   }
   return segments;
 }
 
-function pick(query: Record<string, string>, key: string, validate: (v: string) => boolean): string | undefined {
+function pick(
+  query: Record<string, string>,
+  key: string,
+  validate: (v: string) => boolean,
+): string | undefined {
   const v = query[key];
   if (v === undefined) return undefined;
   const trimmed = v.trim();
@@ -186,12 +205,18 @@ function resolveRoute(segments: string[], query: Record<string, string>): Parsed
       return len === 1 ? { href: '/(tabs)/today' } : null;
     case 'flow':
       return len === 1
-        ? withParams('/(tabs)/flow', { filter: pick(query, 'filter', (v) => (FLOW_FILTERS as readonly string[]).includes(v)) })
+        ? withParams('/(tabs)/flow', {
+            filter: pick(query, 'filter', (v) => (FLOW_FILTERS as readonly string[]).includes(v)),
+          })
         : null;
     case 'plan':
-      return len === 1 ? withParams('/(tabs)/plan', { date: pick(query, 'date', (v) => ISO_DATE_RE.test(v)) }) : null;
+      return len === 1
+        ? withParams('/(tabs)/plan', { date: pick(query, 'date', (v) => ISO_DATE_RE.test(v)) })
+        : null;
     case 'assistant':
-      return len === 1 ? withParams('/(tabs)/assistant', { q: pick(query, 'q', isFreeText) }) : null;
+      return len === 1
+        ? withParams('/(tabs)/assistant', { q: pick(query, 'q', isFreeText) })
+        : null;
     case 'briefing': {
       if (len !== 2 || s1 === undefined) return null;
       if (s1 === 'audio') {
@@ -220,7 +245,8 @@ function resolveRoute(segments: string[], query: Record<string, string>): Parsed
       return { href: `/${s0}/${s1}`, params: { id: s1 } };
     case 'approvals':
       if (len === 1) return { href: '/approvals' };
-      if (len === 2 && s1 !== undefined && isValidEntityId(s1)) return { href: `/approvals/${s1}`, params: { id: s1 } };
+      if (len === 2 && s1 !== undefined && isValidEntityId(s1))
+        return { href: `/approvals/${s1}`, params: { id: s1 } };
       return null;
     case 'followups':
     case 'waiting':
@@ -232,19 +258,30 @@ function resolveRoute(segments: string[], query: Record<string, string>): Parsed
       return len === 1 ? withParams('/search', { q: pick(query, 'q', isFreeText) }) : null;
     case 'settings':
       if (len === 1) return { href: '/settings' };
-      if (len === 2 && s1 !== undefined && (SETTINGS_SECTIONS as readonly string[]).includes(s1)) return { href: `/settings/${s1}` };
+      if (len === 2 && s1 !== undefined && (SETTINGS_SECTIONS as readonly string[]).includes(s1))
+        return { href: `/settings/${s1}` };
       return null;
     case 'paywall':
-      return len === 1 ? withParams('/paywall', { context: pick(query, 'context', (v) => PAYWALL_CONTEXT_RE.test(v)) }) : null;
+      return len === 1
+        ? withParams('/paywall', {
+            context: pick(query, 'context', (v) => PAYWALL_CONTEXT_RE.test(v)),
+          })
+        : null;
     case 'referral':
-      return len === 1 ? withParams('/referral', { code: pick(query, 'code', (v) => REFERRAL_CODE_RE.test(v)) }) : null;
+      return len === 1
+        ? withParams('/referral', { code: pick(query, 'code', (v) => REFERRAL_CODE_RE.test(v)) })
+        : null;
     case 'oauth': {
-      if (len !== 2 || s1 === undefined || !(OAUTH_PROVIDERS as readonly string[]).includes(s1)) return null;
+      if (len !== 2 || s1 === undefined || !(OAUTH_PROVIDERS as readonly string[]).includes(s1))
+        return null;
       const state = pick(query, 'state', (v) => v.length <= 256);
       if (!state) return null;
       const error = pick(query, 'error', (v) => v.length <= 200);
       const accountId = pick(query, 'accountId', isValidEntityId);
-      const status = query.status === 'error' || (error !== undefined && accountId === undefined) ? 'error' : 'ok';
+      const status =
+        query.status === 'error' || (error !== undefined && accountId === undefined)
+          ? 'error'
+          : 'ok';
       return withParams(`/oauth/${s1}`, { provider: s1, state, status, accountId, error });
     }
     case 'auth':

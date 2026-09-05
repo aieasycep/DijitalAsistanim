@@ -78,5 +78,7 @@ export const wrapWithMonitoring = <P extends object>(
   component: React.ComponentType<P>,
 ): React.ComponentType<P> =>
   env.sentryDsn
-    ? (Sentry.wrap(component as React.ComponentType<Record<string, unknown>>) as unknown as React.ComponentType<P>)
+    ? (Sentry.wrap(
+        component as React.ComponentType<Record<string, unknown>>,
+      ) as unknown as React.ComponentType<P>)
     : component;

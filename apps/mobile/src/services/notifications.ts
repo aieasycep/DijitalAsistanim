@@ -31,7 +31,13 @@ import { CacheKeys, readCache, removeCache, writeCache } from '@/lib/storage';
 // Constants & cache keys
 // ---------------------------------------------------------------------------
 
-export const NOTIFICATION_CHANNEL_IDS = ['briefings', 'critical', 'meetings', 'reminders', 'general'] as const;
+export const NOTIFICATION_CHANNEL_IDS = [
+  'briefings',
+  'critical',
+  'meetings',
+  'reminders',
+  'general',
+] as const;
 export type NotificationChannelId = (typeof NOTIFICATION_CHANNEL_IDS)[number];
 
 export const NOTIFICATION_PREFS_CACHE_KEY = 'cache.notificationPreferences.v1';
@@ -55,12 +61,16 @@ const CATEGORY_CHANNEL: Record<NotificationCategory, NotificationChannelId> = {
   approval: 'general',
 };
 
-export function channelForCategory(category: NotificationCategory | null | undefined): NotificationChannelId {
+export function channelForCategory(
+  category: NotificationCategory | null | undefined,
+): NotificationChannelId {
   return category ? CATEGORY_CHANNEL[category] : 'general';
 }
 
 export function isNotificationCategory(value: unknown): value is NotificationCategory {
-  return typeof value === 'string' && (NOTIFICATION_CATEGORIES as readonly string[]).includes(value);
+  return (
+    typeof value === 'string' && (NOTIFICATION_CATEGORIES as readonly string[]).includes(value)
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -85,7 +95,9 @@ export function cacheNotificationPreferences(prefs: NotificationPreferences | nu
 }
 
 /** Fetches the server copy and caches it; returns the cached copy when offline. */
-export async function refreshNotificationPreferences(ds: DataSource): Promise<NotificationPreferences | null> {
+export async function refreshNotificationPreferences(
+  ds: DataSource,
+): Promise<NotificationPreferences | null> {
   try {
     const prefs = await ds.profile.getNotificationPreferences();
     cacheNotificationPreferences(prefs);
@@ -118,7 +130,10 @@ function userLocale(): Locale {
 // ---------------------------------------------------------------------------
 
 export type QuietHoursPolicy = 'defer' | 'silent' | 'skip' | 'ignore';
-export type QuietHoursPrefs = Pick<NotificationPreferences, 'quietHoursEnabled' | 'quietHoursStart' | 'quietHoursEnd'>;
+export type QuietHoursPrefs = Pick<
+  NotificationPreferences,
+  'quietHoursEnabled' | 'quietHoursStart' | 'quietHoursEnd'
+>;
 
 function parseClock(value: string): number | null {
   const m = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
@@ -133,7 +148,12 @@ function parseClock(value: string): number | null {
 export function minutesOfDay(date: Date, timezone?: string): number {
   if (timezone) {
     try {
-      const parts = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: timezone }).formatToParts(date);
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+        timeZone: timezone,
+      }).formatToParts(date);
       const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? NaN);
       const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? NaN);
       if (Number.isFinite(hour) && Number.isFinite(minute)) return (hour % 24) * 60 + minute;
@@ -145,7 +165,11 @@ export function minutesOfDay(date: Date, timezone?: string): number {
 }
 
 /** True when `now` falls inside the user's quiet hours (supports overnight ranges such as 22:00 → 08:00). */
-export function isWithinQuietHours(prefs: QuietHoursPrefs | null | undefined, now: Date, timezone?: string): boolean {
+export function isWithinQuietHours(
+  prefs: QuietHoursPrefs | null | undefined,
+  now: Date,
+  timezone?: string,
+): boolean {
   if (!prefs?.quietHoursEnabled) return false;
   const start = parseClock(prefs.quietHoursStart);
   const end = parseClock(prefs.quietHoursEnd);
@@ -178,8 +202,14 @@ export interface ResolvedDelivery {
  *  - `skip`: do not deliver
  *  - `ignore`: quiet hours do not apply
  */
-export function resolveQuietHours(at: Date, prefs: QuietHoursPrefs | null | undefined, policy: QuietHoursPolicy, timezone?: string): ResolvedDelivery | null {
-  if (policy === 'ignore' || !isWithinQuietHours(prefs, at, timezone) || !prefs) return { at, silent: false };
+export function resolveQuietHours(
+  at: Date,
+  prefs: QuietHoursPrefs | null | undefined,
+  policy: QuietHoursPolicy,
+  timezone?: string,
+): ResolvedDelivery | null {
+  if (policy === 'ignore' || !isWithinQuietHours(prefs, at, timezone) || !prefs)
+    return { at, silent: false };
   switch (policy) {
     case 'defer':
       return { at: quietHoursEndAfter(at, prefs, timezone), silent: false };
@@ -207,7 +237,11 @@ export interface NotificationText {
  *  - `title_only`: title, body stripped
  *  - `generic`: app name + a generic sentence — no user content at all
  */
-export function applyLockScreenPrivacy(title: string, body: string | null | undefined, mode: LockScreenPrivacy): NotificationText {
+export function applyLockScreenPrivacy(
+  title: string,
+  body: string | null | undefined,
+  mode: LockScreenPrivacy,
+): NotificationText {
   switch (mode) {
     case 'title_only':
       return { title, body: null };
@@ -234,7 +268,9 @@ function asString(value: unknown, max = 2048): string | null {
   return typeof value === 'string' && value.length > 0 && value.length <= max ? value : null;
 }
 
-export function readNotificationMeta(data: Record<string, unknown> | null | undefined): NotificationPayloadMeta {
+export function readNotificationMeta(
+  data: Record<string, unknown> | null | undefined,
+): NotificationPayloadMeta {
   const d = data ?? {};
   const category = isNotificationCategory(d.category) ? d.category : null;
   return {
@@ -246,7 +282,9 @@ export function readNotificationMeta(data: Record<string, unknown> | null | unde
   };
 }
 
-export function getNotificationDeepLink(response: Notifications.NotificationResponse | null | undefined): string | null {
+export function getNotificationDeepLink(
+  response: Notifications.NotificationResponse | null | undefined,
+): string | null {
   if (!response) return null;
   return readNotificationMeta(response.notification.request.content.data).deepLink;
 }
@@ -255,7 +293,12 @@ export function getNotificationDeepLink(response: Notifications.NotificationResp
 // Foreground presentation policy
 // ---------------------------------------------------------------------------
 
-const SUPPRESSED: Notifications.NotificationBehavior = { shouldShowBanner: false, shouldShowList: false, shouldPlaySound: false, shouldSetBadge: false };
+const SUPPRESSED: Notifications.NotificationBehavior = {
+  shouldShowBanner: false,
+  shouldShowList: false,
+  shouldPlaySound: false,
+  shouldSetBadge: false,
+};
 
 /**
  * Decides how a notification is presented while the app is in the foreground.
@@ -276,11 +319,29 @@ export function decideForegroundBehavior(
     case 'critical':
     case 'meetings':
     case 'reminders':
-      return { shouldShowBanner: true, shouldShowList: true, shouldPlaySound: !quiet, shouldSetBadge: isApproval, priority: Notifications.AndroidNotificationPriority.HIGH };
+      return {
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: !quiet,
+        shouldSetBadge: isApproval,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+      };
     case 'briefings':
-      return { shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false, priority: Notifications.AndroidNotificationPriority.DEFAULT };
+      return {
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+        priority: Notifications.AndroidNotificationPriority.DEFAULT,
+      };
     default:
-      return { shouldShowBanner: !quiet, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: isApproval, priority: Notifications.AndroidNotificationPriority.DEFAULT };
+      return {
+        shouldShowBanner: !quiet,
+        shouldShowList: true,
+        shouldPlaySound: false,
+        shouldSetBadge: isApproval,
+        priority: Notifications.AndroidNotificationPriority.DEFAULT,
+      };
   }
 }
 
@@ -293,8 +354,14 @@ export function configureNotificationHandler(): void {
   try {
     Notifications.setNotificationHandler({
       handleNotification: async (notification) =>
-        decideForegroundBehavior(notification.request.content.data, getCachedNotificationPreferences(), new Date(), userTimezone()),
-      handleError: (notificationId, error) => captureError(error, { where: 'notificationHandler', notificationId }),
+        decideForegroundBehavior(
+          notification.request.content.data,
+          getCachedNotificationPreferences(),
+          new Date(),
+          userTimezone(),
+        ),
+      handleError: (notificationId, error) =>
+        captureError(error, { where: 'notificationHandler', notificationId }),
     });
   } catch (e) {
     handlerConfigured = false;
@@ -310,13 +377,57 @@ let channelsReady = false;
 
 function channelInputs(): Record<NotificationChannelId, Notifications.NotificationChannelInput> {
   const { AndroidImportance, AndroidNotificationVisibility } = Notifications;
-  const base = { lockscreenVisibility: AndroidNotificationVisibility.PRIVATE, lightColor: '#5B5CE2', enableLights: true } as const;
+  const base = {
+    lockscreenVisibility: AndroidNotificationVisibility.PRIVATE,
+    lightColor: '#5B5CE2',
+    enableLights: true,
+  } as const;
   return {
-    briefings: { ...base, name: t('widgets.brief'), importance: AndroidImportance.DEFAULT, vibrationPattern: null, enableVibrate: false, showBadge: false, sound: 'default' },
-    critical: { ...base, name: t('settings.notificationScreen.categories.critical_email'), importance: AndroidImportance.HIGH, vibrationPattern: [0, 250, 150, 250], enableVibrate: true, showBadge: true, sound: 'default' },
-    meetings: { ...base, name: t('settings.notificationScreen.categories.meeting'), importance: AndroidImportance.HIGH, vibrationPattern: [0, 200], enableVibrate: true, showBadge: false, sound: 'default' },
-    reminders: { ...base, name: t('settings.notificationScreen.categories.reminder'), importance: AndroidImportance.HIGH, vibrationPattern: [0, 200, 100, 200], enableVibrate: true, showBadge: false, sound: 'default' },
-    general: { ...base, name: t('settings.notifications'), importance: AndroidImportance.DEFAULT, vibrationPattern: null, enableVibrate: false, showBadge: true, sound: 'default' },
+    briefings: {
+      ...base,
+      name: t('widgets.brief'),
+      importance: AndroidImportance.DEFAULT,
+      vibrationPattern: null,
+      enableVibrate: false,
+      showBadge: false,
+      sound: 'default',
+    },
+    critical: {
+      ...base,
+      name: t('settings.notificationScreen.categories.critical_email'),
+      importance: AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 150, 250],
+      enableVibrate: true,
+      showBadge: true,
+      sound: 'default',
+    },
+    meetings: {
+      ...base,
+      name: t('settings.notificationScreen.categories.meeting'),
+      importance: AndroidImportance.HIGH,
+      vibrationPattern: [0, 200],
+      enableVibrate: true,
+      showBadge: false,
+      sound: 'default',
+    },
+    reminders: {
+      ...base,
+      name: t('settings.notificationScreen.categories.reminder'),
+      importance: AndroidImportance.HIGH,
+      vibrationPattern: [0, 200, 100, 200],
+      enableVibrate: true,
+      showBadge: false,
+      sound: 'default',
+    },
+    general: {
+      ...base,
+      name: t('settings.notifications'),
+      importance: AndroidImportance.DEFAULT,
+      vibrationPattern: null,
+      enableVibrate: false,
+      showBadge: true,
+      sound: 'default',
+    },
   };
 }
 
@@ -325,7 +436,8 @@ export async function setupNotificationChannels(): Promise<void> {
   if (Platform.OS !== 'android' || channelsReady) return;
   try {
     const inputs = channelInputs();
-    for (const id of NOTIFICATION_CHANNEL_IDS) await Notifications.setNotificationChannelAsync(id, inputs[id]);
+    for (const id of NOTIFICATION_CHANNEL_IDS)
+      await Notifications.setNotificationChannelAsync(id, inputs[id]);
     channelsReady = true;
   } catch (e) {
     captureError(e, { where: 'setupNotificationChannels' });
@@ -338,10 +450,20 @@ export async function setupNotificationChannels(): Promise<void> {
 
 export type NotificationPermission = 'granted' | 'denied' | 'undetermined';
 
-function mapPermission(status: Notifications.NotificationPermissionsStatus): NotificationPermission {
+function mapPermission(
+  status: Notifications.NotificationPermissionsStatus,
+): NotificationPermission {
   if (status.granted) return 'granted';
-  if (status.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL || status.ios?.status === Notifications.IosAuthorizationStatus.EPHEMERAL) return 'granted';
-  if (status.status === 'undetermined' || status.ios?.status === Notifications.IosAuthorizationStatus.NOT_DETERMINED) return 'undetermined';
+  if (
+    status.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL ||
+    status.ios?.status === Notifications.IosAuthorizationStatus.EPHEMERAL
+  )
+    return 'granted';
+  if (
+    status.status === 'undetermined' ||
+    status.ios?.status === Notifications.IosAuthorizationStatus.NOT_DETERMINED
+  )
+    return 'undetermined';
   return 'denied';
 }
 
@@ -360,7 +482,9 @@ export async function requestPermission(): Promise<NotificationPermission> {
   try {
     const current = await Notifications.getPermissionsAsync();
     if (mapPermission(current) !== 'undetermined') return mapPermission(current);
-    const next = await Notifications.requestPermissionsAsync({ ios: { allowAlert: true, allowBadge: true, allowSound: true } });
+    const next = await Notifications.requestPermissionsAsync({
+      ios: { allowAlert: true, allowBadge: true, allowSound: true },
+    });
     return mapPermission(next);
   } catch (e) {
     captureError(e, { where: 'requestPermission' });
@@ -404,25 +528,44 @@ interface CachedPushToken {
 
 export type PushRegistrationResult =
   | { status: 'registered'; token: string }
-  | { status: 'skipped'; reason: 'unsupported_platform' | 'no_project_id' | 'not_a_device' | 'permission' | 'unchanged' }
+  | {
+      status: 'skipped';
+      reason:
+        'unsupported_platform' | 'no_project_id' | 'not_a_device' | 'permission' | 'unchanged';
+    }
   | { status: 'failed'; reason: string };
 
 /**
  * Registers the Expo push token with the backend. Skips gracefully when the EAS project id is missing,
  * on simulators, without permission, or when the same token was registered recently for the same user.
  */
-export async function registerPushToken(ds: DataSource, opts: { userId?: string | null; force?: boolean } = {}): Promise<PushRegistrationResult> {
-  if (Platform.OS !== 'ios' && Platform.OS !== 'android') return { status: 'skipped', reason: 'unsupported_platform' };
+export async function registerPushToken(
+  ds: DataSource,
+  opts: { userId?: string | null; force?: boolean } = {},
+): Promise<PushRegistrationResult> {
+  if (Platform.OS !== 'ios' && Platform.OS !== 'android')
+    return { status: 'skipped', reason: 'unsupported_platform' };
   if (!env.easProjectId) return { status: 'skipped', reason: 'no_project_id' };
   if (!Device.isDevice) return { status: 'skipped', reason: 'not_a_device' };
   try {
-    if ((await getPermissionStatus()) !== 'granted') return { status: 'skipped', reason: 'permission' };
+    if ((await getPermissionStatus()) !== 'granted')
+      return { status: 'skipped', reason: 'permission' };
     const deviceId = await getDeviceId();
-    const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: env.easProjectId });
+    const { data: token } = await Notifications.getExpoPushTokenAsync({
+      projectId: env.easProjectId,
+    });
     const userId = opts.userId ?? null;
     const cached = readCache<CachedPushToken>(PUSH_TOKEN_CACHE_KEY);
     const fresh = cached ? Date.now() - Date.parse(cached.registeredAt) < TOKEN_REFRESH_MS : false;
-    if (!opts.force && cached && fresh && cached.token === token && cached.deviceId === deviceId && cached.appVersion === env.appVersion && cached.userId === userId) {
+    if (
+      !opts.force &&
+      cached &&
+      fresh &&
+      cached.token === token &&
+      cached.deviceId === deviceId &&
+      cached.appVersion === env.appVersion &&
+      cached.userId === userId
+    ) {
       return { status: 'skipped', reason: 'unchanged' };
     }
     await ds.profile.registerPushToken({
@@ -432,7 +575,13 @@ export async function registerPushToken(ds: DataSource, opts: { userId?: string 
       deviceName: Device.deviceName ?? undefined,
       appVersion: env.appVersion,
     });
-    writeCache<CachedPushToken>(PUSH_TOKEN_CACHE_KEY, { token, deviceId, appVersion: env.appVersion, userId, registeredAt: new Date().toISOString() });
+    writeCache<CachedPushToken>(PUSH_TOKEN_CACHE_KEY, {
+      token,
+      deviceId,
+      appVersion: env.appVersion,
+      userId,
+      registeredAt: new Date().toISOString(),
+    });
     return { status: 'registered', token };
   } catch (e) {
     captureError(e, { where: 'registerPushToken' });
@@ -469,7 +618,12 @@ export interface LocalReminderInput {
   quietHours?: QuietHoursPolicy;
 }
 
-function buildContent(text: NotificationText, data: Record<string, unknown>, silent: boolean, channel: NotificationChannelId): Notifications.NotificationContentInput {
+function buildContent(
+  text: NotificationText,
+  data: Record<string, unknown>,
+  silent: boolean,
+  channel: NotificationChannelId,
+): Notifications.NotificationContentInput {
   const content: Notifications.NotificationContentInput = {
     title: text.title,
     body: text.body ?? undefined,
@@ -478,14 +632,19 @@ function buildContent(text: NotificationText, data: Record<string, unknown>, sil
     interruptionLevel: silent ? 'passive' : 'active',
   };
   if (Platform.OS === 'android') {
-    content.priority = silent ? Notifications.AndroidNotificationPriority.LOW : Notifications.AndroidNotificationPriority.HIGH;
+    content.priority = silent
+      ? Notifications.AndroidNotificationPriority.LOW
+      : Notifications.AndroidNotificationPriority.HIGH;
     content.color = '#5B5CE2';
     content.vibrate = silent || channel === 'briefings' ? [] : [0, 200];
   }
   return content;
 }
 
-function buildTrigger(at: Date, channelId: NotificationChannelId): Notifications.NotificationTriggerInput {
+function buildTrigger(
+  at: Date,
+  channelId: NotificationChannelId,
+): Notifications.NotificationTriggerInput {
   if (at.getTime() <= Date.now() + 1000) return Platform.OS === 'android' ? { channelId } : null;
   return { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId };
 }
@@ -511,7 +670,12 @@ export async function scheduleLocalReminder(input: LocalReminderInput): Promise<
   try {
     await Notifications.scheduleNotificationAsync({
       identifier,
-      content: buildContent(text, { deepLink: input.deepLink, category, reminderId: input.id }, delivery.silent, channel),
+      content: buildContent(
+        text,
+        { deepLink: input.deepLink, category, reminderId: input.id },
+        delivery.silent,
+        channel,
+      ),
       trigger: buildTrigger(delivery.at, channel),
     });
     return identifier;
@@ -543,11 +707,18 @@ type MeetingLeadCache = Record<string, string>;
  * Schedules "{{time}} toplantına {{minutes}} dakika kaldı." before an event. Deduped per event + fire time,
  * cancelled events are removed. Quiet hours make it silent rather than late.
  */
-export async function scheduleMeetingLeadNotification(event: Pick<CalendarEvent, 'id' | 'title' | 'startAt' | 'status'>, leadMinutes: number): Promise<string | null> {
+export async function scheduleMeetingLeadNotification(
+  event: Pick<CalendarEvent, 'id' | 'title' | 'startAt' | 'status'>,
+  leadMinutes: number,
+): Promise<string | null> {
   const identifier = meetingLeadIdentifier(event.id);
   const cache = readCache<MeetingLeadCache>(MEETING_LEAD_CACHE_KEY) ?? {};
   const fireAt = new Date(Date.parse(event.startAt) - Math.max(0, leadMinutes) * 60_000);
-  if (event.status === 'cancelled' || Number.isNaN(fireAt.getTime()) || fireAt.getTime() <= Date.now()) {
+  if (
+    event.status === 'cancelled' ||
+    Number.isNaN(fireAt.getTime()) ||
+    fireAt.getTime() <= Date.now()
+  ) {
     await cancelMeetingLeadNotification(event.id);
     return null;
   }
@@ -557,7 +728,11 @@ export async function scheduleMeetingLeadNotification(event: Pick<CalendarEvent,
   if (!delivery) return null;
   const stamp = `${delivery.at.toISOString()}|${delivery.silent ? 's' : 'a'}|${prefs?.lockScreenPrivacy ?? 'full'}`;
   if (cache[event.id] === stamp) return identifier;
-  const text = applyLockScreenPrivacy(event.title, t('notifications.meetingNoPrep', { time: clockLabel(event.startAt), minutes: leadMinutes }), prefs?.lockScreenPrivacy ?? 'full');
+  const text = applyLockScreenPrivacy(
+    event.title,
+    t('notifications.meetingNoPrep', { time: clockLabel(event.startAt), minutes: leadMinutes }),
+    prefs?.lockScreenPrivacy ?? 'full',
+  );
   try {
     await Notifications.cancelScheduledNotificationAsync(identifier);
   } catch {
@@ -566,7 +741,16 @@ export async function scheduleMeetingLeadNotification(event: Pick<CalendarEvent,
   try {
     await Notifications.scheduleNotificationAsync({
       identifier,
-      content: buildContent(text, { deepLink: `${env.appScheme}://meeting/${event.id}/prep`, category: 'meeting', eventId: event.id }, delivery.silent, 'meetings'),
+      content: buildContent(
+        text,
+        {
+          deepLink: `${env.appScheme}://meeting/${event.id}/prep`,
+          category: 'meeting',
+          eventId: event.id,
+        },
+        delivery.silent,
+        'meetings',
+      ),
       trigger: buildTrigger(delivery.at, 'meetings'),
     });
     writeCache<MeetingLeadCache>(MEETING_LEAD_CACHE_KEY, { ...cache, [event.id]: stamp });

@@ -8,7 +8,18 @@ module.exports = function (api) {
         {
           root: ['./'],
           alias: { '@': './src' },
-          extensions: ['.ios.tsx', '.android.tsx', '.native.tsx', '.tsx', '.ios.ts', '.android.ts', '.native.ts', '.ts', '.js', '.json'],
+          extensions: [
+            '.ios.tsx',
+            '.android.tsx',
+            '.native.tsx',
+            '.tsx',
+            '.ios.ts',
+            '.android.ts',
+            '.native.ts',
+            '.ts',
+            '.js',
+            '.json',
+          ],
         },
       ],
       // react-native-worklets/plugin must be last (Reanimated 4)

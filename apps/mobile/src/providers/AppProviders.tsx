@@ -17,7 +17,9 @@ export function AppProviders({ children }: PropsWithChildren) {
 
   useEffect(() => setupQueryClientListeners(), []);
   useEffect(() => {
-    const unsub = NetInfo.addEventListener((state) => setOffline(!(state.isConnected && state.isInternetReachable !== false)));
+    const unsub = NetInfo.addEventListener((state) =>
+      setOffline(!(state.isConnected && state.isInternetReachable !== false)),
+    );
     return unsub;
   }, [setOffline]);
 

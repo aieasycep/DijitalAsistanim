@@ -7,7 +7,8 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
  * share extension (expo-share-intent), widgets (expo-widgets), Apple Sign in, background tasks,
  * Android NotificationListenerService (local module ./modules/notification-listener).
  */
-const env = (key: string, fallback: string): string => process.env[key] && process.env[key] !== '' ? String(process.env[key]) : fallback;
+const env = (key: string, fallback: string): string =>
+  process.env[key] && process.env[key] !== '' ? String(process.env[key]) : fallback;
 
 const APP_NAME = env('APP_NAME', 'Dijital Asistan');
 const SCHEME = env('APP_SCHEME', env('EXPO_PUBLIC_APP_SCHEME', 'dijitalasistan'));
@@ -16,11 +17,15 @@ const ANDROID_PACKAGE = env('ANDROID_PACKAGE', 'com.dijitalasistan.app');
 const APP_GROUP = env('IOS_APP_GROUP', `group.${IOS_BUNDLE_ID}`);
 const APPLE_TEAM_ID = env('APPLE_TEAM_ID', '');
 const EAS_PROJECT_ID = env('EXPO_PUBLIC_EAS_PROJECT_ID', '');
-const UNIVERSAL_HOSTS = env('EXPO_PUBLIC_UNIVERSAL_LINK_HOSTS', 'dijitalasistan.app,www.dijitalasistan.app')
+const UNIVERSAL_HOSTS = env(
+  'EXPO_PUBLIC_UNIVERSAL_LINK_HOSTS',
+  'dijitalasistan.app,www.dijitalasistan.app',
+)
   .split(',')
   .map((h) => h.trim())
   .filter(Boolean);
-const IS_PRODUCTION = process.env.APP_ENV === 'production' || process.env.EAS_BUILD_PROFILE === 'production';
+const IS_PRODUCTION =
+  process.env.APP_ENV === 'production' || process.env.EAS_BUILD_PROFILE === 'production';
 const VERSION = env('APP_VERSION', '1.0.0');
 
 const config = (_ctx: ConfigContext): ExpoConfig => ({
@@ -54,34 +59,83 @@ const config = (_ctx: ConfigContext): ExpoConfig => ({
       CFBundleDevelopmentRegion: 'tr',
       NSCalendarsFullAccessUsageDescription:
         'Takvimini okuyarak gününü, çakışmaları ve toplantı hazırlıklarını anlayabiliriz. Etkinlikler yalnızca sen onaylayınca oluşturulur.',
-      NSCalendarsWriteOnlyAccessUsageDescription: 'Onayladığın etkinlikleri takvimine ekleyebilmek için.',
-      NSRemindersFullAccessUsageDescription: 'Onayladığın hatırlatıcıları Anımsatıcılar uygulamasına ekleyebilmek için.',
-      NSContactsUsageDescription: 'Önemli kişileri (VIP) rehberinden seçebilmen için. İsteğe bağlıdır.',
+      NSCalendarsWriteOnlyAccessUsageDescription:
+        'Onayladığın etkinlikleri takvimine ekleyebilmek için.',
+      NSRemindersFullAccessUsageDescription:
+        'Onayladığın hatırlatıcıları Anımsatıcılar uygulamasına ekleyebilmek için.',
+      NSContactsUsageDescription:
+        'Önemli kişileri (VIP) rehberinden seçebilmen için. İsteğe bağlıdır.',
       NSMicrophoneUsageDescription: 'Sesli soru sorabilmen ve toplantı sonrası not alabilmen için.',
       NSSpeechRecognitionUsageDescription: 'Sesli sorularını cihaz üzerinde yazıya dökmek için.',
-      NSCameraUsageDescription: 'Belge, ekran görüntüsü veya etkinlik afişini yakalayıp analiz edebilmek için.',
-      NSPhotoLibraryUsageDescription: 'Ekran görüntüsü veya fotoğrafları yakalayıp analiz edebilmek için.',
+      NSCameraUsageDescription:
+        'Belge, ekran görüntüsü veya etkinlik afişini yakalayıp analiz edebilmek için.',
+      NSPhotoLibraryUsageDescription:
+        'Ekran görüntüsü veya fotoğrafları yakalayıp analiz edebilmek için.',
       NSFaceIDUsageDescription: 'Hesabına hızlı ve güvenli erişim için.',
       NSUserActivityTypes: [`${IOS_BUNDLE_ID}.open`],
       ITSAppUsesNonExemptEncryption: false,
       UIBackgroundModes: ['audio', 'fetch', 'remote-notification', 'processing'],
-      BGTaskSchedulerPermittedIdentifiers: [`${IOS_BUNDLE_ID}.sync`, `${IOS_BUNDLE_ID}.widget-refresh`],
-      LSApplicationQueriesSchemes: ['googlegmail', 'ms-outlook', 'msteams', 'zoomus', 'comgooglemaps', 'maps', 'whatsapp', 'googlemeet'],
+      BGTaskSchedulerPermittedIdentifiers: [
+        `${IOS_BUNDLE_ID}.sync`,
+        `${IOS_BUNDLE_ID}.widget-refresh`,
+      ],
+      LSApplicationQueriesSchemes: [
+        'googlegmail',
+        'ms-outlook',
+        'msteams',
+        'zoomus',
+        'comgooglemaps',
+        'maps',
+        'whatsapp',
+        'googlemeet',
+      ],
     },
     privacyManifests: {
       NSPrivacyTracking: false,
       NSPrivacyTrackingDomains: [],
       NSPrivacyCollectedDataTypes: [
-        { NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeEmailAddress', NSPrivacyCollectedDataTypeLinked: true, NSPrivacyCollectedDataTypeTracking: false, NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'] },
-        { NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeEmailsOrTextMessages', NSPrivacyCollectedDataTypeLinked: true, NSPrivacyCollectedDataTypeTracking: false, NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'] },
-        { NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeCrashData', NSPrivacyCollectedDataTypeLinked: false, NSPrivacyCollectedDataTypeTracking: false, NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'] },
-        { NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeProductInteraction', NSPrivacyCollectedDataTypeLinked: false, NSPrivacyCollectedDataTypeTracking: false, NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAnalytics'] },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeEmailAddress',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeEmailsOrTextMessages',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeCrashData',
+          NSPrivacyCollectedDataTypeLinked: false,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeProductInteraction',
+          NSPrivacyCollectedDataTypeLinked: false,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAnalytics'],
+        },
       ],
       NSPrivacyAccessedAPITypes: [
-        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults', NSPrivacyAccessedAPITypeReasons: ['CA92.1'] },
-        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp', NSPrivacyAccessedAPITypeReasons: ['C617.1'] },
-        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime', NSPrivacyAccessedAPITypeReasons: ['35F9.1'] },
-        { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace', NSPrivacyAccessedAPITypeReasons: ['E174.1'] },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+          NSPrivacyAccessedAPITypeReasons: ['CA92.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+          NSPrivacyAccessedAPITypeReasons: ['C617.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+          NSPrivacyAccessedAPITypeReasons: ['35F9.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+          NSPrivacyAccessedAPITypeReasons: ['E174.1'],
+        },
       ],
     },
     config: { usesNonExemptEncryption: false },
@@ -152,10 +206,14 @@ const config = (_ctx: ConfigContext): ExpoConfig => ({
       'expo-calendar',
       {
         calendarPermission: 'Takvimini okuyarak gününü ve çakışmaları anlayabiliriz.',
-        remindersPermission: 'Onayladığın hatırlatıcıları Anımsatıcılar uygulamasına ekleyebilmek için.',
+        remindersPermission:
+          'Onayladığın hatırlatıcıları Anımsatıcılar uygulamasına ekleyebilmek için.',
       },
     ],
-    ['expo-contacts', { contactsPermission: 'Önemli kişileri rehberinden seçebilmen için. İsteğe bağlıdır.' }],
+    [
+      'expo-contacts',
+      { contactsPermission: 'Önemli kişileri rehberinden seçebilmen için. İsteğe bağlıdır.' },
+    ],
     [
       'expo-image-picker',
       {
@@ -164,7 +222,10 @@ const config = (_ctx: ConfigContext): ExpoConfig => ({
         microphonePermission: false,
       },
     ],
-    ['expo-document-picker', { iCloudContainerEnvironment: IS_PRODUCTION ? 'Production' : 'Development' }],
+    [
+      'expo-document-picker',
+      { iCloudContainerEnvironment: IS_PRODUCTION ? 'Production' : 'Development' },
+    ],
     [
       'expo-share-intent',
       {
@@ -191,7 +252,12 @@ const config = (_ctx: ConfigContext): ExpoConfig => ({
             name: 'NextImportant',
             displayName: 'Sıradaki',
             description: 'Bugün bilmen gereken bir sonraki şey.',
-            supportedFamilies: ['systemSmall', 'accessoryRectangular', 'accessoryInline', 'accessoryCircular'],
+            supportedFamilies: [
+              'systemSmall',
+              'accessoryRectangular',
+              'accessoryInline',
+              'accessoryCircular',
+            ],
             contentMarginsDisabled: false,
             android: { targetCellWidth: 2, targetCellHeight: 2, resizeMode: 'horizontal' },
           },

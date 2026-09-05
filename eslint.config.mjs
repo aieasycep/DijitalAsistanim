@@ -60,7 +60,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.test.{ts,tsx}', '**/__tests__/**', '**/*.spec.{ts,tsx}', 'scripts/**'],
+    files: ['**/*.test.{ts,tsx}', '**/__tests__/**', '**/*.spec.{ts,tsx}', 'scripts/**', 'apps/*/scripts/**'],
     rules: { 'no-console': 'off' },
   },
   {

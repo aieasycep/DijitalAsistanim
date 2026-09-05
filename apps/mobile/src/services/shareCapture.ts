@@ -66,7 +66,9 @@ function mapFile(file: ShareIntentFile): ShareCaptureItem {
  * Turns a native share intent into capture items. Order: primary item first (link > text > files),
  * additional files queued after it so the capture screen can process them one by one.
  */
-export function mapShareIntentToCapture(intent: ShareIntent | null | undefined): ShareCaptureItem[] {
+export function mapShareIntentToCapture(
+  intent: ShareIntent | null | undefined,
+): ShareCaptureItem[] {
   if (!intent) return [];
   const items: ShareCaptureItem[] = [];
   const text = intent.text?.trim() ?? '';
@@ -100,7 +102,11 @@ export function shareIntentSignature(intent: ShareIntent | null | undefined): st
 
 let pending: PendingShareCapture | null = null;
 
-export function setPendingShareCapture(items: ShareCaptureItem[], signature: string, receivedAt = new Date()): PendingShareCapture | null {
+export function setPendingShareCapture(
+  items: ShareCaptureItem[],
+  signature: string,
+  receivedAt = new Date(),
+): PendingShareCapture | null {
   if (!items.length) return null;
   pending = { items, signature, receivedAt: receivedAt.toISOString() };
   return pending;

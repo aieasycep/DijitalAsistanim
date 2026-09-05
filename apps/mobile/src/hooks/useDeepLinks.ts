@@ -20,7 +20,13 @@ import { useSessionStore } from '@/store/session';
 import { track } from '@/lib/analytics';
 import { captureError } from '@/lib/monitoring';
 import { readCache, removeCache, writeCache } from '@/lib/storage';
-import { deepLinkKind, openDeepLink, parseDeepLink, setDeepLinkHandler, type ParsedDeepLink } from '@/services/deeplinks';
+import {
+  deepLinkKind,
+  openDeepLink,
+  parseDeepLink,
+  setDeepLinkHandler,
+  type ParsedDeepLink,
+} from '@/services/deeplinks';
 
 export const REFERRAL_PENDING_CACHE_KEY = 'referral.pending.v1';
 
@@ -95,12 +101,25 @@ export function useDeepLinks(): void {
       const p = link.params ?? {};
       const outcome: 'ok' | 'error' = p.status === 'error' ? 'error' : 'ok';
       try {
-        const account = await ds.accounts.completeOAuth({ state: p.state ?? '', status: outcome, accountId: p.accountId, error: p.error });
+        const account = await ds.accounts.completeOAuth({
+          state: p.state ?? '',
+          status: outcome,
+          accountId: p.accountId,
+          error: p.error,
+        });
         await queryClient.invalidateQueries({ queryKey: qk.accounts });
         if (outcome === 'ok' && account) {
-          toast.show({ message: `${account.displayName} · ${t('settings.integrationsScreen.status.active')}`, icon: 'check', iconTone: 'success' });
-          const provider: AnalyticsProvider = account.provider === 'demo' ? 'google' : account.provider;
-          const kind = account.kinds.find((k): k is AnalyticsKind => k === 'email' || k === 'calendar' || k === 'tasks') ?? 'email';
+          toast.show({
+            message: `${account.displayName} · ${t('settings.integrationsScreen.status.active')}`,
+            icon: 'check',
+            iconTone: 'success',
+          });
+          const provider: AnalyticsProvider =
+            account.provider === 'demo' ? 'google' : account.provider;
+          const kind =
+            account.kinds.find(
+              (k): k is AnalyticsKind => k === 'email' || k === 'calendar' || k === 'tasks',
+            ) ?? 'email';
           track('account_connected', { provider, kind });
           if (kind === 'calendar') track('calendar_connected', { provider });
         } else {
@@ -129,7 +148,8 @@ export function useDeepLinks(): void {
   const dispatch = useCallback(
     (url: string) => {
       const now = Date.now();
-      if (lastHandled && lastHandled.url === url && now - lastHandled.at < DUPLICATE_WINDOW_MS) return;
+      if (lastHandled && lastHandled.url === url && now - lastHandled.at < DUPLICATE_WINDOW_MS)
+        return;
       lastHandled = { url, at: now };
       const link = parseDeepLink(url);
       if (!link) return;
@@ -143,7 +163,11 @@ export function useDeepLinks(): void {
           return;
         case 'referral': {
           const code = link.params?.code;
-          if (code) writeCache<PendingReferral>(REFERRAL_PENDING_CACHE_KEY, { code, receivedAt: new Date().toISOString() });
+          if (code)
+            writeCache<PendingReferral>(REFERRAL_PENDING_CACHE_KEY, {
+              code,
+              receivedAt: new Date().toISOString(),
+            });
           break;
         }
         default:

@@ -1,4 +1,3 @@
-
 // Native module shims for unit tests (no native runtime in Jest).
 jest.mock('expo-secure-store', () => {
   const store = new Map<string, string>();
@@ -59,7 +58,13 @@ jest.mock('expo-router', () => {
   const actual = jest.requireActual('expo-router');
   return {
     ...actual,
-    useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true, navigate: jest.fn() }),
+    useRouter: () => ({
+      push: jest.fn(),
+      replace: jest.fn(),
+      back: jest.fn(),
+      canGoBack: () => true,
+      navigate: jest.fn(),
+    }),
     useLocalSearchParams: () => ({}),
     useSegments: () => [],
     usePathname: () => '/',

@@ -218,7 +218,11 @@ export function useInsightActions() {
           }
           const ok = await openExternal(url);
           if (!ok)
-            toast.show({ message: t('errors.handoffFailed'), icon: 'warning', iconTone: 'critical' });
+            toast.show({
+              message: t('errors.handoffFailed'),
+              icon: 'warning',
+              iconTone: 'critical',
+            });
           return ok;
         }
         case 'wallet':

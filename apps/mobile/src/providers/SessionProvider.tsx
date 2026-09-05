@@ -29,7 +29,10 @@ export function SessionProvider({ children }: PropsWithChildren) {
         changeLocale(cachedPrefs.locale);
       }
       try {
-        const [profile, prefs] = await Promise.all([ds.profile.getProfile(), ds.profile.getPreferences()]);
+        const [profile, prefs] = await Promise.all([
+          ds.profile.getProfile(),
+          ds.profile.getPreferences(),
+        ]);
         if (cancelled) return;
         setProfile(profile);
         setPreferences(prefs);

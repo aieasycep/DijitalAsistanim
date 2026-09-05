@@ -14,7 +14,12 @@ export interface DeviceContact {
   company: string | null;
 }
 
-const PICK_FIELDS = [Contacts.Fields.Name, Contacts.Fields.Emails, Contacts.Fields.PhoneNumbers, Contacts.Fields.Company];
+const PICK_FIELDS = [
+  Contacts.Fields.Name,
+  Contacts.Fields.Emails,
+  Contacts.Fields.PhoneNumbers,
+  Contacts.Fields.Company,
+];
 
 function unique(values: (string | undefined)[]): string[] {
   const out: string[] = [];
@@ -29,8 +34,19 @@ function unique(values: (string | undefined)[]): string[] {
 export function toDeviceContact(contact: Contacts.ExistingContact): DeviceContact {
   const emails = unique((contact.emails ?? []).map((e) => e.email?.toLowerCase()));
   const phones = unique((contact.phoneNumbers ?? []).map((p) => p.digits ?? p.number));
-  const name = contact.name?.trim() || [contact.firstName, contact.lastName].filter(Boolean).join(' ').trim() || emails[0] || phones[0] || '';
-  return { id: contact.id, displayName: name, emails, phones, company: contact.company?.trim() || null };
+  const name =
+    contact.name?.trim() ||
+    [contact.firstName, contact.lastName].filter(Boolean).join(' ').trim() ||
+    emails[0] ||
+    phones[0] ||
+    '';
+  return {
+    id: contact.id,
+    displayName: name,
+    emails,
+    phones,
+    company: contact.company?.trim() || null,
+  };
 }
 
 export function primaryEmail(contact: DeviceContact): string | null {
@@ -72,7 +88,12 @@ export async function searchDeviceContacts(query: string, limit = 20): Promise<D
   if (q.length < 2) return [];
   if ((await getContactsPermission()) !== 'granted') return [];
   try {
-    const response = await Contacts.getContactsAsync({ name: q, fields: PICK_FIELDS, pageSize: limit, pageOffset: 0 });
+    const response = await Contacts.getContactsAsync({
+      name: q,
+      fields: PICK_FIELDS,
+      pageSize: limit,
+      pageOffset: 0,
+    });
     return response.data.map(toDeviceContact).filter((c) => c.displayName.length > 0);
   } catch (e) {
     captureError(e, { where: 'searchDeviceContacts' });

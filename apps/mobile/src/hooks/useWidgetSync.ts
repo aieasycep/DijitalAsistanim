@@ -15,7 +15,11 @@ import { useDataSource } from '@/hooks/useDataSource';
 import { useSessionStore } from '@/store/session';
 import { captureError } from '@/lib/monitoring';
 import { registerBackgroundSync, unregisterBackgroundSync } from '@/services/background';
-import { syncWidgetsFromCache, syncWidgetsFromToday, syncWidgetsSignedOut } from '@/services/widgets';
+import {
+  syncWidgetsFromCache,
+  syncWidgetsFromToday,
+  syncWidgetsSignedOut,
+} from '@/services/widgets';
 
 export function useWidgetSync(): void {
   const ds = useDataSource();
@@ -39,14 +43,18 @@ export function useWidgetSync(): void {
 
   useEffect(() => {
     if (!signedIn || !today.data) return;
-    syncWidgetsFromToday(today.data, true, privacy ? { privacy } : {}).catch((e: unknown) => captureError(e, { where: 'useWidgetSync.today' }));
+    syncWidgetsFromToday(today.data, true, privacy ? { privacy } : {}).catch((e: unknown) =>
+      captureError(e, { where: 'useWidgetSync.today' }),
+    );
   }, [today.data, signedIn, privacy]);
 
   const previousStatus = useRef(status);
   useEffect(() => {
     if (status === 'signedIn') void registerBackgroundSync();
     if (previousStatus.current === 'signedIn' && status === 'signedOut') {
-      syncWidgetsSignedOut().catch((e: unknown) => captureError(e, { where: 'useWidgetSync.signedOut' }));
+      syncWidgetsSignedOut().catch((e: unknown) =>
+        captureError(e, { where: 'useWidgetSync.signedOut' }),
+      );
       void unregisterBackgroundSync();
     }
     previousStatus.current = status;
@@ -55,7 +63,9 @@ export function useWidgetSync(): void {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state !== 'active') return;
-      syncWidgetsFromCache(useSessionStore.getState().status === 'signedIn').catch((e: unknown) => captureError(e, { where: 'useWidgetSync.foreground' }));
+      syncWidgetsFromCache(useSessionStore.getState().status === 'signedIn').catch((e: unknown) =>
+        captureError(e, { where: 'useWidgetSync.foreground' }),
+      );
     });
     return () => sub.remove();
   }, []);

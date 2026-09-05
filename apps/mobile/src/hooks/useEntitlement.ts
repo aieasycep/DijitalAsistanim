@@ -37,7 +37,10 @@ export function useEntitlement() {
   });
   const entitlement = query.data ?? useSessionStore.getState().entitlement ?? FALLBACK;
 
-  const hasFeature = useCallback((feature: Feature): boolean => FEATURE_PLAN[feature] === 'free' || entitlement.isPro, [entitlement.isPro]);
+  const hasFeature = useCallback(
+    (feature: Feature): boolean => FEATURE_PLAN[feature] === 'free' || entitlement.isPro,
+    [entitlement.isPro],
+  );
 
   const gate = useCallback(
     (feature: Feature, context: string): boolean => {
@@ -49,5 +52,12 @@ export function useEntitlement() {
     [hasFeature, router],
   );
 
-  return { entitlement, isPro: entitlement.isPro, hasFeature, gate, refetch: query.refetch, isLoading: query.isLoading };
+  return {
+    entitlement,
+    isPro: entitlement.isPro,
+    hasFeature,
+    gate,
+    refetch: query.refetch,
+    isLoading: query.isLoading,
+  };
 }

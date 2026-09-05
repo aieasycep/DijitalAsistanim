@@ -1,1 +1,8 @@
-{"CFBundleDisplayName":"Dijital Asistan","NSCalendarsFullAccessUsageDescription":"We read your calendar to understand your day and conflicts.","NSContactsUsageDescription":"To pick VIP people from your contacts. Optional.","NSMicrophoneUsageDescription":"So you can ask by voice.","NSCameraUsageDescription":"To capture and analyze documents or posters.","NSPhotoLibraryUsageDescription":"To analyze screenshots."}
+{
+  "CFBundleDisplayName": "Dijital Asistan",
+  "NSCalendarsFullAccessUsageDescription": "We read your calendar to understand your day and conflicts.",
+  "NSContactsUsageDescription": "To pick VIP people from your contacts. Optional.",
+  "NSMicrophoneUsageDescription": "So you can ask by voice.",
+  "NSCameraUsageDescription": "To capture and analyze documents or posters.",
+  "NSPhotoLibraryUsageDescription": "To analyze screenshots."
+}

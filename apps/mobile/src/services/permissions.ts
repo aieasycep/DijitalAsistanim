@@ -11,9 +11,12 @@ export interface PermissionLike {
 }
 
 /** Maps an Expo `PermissionResponse` (or any `{status}` shape) to the app's outcome vocabulary. */
-export function toPermissionOutcome(response: PermissionLike | null | undefined): PermissionOutcome {
+export function toPermissionOutcome(
+  response: PermissionLike | null | undefined,
+): PermissionOutcome {
   if (!response) return 'undetermined';
-  if (response.granted || response.status === 'granted' || response.status === 'limited') return 'granted';
+  if (response.granted || response.status === 'granted' || response.status === 'limited')
+    return 'granted';
   if (response.status === 'undetermined') return 'undetermined';
   return 'denied';
 }

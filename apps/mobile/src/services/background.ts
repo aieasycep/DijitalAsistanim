@@ -55,7 +55,9 @@ function defineBackgroundTask(): void {
     }
     TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
       const outcome = await runBackgroundSync();
-      return outcome === 'failed' ? BackgroundTask.BackgroundTaskResult.Failed : BackgroundTask.BackgroundTaskResult.Success;
+      return outcome === 'failed'
+        ? BackgroundTask.BackgroundTaskResult.Failed
+        : BackgroundTask.BackgroundTaskResult.Success;
     });
     defined = true;
   } catch {
@@ -68,7 +70,9 @@ defineBackgroundTask();
 async function backgroundTasksAvailable(): Promise<boolean> {
   try {
     if (!(await TaskManager.isAvailableAsync())) return false;
-    return (await BackgroundTask.getStatusAsync()) === BackgroundTask.BackgroundTaskStatus.Available;
+    return (
+      (await BackgroundTask.getStatusAsync()) === BackgroundTask.BackgroundTaskStatus.Available
+    );
   } catch {
     return false;
   }
@@ -88,7 +92,9 @@ export async function registerBackgroundSync(): Promise<boolean> {
   if (!defined || !(await backgroundTasksAvailable())) return false;
   try {
     if (await isBackgroundSyncRegistered()) return true;
-    await BackgroundTask.registerTaskAsync(BACKGROUND_SYNC_TASK, { minimumInterval: BACKGROUND_SYNC_MIN_INTERVAL_MINUTES });
+    await BackgroundTask.registerTaskAsync(BACKGROUND_SYNC_TASK, {
+      minimumInterval: BACKGROUND_SYNC_MIN_INTERVAL_MINUTES,
+    });
     return true;
   } catch (e) {
     captureError(e, { where: 'registerBackgroundSync' });
@@ -99,7 +105,8 @@ export async function registerBackgroundSync(): Promise<boolean> {
 /** Sign-out: stop waking up for a user that is no longer there. */
 export async function unregisterBackgroundSync(): Promise<void> {
   try {
-    if (await isBackgroundSyncRegistered()) await BackgroundTask.unregisterTaskAsync(BACKGROUND_SYNC_TASK);
+    if (await isBackgroundSyncRegistered())
+      await BackgroundTask.unregisterTaskAsync(BACKGROUND_SYNC_TASK);
   } catch (e) {
     captureError(e, { where: 'unregisterBackgroundSync' });
   }
