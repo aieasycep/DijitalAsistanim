@@ -28,8 +28,9 @@ export const BACKGROUND_SYNC_MIN_INTERVAL_MINUTES = 60;
 export type BackgroundSyncOutcome = 'synced' | 'skipped' | 'failed';
 
 /** The task body — exported so it can run from a foreground trigger or a test with a fake data source. */
-export async function runBackgroundSync(ds: DataSource = getDataSource()): Promise<BackgroundSyncOutcome> {
+export async function runBackgroundSync(dataSource?: DataSource): Promise<BackgroundSyncOutcome> {
   try {
+    const ds = dataSource ?? getDataSource();
     const session = await ds.auth.getSession();
     if (!session) return 'skipped';
     const today = await ds.feed.getToday();

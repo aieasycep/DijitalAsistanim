@@ -82,7 +82,7 @@ describe('background sync', () => {
     expect(background.BACKGROUND_SYNC_TASK).toBe('da-background-sync');
     const executor = mockTaskState.defined.get(background.BACKGROUND_SYNC_TASK);
     expect(executor).toBeDefined();
-    expect(TaskManager.defineTask).toHaveBeenCalledTimes(1);
+    expect(await executor?.()).toBe(BackgroundTask.BackgroundTaskResult.Failed);
   });
 
   it('skips without a session', async () => {
