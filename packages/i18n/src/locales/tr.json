@@ -882,7 +882,36 @@
       "faq": "Sık sorulanlar",
       "contact": "Bize yaz",
       "docs": "Nasıl çalışır?",
-      "status": "Sistem durumu"
+      "status": "Sistem durumu",
+      "subtitle": "Aklına takılanlar ve bize ulaşma yolları.",
+      "faqItems": [
+        {
+          "q": "Maillerimi kim okuyor?",
+          "a": "Yalnızca sen ve senin adına çalışan yapay zekâ. Mail içerikleri model eğitiminde kullanılmaz, reklamverenlerle paylaşılmaz."
+        },
+        {
+          "q": "Asistan benim adıma mail gönderebilir mi?",
+          "a": "Hayır. Gönderme, takvim ve görev yazma gibi tüm işlemler önce Onay Merkezi'ne düşer; sen onaylamadan hiçbir şey gerçekleşmez."
+        },
+        {
+          "q": "Brifing saatlerini nasıl değiştiririm?",
+          "a": "Ayarlar › Brifing Ayarları'ndan sabah, öğle ve akşam saatlerini, hafta sonu ve sessiz günleri seçebilirsin."
+        },
+        {
+          "q": "Verilerim nerede saklanıyor?",
+          "a": "Veriler AB'de (Frankfurt) şifreli olarak saklanır. Saklama süresini Gizlilik ve Güvenlik'ten seçebilir, geçmişi istediğin zaman silebilirsin."
+        },
+        {
+          "q": "Aboneliğimi nasıl iptal ederim?",
+          "a": "Abonelik ekranındaki 'Aboneliği yönet' ile App Store veya Google Play abonelik sayfasına gidersin; iptal sonrası dönem sonuna kadar Pro açık kalır."
+        }
+      ],
+      "links": "Bağlantılar",
+      "contactSubject": "Dijital Asistan · Destek",
+      "contactBody": "Uygulama sürümü: {{version}} · {{platform}}",
+      "privacyPolicy": "Gizlilik politikası",
+      "terms": "Kullanım şartları",
+      "openFailed": "Bağlantı açılamadı."
     },
     "feedback": "Geri Bildirim",
     "referral": "Arkadaşını Davet Et",
@@ -891,24 +920,99 @@
     "signOutBody": "Cihazdaki önbellek temizlenir; hesabın kalır.",
     "version": "Sürüm {{version}}",
     "androidNotifications": "Telefon Bildirimleri",
+    "groups": {
+      "assistant": "Asistan",
+      "account": "Hesap",
+      "app": "Uygulama"
+    },
+    "approvalCenter": "Onay Merkezi",
+    "approvalsPending": "{{count}} işlem onayını bekliyor",
+    "approvalsNone": "Bekleyen işlem yok",
+    "editProfile": "Profili düzenle",
+    "releaseNotes": "Sürüm notları",
+    "signingOut": "Çıkış yapılıyor…",
+    "values": {
+      "onlyImportant": "Sadece önemli",
+      "on": "Açık",
+      "off": "Kapalı",
+      "rules": "{{count}} kural",
+      "people": "{{count}} kişi",
+      "accounts": "{{count}} hesap",
+      "noAccounts": "Bağlı hesap yok",
+      "referralBonus": "+{{days}} gün",
+      "trial": "Deneme"
+    },
+    "subscriptionScreen": {
+      "freeTitle": "Ücretsiz plan",
+      "freeBody": "Sabah brifingi, 1 mail ve 1 takvim hesabı her zaman ücretsiz.",
+      "proBody": "Tüm özellikler açık. Teşekkürler.",
+      "trialBody": "Deneme süren boyunca tüm Pro özellikleri açık.",
+      "details": "Abonelik",
+      "plan": "Plan",
+      "expires": "Bitiş",
+      "renews": "Yenileme",
+      "source": "Kaynak",
+      "sources": {
+        "revenuecat": "Mağaza aboneliği",
+        "referral": "Davet bonusu",
+        "promo": "Promosyon",
+        "demo": "Demo",
+        "none": "—"
+      },
+      "usage": "Kullanım",
+      "assistantUsage": "Asistan soruları",
+      "captureUsage": "Yakalama",
+      "emailAccounts": "Mail hesapları",
+      "calendarAccounts": "Takvim hesapları",
+      "perDay": "{{used}} / {{limit}} bugün",
+      "ofLimit": "{{used}} / {{limit}}",
+      "restoring": "Geri yükleniyor…",
+      "restoreFailed": "Geri yükleme başarısız.",
+      "inviteFriends": "Arkadaşını davet et, 14 gün Pro kazan",
+      "benefitsTitle": "Pro ile neler açılır?"
+    },
     "profileScreen": {
       "name": "Ad",
       "email": "E-posta",
       "timezone": "Saat dilimi",
       "saved": "Profil güncellendi",
-      "changePhoto": "Fotoğrafı değiştir"
+      "changePhoto": "Fotoğrafı değiştir",
+      "subtitle": "Sana nasıl hitap edelim, saatleri neye göre hesaplayalım?",
+      "nameHint": "Brifinglerde sana böyle hitap ederiz.",
+      "nameRequired": "Ad boş olamaz.",
+      "emailNote": "E-posta giriş sağlayıcından gelir; buradan değiştirilemez.",
+      "timezoneNote": "Brifing saatleri ve tarihler bu saat dilimine göre hesaplanır.",
+      "pickTimezone": "Saat dilimi seç",
+      "searchTimezone": "Şehir veya bölge ara",
+      "deviceTimezone": "Cihaz saat dilimi",
+      "noTimezoneMatch": "Eşleşen saat dilimi yok.",
+      "signedInWith": "{{provider}} ile giriş yapıldı",
+      "providers": {
+        "apple": "Apple",
+        "google": "Google",
+        "microsoft": "Microsoft",
+        "email": "E-posta",
+        "demo": "Demo"
+      }
     },
     "appearanceScreen": {
       "system": "Sistem",
       "light": "Açık",
       "dark": "Koyu",
       "reducedMotion": "Hareketi azalt",
-      "haptics": "Dokunsal geri bildirim"
+      "haptics": "Dokunsal geri bildirim",
+      "theme": "Tema",
+      "current": "Şu an: {{mode}}",
+      "accessibility": "Erişilebilirlik",
+      "reducedMotionNote": "Açıkken geçişler ve parıltılar kapanır.",
+      "hapticsNote": "Onay ve seçimlerde hafif titreşim."
     },
     "languageScreen": {
       "tr": "Türkçe",
       "en": "English",
-      "note": "Tarih ve saat biçimleri seçilen dile göre ayarlanır."
+      "note": "Tarih ve saat biçimleri seçilen dile göre ayarlanır.",
+      "changed": "Dil değiştirildi",
+      "briefingNote": "Brifing ve özetler seçtiğin dilde yazılır; maillerin orijinal dili korunur."
     },
     "briefingScreen": {
       "morningTime": "Sabah brifingi saati",
@@ -918,7 +1022,20 @@
       "weekend": "Hafta sonu",
       "timezone": "Saat dilimi",
       "quietDays": "Sessiz günler",
-      "saved": "Brifing ayarları kaydedildi"
+      "saved": "Brifing ayarları kaydedildi",
+      "subtitle": "Brifinglerin ne zaman hazır olsun?",
+      "schedule": "Zamanlama",
+      "days": "Günler",
+      "morning": "Sabah brifingi",
+      "middayTime": "Öğle saati",
+      "eveningTime": "Akşam saati",
+      "weeklyDay": "Haftalık özet günü",
+      "weeklyTime": "Haftalık özet saati",
+      "weekendNote": "Kapalıyken cumartesi ve pazar brifing gönderilmez.",
+      "quietDaysNote": "Seçili günlerde hiçbir brifing gönderilmez.",
+      "pickTime": "{{label}} seç",
+      "pickDay": "Gün seç",
+      "proNote": "Öğle nabzı, akşam kapanışı ve haftalık özet Pro ile."
     },
     "notificationScreen": {
       "categories": {
@@ -943,7 +1060,24 @@
         "generic": "Genel bildirim"
       },
       "systemOff": "Sistem bildirimleri kapalı.",
-      "openSystemSettings": "Sistem ayarlarını aç"
+      "openSystemSettings": "Sistem ayarlarını aç",
+      "subtitle": "Hangi konularda haber verelim?",
+      "groups": {
+        "briefings": "Brifingler",
+        "important": "Önemli",
+        "other": "Diğer"
+      },
+      "system": "Sistem izni",
+      "systemGranted": "Sistem bildirimleri açık.",
+      "systemUndetermined": "Bildirim izni henüz istenmedi.",
+      "systemAllow": "İzin ver",
+      "onlyImportantNote": "Açıkken yalnızca kritik mailler, son tarihler ve toplantılar bildirilir.",
+      "quietStart": "Başlangıç",
+      "quietEnd": "Bitiş",
+      "quietNote": "Sessiz saatlerde hatırlatıcılar ertelenir, toplantı uyarıları sessiz gelir.",
+      "lockScreenNote": "Kilit ekranında ne kadar detay görünsün?",
+      "meetingLead": "Toplantı hatırlatması",
+      "meetingLeadValue": "{{minutes}} dk önce"
     },
     "rules": {
       "title": "Öncelik Kuralları",
@@ -965,7 +1099,38 @@
       },
       "deleteConfirm": "Kural silinsin mi?",
       "empty": "Henüz kural yok. Kurallar AI öğrenmesinden her zaman önce gelir.",
-      "precedenceNote": "Açık kurallar, AI'ın öğrendiği tercihlerden daha önceliklidir."
+      "precedenceNote": "Açık kurallar, AI'ın öğrendiği tercihlerden daha önceliklidir.",
+      "subtitle": "Senin yazdığın açık kurallar. Her zaman AI'ın kendi öğrendiklerinin önüne geçer.",
+      "orderNote": "Sıra önemli: çakışan kurallarda üstteki kazanır.",
+      "count": "{{count}} kural",
+      "addTitle": "Yeni Kural",
+      "editTitle": "Kuralı Düzenle",
+      "typeKicker": "1 · KOŞUL",
+      "valueKicker": "2 · DEĞER",
+      "valueLabel": "Değer",
+      "valueAny": "Tüm eşleşenler",
+      "valueRequired": "Bu kural için bir değer gerekli.",
+      "labelLabel": "Kural adı (isteğe bağlı)",
+      "labelPlaceholder": "Örn. Müşteri mailleri",
+      "enabled": "Kural aktif",
+      "disabledMeta": "Kapalı",
+      "save": "Kuralı Kaydet",
+      "saveChanges": "Değişiklikleri Kaydet",
+      "saved": "Kural kaydedildi",
+      "deleted": "Kural silindi",
+      "deleteBody": "“{{label}}” kuralı kaldırılır. AI bu kuralı bir daha varsaymaz.",
+      "moveUp": "Yukarı taşı",
+      "moveDown": "Aşağı taşı",
+      "edit": "Düzenle",
+      "toggle": "{{label}} kuralını aç/kapat",
+      "outcomes": {
+        "important": "Her zaman önemli",
+        "notify": "Her zaman bildir",
+        "low": "Düşük öncelik",
+        "mute": "Sessize al"
+      },
+      "aiLink": "AI'ın kendi öğrendiklerini AI Kişiselleştirme'de görürsün; burası yalnızca senin kuralların.",
+      "aiLinkCta": "AI Kişiselleştirme"
     },
     "vipScreen": {
       "title": "Önemli Kişiler",
@@ -975,7 +1140,26 @@
       "relation": "İlişki",
       "notifyAlways": "Her zaman bildir",
       "remove": "VIP'den çıkar",
-      "empty": "Henüz VIP kişi yok."
+      "empty": "Henüz VIP kişi yok.",
+      "subtitle": "Bu kişilerden gelenleri her zaman öne alırım ve bekleme sürelerini daha sıkı izlerim.",
+      "emptyBody": "Eş, aile, yönetici ve müşterilerini ekle; onlardan gelenleri her zaman öne alırım.",
+      "addSubtitle": "Rehberden seç ya da e-posta adresiyle ekle.",
+      "namePlaceholder": "Ad Soyad",
+      "emailPlaceholder": "ornek@sirket.com",
+      "relationPlaceholder": "Örn. Yönetici, Müşteri, Aile",
+      "invalidEmail": "Geçerli bir e-posta adresi gir.",
+      "save": "Ekle",
+      "added": "{{name}} VIP olarak eklendi",
+      "removed": "{{name}} VIP listesinden çıkarıldı",
+      "removeTitle": "{{name}} VIP'den çıkarılsın mı?",
+      "removeBody": "Bu kişiden gelenler artık otomatik öne çıkmaz.",
+      "notifyMeta": "Sessiz saatlerde bile bildirir",
+      "notifyOffMeta": "Yalnızca öne çıkarır",
+      "notifyToggle": "{{name}} için her zaman bildir",
+      "contactsDenied": "Rehber erişimi kapalı. Ayarlardan açabilirsin.",
+      "openSettings": "Ayarları Aç",
+      "noEmailInContact": "Bu kişide e-posta adresi yok; adıyla eklendi.",
+      "count": "{{count}} kişi"
     },
     "integrationsScreen": {
       "title": "Bağlantılar",
@@ -1006,7 +1190,39 @@
         "apple_reminders": "Apple Anımsatıcılar"
       },
       "proNeeded": "Birden fazla hesap Pro ile.",
-      "grantWrite": "Yazma izni ver"
+      "grantWrite": "Yazma izni ver",
+      "subtitle": "Hangi hesapların bağlı, ne okunuyor ve hangi yazma izinleri var; hepsi burada.",
+      "countKicker": "BAĞLI HESAPLAR · {{count}}",
+      "primary": "Birincil",
+      "makePrimary": "Birincil yap",
+      "madePrimary": "{{name}} birincil hesap oldu",
+      "syncNow": "Şimdi eşitle",
+      "synced": "Eşitleme başladı",
+      "reconnected": "Bağlantı yenilendi",
+      "removed": "Bağlantı kaldırıldı",
+      "granted": "Yazma izni verildi",
+      "neverSynced": "Henüz eşitlenmedi",
+      "needsAttention": "Bağlantıda sorun var; yenile.",
+      "scopes": {
+        "read": "Okuma",
+        "mail_send": "Gönderme (onaylı)",
+        "calendar_write": "Etkinlik oluşturma (onaylı)",
+        "tasks_write": "Görev oluşturma (onaylı)"
+      },
+      "grantWriteMeta": "{{scope}} için izin iste",
+      "kinds": {
+        "email": "Mail",
+        "calendar": "Takvim",
+        "tasks": "Görevler"
+      },
+      "addSubtitle": "Yalnızca okuma izniyle başlar; yazma izinlerini sonra verirsin.",
+      "deviceCalendar": "Cihaz takvimi",
+      "deviceConnect": "Bağla",
+      "deviceSynced": "{{count}} etkinlik eşitlendi",
+      "deviceDenied": "Takvim izni kapalı. Sistem ayarlarından açabilirsin.",
+      "openSettings": "Ayarları Aç",
+      "empty": "Henüz bağlı hesap yok.",
+      "emptyBody": "Mail ve takvimini bağla; brifingler ve öncelikler buradan beslenir."
     },
     "dataSourceScreen": {
       "readEmail": "Mailleri oku",
@@ -1017,7 +1233,29 @@
       "suggestSchedule": "Program öner",
       "createEventsWithApproval": "Onayla etkinlik oluştur",
       "readTasks": "Görevleri oku",
-      "attachmentsNote": "Ekler yalnızca PDF/metin ve 10 MB altı için, sen açmadıkça kalıcı saklanmaz."
+      "attachmentsNote": "Ekler yalnızca PDF/metin ve 10 MB altı için, sen açmadıkça kalıcı saklanmaz.",
+      "title": "Veri Kaynağı Kontrolü",
+      "subtitle": "Her hesap için neyin okunacağını sen seçersin. Kapattığın alanlar analize girmez.",
+      "groups": {
+        "mail": "MAİL",
+        "calendar": "TAKVİM",
+        "tasks": "GÖREVLER"
+      },
+      "hints": {
+        "readEmail": "Konu, gönderen ve gövde özetlenir.",
+        "analyzeAttachments": "PDF ve metin ekleri; 10 MB altı.",
+        "detectDeadlines": "Açıkça yazılı tarihler yakalanır.",
+        "prepareDrafts": "Yanıt taslakları hazırlanır; gönderim onayla.",
+        "readEvents": "Katılımcılar ve konum dahil.",
+        "suggestSchedule": "Boş bloklara görev önerir.",
+        "createEventsWithApproval": "Yalnızca sen onaylayınca yazar.",
+        "readTasks": "Açık görevler plana eklenir."
+      },
+      "empty": "Bağlı hesap yok.",
+      "emptyBody": "Önce Bağlantılar'dan bir hesap ekle.",
+      "goConnections": "Bağlantılara git",
+      "saveFailed": "Kaydedilemedi; ayar geri alındı.",
+      "toggle": "{{account}} · {{control}}"
     },
     "aiScreen": {
       "title": "Dijital Asistan beni nasıl tanıyor?",
@@ -1029,7 +1267,24 @@
       "enable": "Etkinleştir",
       "delete": "Sil",
       "empty": "Henüz öğrenilmiş bir tercih yok.",
-      "precedence": "Açık kurallar her zaman öğrenilen tercihlerden önce gelir."
+      "precedence": "Açık kurallar her zaman öğrenilen tercihlerden önce gelir.",
+      "subtitle": "Zamanla öğrendiklerim. Her satırı kapatabilir veya silebilirsin; sildiğin şeyi bir daha varsaymam.",
+      "emptyBody": "Kullandıkça öğrendiklerimi burada göreceksin.",
+      "groups": {
+        "people": "KİŞİLER",
+        "topics": "KONULAR",
+        "preferences": "TERCİHLER"
+      },
+      "evidence": "{{count}} kez gözlemlendi · {{date}}",
+      "disabledMeta": "Kapalı · {{count}} kez gözlemlendi",
+      "toggle": "{{statement}} tercihini aç/kapat",
+      "rulesLink": "Öncelik Kuralları",
+      "rulesLinkMeta": "{{count}} açık kural · her zaman öğrenilenlerden önce",
+      "deleteTitle": "Bu tercih silinsin mi?",
+      "deleteBody": "“{{statement}}” silinir ve bir daha varsayılmaz.",
+      "deleted": "Tercih silindi",
+      "learnOn": "Öğrenme açık",
+      "learnOff": "Öğrenme kapalı"
     },
     "privacyScreen": {
       "title": "Gizlilik ve Güvenlik",
@@ -1077,7 +1332,72 @@
         "Yakaladığın içerikler",
         "Öğrenilen tercihler"
       ],
-      "aiDataNote": "Ham mail gövdeleri hafızaya yazılmaz; yalnızca özet ve seçili alıntılar saklanır."
+      "aiDataNote": "Ham mail gövdeleri hafızaya yazılmaz; yalnızca özet ve seçili alıntılar saklanır.",
+      "subtitle": "Neyi okuduğumu, ne kadar sakladığımı ve nasıl sileceğini burada görürsün.",
+      "assuranceKicker": "SÖZÜMÜZ",
+      "dataKicker": "VERİ",
+      "on": "Açık",
+      "off": "Kapalı",
+      "connectedMeta": "{{count}} hesap",
+      "retentionKicker": "VERİ SAKLAMA",
+      "retentionBody": "Analiz sonuçları ve özetler ne kadar saklansın? Hafıza araması bu süreyle sınırlıdır. Orijinal mailler zaten kendi hesabında; biz kopya tutmayız.",
+      "retentionSaved": "Saklama süresi: {{option}}",
+      "retentionSelect": "{{option}} seç",
+      "deleteHistoryPreserved": "Korunan: bağlantılar, ayarlar, VIP listesi, kurallar",
+      "deleteHistoryDone": "Analiz geçmişi silindi",
+      "deleteHistoryCount": "{{count}} kayıt silindi",
+      "exportKicker": "DIŞA AKTARMA",
+      "exportPreparing": "Hazırlanıyor… Bu ekranda kalman gerekmez.",
+      "exportReadyMeta": "Hazır · {{size}} · {{until}} tarihine kadar geçerli",
+      "exportFailedBody": "Dışa aktarma başarısız oldu. Tekrar deneyebilirsin.",
+      "exportExpiredBody": "Bağlantının süresi doldu. Yeni bir dışa aktarma başlat.",
+      "exportRestart": "Yeniden Başlat",
+      "sizeMb": "{{size}} MB",
+      "sizeKb": "{{size}} KB",
+      "auditKicker": "SON İŞLEMLER",
+      "auditEmpty": "Henüz kayıtlı işlem yok.",
+      "auditActors": {
+        "user": "Sen",
+        "system": "Sistem",
+        "assistant": "Asistan",
+        "cron": "Zamanlayıcı",
+        "webhook": "Sağlayıcı"
+      },
+      "auditActions": {
+        "oauth_connect": "Hesap bağlandı",
+        "oauth_refresh": "Bağlantı yenilendi",
+        "oauth_revoke": "Bağlantı kaldırıldı",
+        "oauth_scope_upgrade": "Yazma izni verildi",
+        "token_decrypt": "Erişim belirteci kullanıldı",
+        "approval_create": "Onay isteği oluşturuldu",
+        "approval_approve": "İşlem onaylandı",
+        "approval_reject": "İşlem reddedildi",
+        "approval_edit": "Onay düzenlendi",
+        "approval_execute": "İşlem uygulandı",
+        "approval_fail": "İşlem başarısız oldu",
+        "email_send": "Mail gönderildi",
+        "calendar_write": "Takvime yazıldı",
+        "task_write": "Görev yazıldı",
+        "reminder_write": "Hatırlatıcı oluşturuldu",
+        "data_export": "Veri dışa aktarıldı",
+        "data_delete_history": "Geçmiş silindi",
+        "account_delete": "Hesap silindi",
+        "retention_cleanup": "Saklama temizliği çalıştı",
+        "sync_run": "Eşitleme çalıştı",
+        "push_send": "Bildirim gönderildi",
+        "ai_call": "AI analizi yapıldı",
+        "notification_access_change": "Bildirim erişimi değişti",
+        "referral_redeem": "Davet kodu kullanıldı",
+        "subscription_change": "Abonelik değişti"
+      },
+      "deleteAccountStep": "Adım {{step}} / 2",
+      "deleteAccountWhat": "Silinecekler: bağlantılar ve izinler, tüm analizler, hafıza, kurallar, VIP listesi, abonelik eşlemesi.",
+      "deleteAccountKeep": "Orijinal maillerin ve takvimin kendi hesabında kalır.",
+      "deleteAccountContinue": "Devam Et",
+      "deleteAccountWord": "SİL",
+      "deleteAccountMismatch": "Onaylamak için tam olarak “{{word}}” yaz.",
+      "deleteAccountDone": "Hesabın silindi.",
+      "compliance": "Aktarımda (TLS) ve sunucuda şifreli · KVKK ve GDPR uyumlu"
     },
     "feedbackScreen": {
       "title": "Geri Bildirim",
@@ -1091,7 +1411,11 @@
       "placeholder": "Ne düşünüyorsun?",
       "diagnostics": "Tanılama bilgilerini ekle (mail içeriği içermez)",
       "send": "Gönder",
-      "sent": "Teşekkürler, aldık."
+      "sent": "Teşekkürler, aldık.",
+      "subtitle": "Ne iyi, ne eksik? Her mesajı okuyoruz.",
+      "messageLabel": "Mesajın",
+      "tooShort": "Biraz daha detay verir misin? En az 5 karakter.",
+      "diagnosticsPreview": "Eklenecek: {{details}}"
     },
     "android": {
       "title": "Telefon Bildirimleri",
@@ -1106,7 +1430,31 @@
       "uploadConsent": "Bildirim içeriğini analiz için sunucuya gönder",
       "uploadNote": "Kapalıyken bildirimler yalnızca cihazda işlenir.",
       "privacy": "Doğrulama kodları ve şifre yöneticisi bildirimleri asla kaydedilmez.",
-      "excludedDefault": "Varsayılan olarak hariç"
+      "excludedDefault": "Varsayılan olarak hariç",
+      "subtitle": "Kargo, ödeme ve toplantı bildirimleri de Bugün ekranında yer alsın.",
+      "iosOnly": "Bu özellik yalnızca Android'de",
+      "iosOnlyBody": "Telefon bildirimlerini okuma yalnızca Android'de mümkün.",
+      "unavailable": "Bu cihazda kullanılamıyor",
+      "unavailableBody": "Bildirim dinleyici modülü bu sürümde yok.",
+      "permissionKicker": "ERİŞİM",
+      "notGranted": "Erişim verilmedi",
+      "grantHint": "Sistem ayarlarında Dijital Asistan'ı aç, sonra geri dön.",
+      "refresh": "Yeniden kontrol et",
+      "scopeKicker": "KAPSAM",
+      "appsHint": "Mesajlaşma uygulamaları yalnızca açıkça izin verirsen dinlenir.",
+      "messaging": "Mesajlaşma",
+      "noApps": "Uygulama listesi alınamadı.",
+      "consentKicker": "SUNUCU ANALİZİ",
+      "recentKicker": "SON BİLDİRİMLER",
+      "recentEmpty": "Henüz yakalanan bildirim yok.",
+      "recentDevice": "Yalnızca cihazda",
+      "recentInsight": "Bugün'e eklendi",
+      "clearAll": "Tümünü temizle",
+      "cleared": "Bildirimler temizlendi",
+      "proTitle": "Telefon bildirimleri Pro'da.",
+      "proBody": "Kargo, ödeme ve toplantı bildirimleri Bugün ekranında görünür.",
+      "proCta": "Pro'ya Geç",
+      "saved": "Kaydedildi"
     }
   },
   "paywall": {

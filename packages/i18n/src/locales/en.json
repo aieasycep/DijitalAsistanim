@@ -886,7 +886,36 @@
       "faq": "FAQ",
       "contact": "Contact us",
       "docs": "How it works",
-      "status": "System status"
+      "status": "System status",
+      "subtitle": "Common questions and ways to reach us.",
+      "faqItems": [
+        {
+          "q": "Who reads my emails?",
+          "a": "Only you and the AI working on your behalf. Email content is never used to train models and never shared with advertisers."
+        },
+        {
+          "q": "Can the assistant send emails for me?",
+          "a": "No. Sending, calendar and task writes always land in the Approval Center first; nothing happens until you approve it."
+        },
+        {
+          "q": "How do I change briefing times?",
+          "a": "Settings › Briefing settings lets you pick morning, midday and evening times, weekends and quiet days."
+        },
+        {
+          "q": "Where is my data stored?",
+          "a": "Data is stored encrypted in the EU (Frankfurt). You choose the retention window in Privacy & security and can delete history at any time."
+        },
+        {
+          "q": "How do I cancel my subscription?",
+          "a": "'Manage subscription' on the Subscription screen opens the App Store or Google Play subscription page; Pro stays on until the end of the period."
+        }
+      ],
+      "links": "Links",
+      "contactSubject": "Dijital Asistan · Support",
+      "contactBody": "App version: {{version}} · {{platform}}",
+      "privacyPolicy": "Privacy policy",
+      "terms": "Terms of use",
+      "openFailed": "Couldn't open the link."
     },
     "feedback": "Feedback",
     "referral": "Invite a friend",
@@ -895,24 +924,99 @@
     "signOutBody": "The cache on this device is cleared; your account stays.",
     "version": "Version {{version}}",
     "androidNotifications": "Phone notifications",
+    "groups": {
+      "assistant": "Assistant",
+      "account": "Account",
+      "app": "App"
+    },
+    "approvalCenter": "Approval Center",
+    "approvalsPending": "{{count}} actions await your approval",
+    "approvalsNone": "Nothing waiting",
+    "editProfile": "Edit profile",
+    "releaseNotes": "Release notes",
+    "signingOut": "Signing out…",
+    "values": {
+      "onlyImportant": "Only important",
+      "on": "On",
+      "off": "Off",
+      "rules": "{{count}} rules",
+      "people": "{{count}} people",
+      "accounts": "{{count}} accounts",
+      "noAccounts": "No accounts connected",
+      "referralBonus": "+{{days}} days",
+      "trial": "Trial"
+    },
+    "subscriptionScreen": {
+      "freeTitle": "Free plan",
+      "freeBody": "The morning briefing, 1 email and 1 calendar account are always free.",
+      "proBody": "Everything is unlocked. Thank you.",
+      "trialBody": "All Pro features are open for the length of your trial.",
+      "details": "Subscription",
+      "plan": "Plan",
+      "expires": "Ends",
+      "renews": "Renews",
+      "source": "Source",
+      "sources": {
+        "revenuecat": "Store subscription",
+        "referral": "Referral bonus",
+        "promo": "Promo",
+        "demo": "Demo",
+        "none": "—"
+      },
+      "usage": "Usage",
+      "assistantUsage": "Assistant questions",
+      "captureUsage": "Captures",
+      "emailAccounts": "Email accounts",
+      "calendarAccounts": "Calendar accounts",
+      "perDay": "{{used}} / {{limit}} today",
+      "ofLimit": "{{used}} / {{limit}}",
+      "restoring": "Restoring…",
+      "restoreFailed": "Restore failed.",
+      "inviteFriends": "Invite a friend, earn 14 days of Pro",
+      "benefitsTitle": "What Pro unlocks"
+    },
     "profileScreen": {
       "name": "Name",
       "email": "Email",
       "timezone": "Time zone",
       "saved": "Profile updated",
-      "changePhoto": "Change photo"
+      "changePhoto": "Change photo",
+      "subtitle": "How should we address you, and which clock should we use?",
+      "nameHint": "Briefings address you by this name.",
+      "nameRequired": "Name can't be empty.",
+      "emailNote": "Email comes from your sign-in provider and can't be changed here.",
+      "timezoneNote": "Briefing times and dates are calculated in this time zone.",
+      "pickTimezone": "Choose time zone",
+      "searchTimezone": "Search city or region",
+      "deviceTimezone": "Device time zone",
+      "noTimezoneMatch": "No matching time zone.",
+      "signedInWith": "Signed in with {{provider}}",
+      "providers": {
+        "apple": "Apple",
+        "google": "Google",
+        "microsoft": "Microsoft",
+        "email": "Email",
+        "demo": "Demo"
+      }
     },
     "appearanceScreen": {
       "system": "System",
       "light": "Light",
       "dark": "Dark",
       "reducedMotion": "Reduce motion",
-      "haptics": "Haptic feedback"
+      "haptics": "Haptic feedback",
+      "theme": "Theme",
+      "current": "Now: {{mode}}",
+      "accessibility": "Accessibility",
+      "reducedMotionNote": "Turns off transitions and shimmer.",
+      "hapticsNote": "A light tap on confirmations and selections."
     },
     "languageScreen": {
       "tr": "Türkçe",
       "en": "English",
-      "note": "Date and time formats follow the selected language."
+      "note": "Date and time formats follow the selected language.",
+      "changed": "Language changed",
+      "briefingNote": "Briefings and summaries are written in the selected language; your emails keep their original language."
     },
     "briefingScreen": {
       "morningTime": "Morning briefing time",
@@ -922,7 +1026,20 @@
       "weekend": "Weekends",
       "timezone": "Time zone",
       "quietDays": "Quiet days",
-      "saved": "Briefing settings saved"
+      "saved": "Briefing settings saved",
+      "subtitle": "When should your briefings be ready?",
+      "schedule": "Schedule",
+      "days": "Days",
+      "morning": "Morning briefing",
+      "middayTime": "Midday time",
+      "eveningTime": "Evening time",
+      "weeklyDay": "Weekly review day",
+      "weeklyTime": "Weekly review time",
+      "weekendNote": "When off, no briefings are sent on Saturday and Sunday.",
+      "quietDaysNote": "No briefings are sent on the selected days.",
+      "pickTime": "Pick {{label}}",
+      "pickDay": "Pick a day",
+      "proNote": "Midday pulse, evening close and the weekly review are Pro features."
     },
     "notificationScreen": {
       "categories": {
@@ -947,7 +1064,24 @@
         "generic": "Generic notification"
       },
       "systemOff": "System notifications are off.",
-      "openSystemSettings": "Open system settings"
+      "openSystemSettings": "Open system settings",
+      "subtitle": "What should we tell you about?",
+      "groups": {
+        "briefings": "Briefings",
+        "important": "Important",
+        "other": "Other"
+      },
+      "system": "System permission",
+      "systemGranted": "System notifications are on.",
+      "systemUndetermined": "Notification permission hasn't been requested yet.",
+      "systemAllow": "Allow",
+      "onlyImportantNote": "When on, only critical emails, deadlines and meetings notify you.",
+      "quietStart": "Start",
+      "quietEnd": "End",
+      "quietNote": "During quiet hours reminders are deferred and meeting alerts arrive silently.",
+      "lockScreenNote": "How much detail should the lock screen show?",
+      "meetingLead": "Meeting reminder",
+      "meetingLeadValue": "{{minutes}} min before"
     },
     "rules": {
       "title": "Priority rules",
@@ -969,7 +1103,38 @@
       },
       "deleteConfirm": "Delete this rule?",
       "empty": "No rules yet. Rules always take precedence over AI learning.",
-      "precedenceNote": "Explicit rules take precedence over learned preferences."
+      "precedenceNote": "Explicit rules take precedence over learned preferences.",
+      "subtitle": "Rules you wrote yourself. They always take precedence over what the AI has learned.",
+      "orderNote": "Order matters: when rules conflict, the one higher up wins.",
+      "count": "{{count}} rules",
+      "addTitle": "New rule",
+      "editTitle": "Edit rule",
+      "typeKicker": "1 · CONDITION",
+      "valueKicker": "2 · VALUE",
+      "valueLabel": "Value",
+      "valueAny": "All matches",
+      "valueRequired": "This rule needs a value.",
+      "labelLabel": "Rule name (optional)",
+      "labelPlaceholder": "e.g. Client emails",
+      "enabled": "Rule active",
+      "disabledMeta": "Off",
+      "save": "Save rule",
+      "saveChanges": "Save changes",
+      "saved": "Rule saved",
+      "deleted": "Rule deleted",
+      "deleteBody": "The rule “{{label}}” is removed. The AI will not assume it again.",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "edit": "Edit",
+      "toggle": "Toggle rule {{label}}",
+      "outcomes": {
+        "important": "Always important",
+        "notify": "Always notify",
+        "low": "Low priority",
+        "mute": "Mute"
+      },
+      "aiLink": "What the AI learned on its own lives in AI personalization; this list is only your rules.",
+      "aiLinkCta": "AI personalization"
     },
     "vipScreen": {
       "title": "VIP people",
@@ -979,7 +1144,26 @@
       "relation": "Relation",
       "notifyAlways": "Always notify",
       "remove": "Remove VIP",
-      "empty": "No VIP people yet."
+      "empty": "No VIP people yet.",
+      "subtitle": "I always surface what comes from these people and watch their waiting times more strictly.",
+      "emptyBody": "Add your partner, family, manager and clients; I'll always surface what they send.",
+      "addSubtitle": "Pick from your contacts or add by e-mail address.",
+      "namePlaceholder": "Full name",
+      "emailPlaceholder": "name@company.com",
+      "relationPlaceholder": "e.g. Manager, Client, Family",
+      "invalidEmail": "Enter a valid e-mail address.",
+      "save": "Add",
+      "added": "{{name}} added as VIP",
+      "removed": "{{name}} removed from VIPs",
+      "removeTitle": "Remove {{name}} from VIPs?",
+      "removeBody": "Messages from this person will no longer be surfaced automatically.",
+      "notifyMeta": "Notifies even during quiet hours",
+      "notifyOffMeta": "Only surfaced, no extra notification",
+      "notifyToggle": "Always notify for {{name}}",
+      "contactsDenied": "Contacts access is off. You can enable it in Settings.",
+      "openSettings": "Open Settings",
+      "noEmailInContact": "This contact has no e-mail address; added by name.",
+      "count": "{{count}} people"
     },
     "integrationsScreen": {
       "title": "Connections",
@@ -1010,7 +1194,39 @@
         "apple_reminders": "Apple Reminders"
       },
       "proNeeded": "Multiple accounts are a Pro feature.",
-      "grantWrite": "Grant write access"
+      "grantWrite": "Grant write access",
+      "subtitle": "Which accounts are connected, what is read and which write permissions exist; all in one place.",
+      "countKicker": "CONNECTED ACCOUNTS · {{count}}",
+      "primary": "Primary",
+      "makePrimary": "Make primary",
+      "madePrimary": "{{name}} is now the primary account",
+      "syncNow": "Sync now",
+      "synced": "Sync started",
+      "reconnected": "Connection renewed",
+      "removed": "Connection removed",
+      "granted": "Write access granted",
+      "neverSynced": "Not synced yet",
+      "needsAttention": "There's a problem with this connection; reconnect.",
+      "scopes": {
+        "read": "Read",
+        "mail_send": "Send (with approval)",
+        "calendar_write": "Create events (with approval)",
+        "tasks_write": "Create tasks (with approval)"
+      },
+      "grantWriteMeta": "Request permission: {{scope}}",
+      "kinds": {
+        "email": "Mail",
+        "calendar": "Calendar",
+        "tasks": "Tasks"
+      },
+      "addSubtitle": "Starts with read-only access; you grant write permissions later.",
+      "deviceCalendar": "Device calendar",
+      "deviceConnect": "Connect",
+      "deviceSynced": "{{count}} events synced",
+      "deviceDenied": "Calendar permission is off. You can enable it in system settings.",
+      "openSettings": "Open Settings",
+      "empty": "No connected accounts yet.",
+      "emptyBody": "Connect your mail and calendar; briefings and priorities are built from them."
     },
     "dataSourceScreen": {
       "readEmail": "Read emails",
@@ -1021,7 +1237,29 @@
       "suggestSchedule": "Suggest schedule",
       "createEventsWithApproval": "Create events with approval",
       "readTasks": "Read tasks",
-      "attachmentsNote": "Only PDF/text under 10 MB; never stored permanently unless you save it."
+      "attachmentsNote": "Only PDF/text under 10 MB; never stored permanently unless you save it.",
+      "title": "Data source control",
+      "subtitle": "You choose what is read for each account. Anything you turn off is left out of analysis.",
+      "groups": {
+        "mail": "MAIL",
+        "calendar": "CALENDAR",
+        "tasks": "TASKS"
+      },
+      "hints": {
+        "readEmail": "Subject, sender and body are summarized.",
+        "analyzeAttachments": "PDF and text attachments under 10 MB.",
+        "detectDeadlines": "Explicitly written dates are captured.",
+        "prepareDrafts": "Reply drafts are prepared; sending needs approval.",
+        "readEvents": "Including attendees and location.",
+        "suggestSchedule": "Suggests tasks for free blocks.",
+        "createEventsWithApproval": "Writes only after you approve.",
+        "readTasks": "Open tasks appear in the plan."
+      },
+      "empty": "No connected accounts.",
+      "emptyBody": "Add an account under Connections first.",
+      "goConnections": "Go to Connections",
+      "saveFailed": "Couldn't save; the setting was reverted.",
+      "toggle": "{{account}} · {{control}}"
     },
     "aiScreen": {
       "title": "How Dijital Asistan knows me",
@@ -1033,7 +1271,24 @@
       "enable": "Enable",
       "delete": "Delete",
       "empty": "No learned preferences yet.",
-      "precedence": "Explicit rules always come before learned preferences."
+      "precedence": "Explicit rules always come before learned preferences.",
+      "subtitle": "What I learned over time. You can disable or delete any line; I won't assume a deleted one again.",
+      "emptyBody": "As you use the app, what I learn will show up here.",
+      "groups": {
+        "people": "PEOPLE",
+        "topics": "TOPICS",
+        "preferences": "PREFERENCES"
+      },
+      "evidence": "Observed {{count}} times · {{date}}",
+      "disabledMeta": "Off · observed {{count}} times",
+      "toggle": "Toggle preference: {{statement}}",
+      "rulesLink": "Priority rules",
+      "rulesLinkMeta": "{{count}} explicit rules · always before learned ones",
+      "deleteTitle": "Delete this preference?",
+      "deleteBody": "“{{statement}}” is deleted and never assumed again.",
+      "deleted": "Preference deleted",
+      "learnOn": "Learning on",
+      "learnOff": "Learning off"
     },
     "privacyScreen": {
       "title": "Privacy & security",
@@ -1081,7 +1336,72 @@
         "Captured content",
         "Learned preferences"
       ],
-      "aiDataNote": "Raw email bodies are not written to memory; only summaries and selected excerpts are kept."
+      "aiDataNote": "Raw email bodies are not written to memory; only summaries and selected excerpts are kept.",
+      "subtitle": "See what I read, how long I keep it and how to delete it.",
+      "assuranceKicker": "OUR PROMISE",
+      "dataKicker": "DATA",
+      "on": "On",
+      "off": "Off",
+      "connectedMeta": "{{count}} accounts",
+      "retentionKicker": "DATA RETENTION",
+      "retentionBody": "How long should analysis results and summaries be kept? Memory search is limited to this window. Your original emails stay in your own account; we keep no copies.",
+      "retentionSaved": "Retention: {{option}}",
+      "retentionSelect": "Select {{option}}",
+      "deleteHistoryPreserved": "Kept: connections, settings, VIP list, rules",
+      "deleteHistoryDone": "Analysis history deleted",
+      "deleteHistoryCount": "{{count}} records deleted",
+      "exportKicker": "EXPORT",
+      "exportPreparing": "Preparing… You don't need to stay on this screen.",
+      "exportReadyMeta": "Ready · {{size}} · valid until {{until}}",
+      "exportFailedBody": "Export failed. You can try again.",
+      "exportExpiredBody": "The link has expired. Start a new export.",
+      "exportRestart": "Start again",
+      "sizeMb": "{{size}} MB",
+      "sizeKb": "{{size}} KB",
+      "auditKicker": "RECENT ACTIVITY",
+      "auditEmpty": "No recorded activity yet.",
+      "auditActors": {
+        "user": "You",
+        "system": "System",
+        "assistant": "Assistant",
+        "cron": "Scheduler",
+        "webhook": "Provider"
+      },
+      "auditActions": {
+        "oauth_connect": "Account connected",
+        "oauth_refresh": "Connection refreshed",
+        "oauth_revoke": "Connection removed",
+        "oauth_scope_upgrade": "Write access granted",
+        "token_decrypt": "Access token used",
+        "approval_create": "Approval requested",
+        "approval_approve": "Action approved",
+        "approval_reject": "Action rejected",
+        "approval_edit": "Approval edited",
+        "approval_execute": "Action executed",
+        "approval_fail": "Action failed",
+        "email_send": "Email sent",
+        "calendar_write": "Calendar written",
+        "task_write": "Task written",
+        "reminder_write": "Reminder created",
+        "data_export": "Data exported",
+        "data_delete_history": "History deleted",
+        "account_delete": "Account deleted",
+        "retention_cleanup": "Retention cleanup ran",
+        "sync_run": "Sync ran",
+        "push_send": "Notification sent",
+        "ai_call": "AI analysis ran",
+        "notification_access_change": "Notification access changed",
+        "referral_redeem": "Referral code redeemed",
+        "subscription_change": "Subscription changed"
+      },
+      "deleteAccountStep": "Step {{step}} of 2",
+      "deleteAccountWhat": "Deleted: connections and permissions, all analyses, memory, rules, VIP list, subscription mapping.",
+      "deleteAccountKeep": "Your original emails and calendar stay in your own account.",
+      "deleteAccountContinue": "Continue",
+      "deleteAccountWord": "DELETE",
+      "deleteAccountMismatch": "Type exactly “{{word}}” to confirm.",
+      "deleteAccountDone": "Your account was deleted.",
+      "compliance": "Encrypted in transit (TLS) and at rest · KVKK and GDPR compliant"
     },
     "feedbackScreen": {
       "title": "Feedback",
@@ -1095,7 +1415,11 @@
       "placeholder": "What's on your mind?",
       "diagnostics": "Include diagnostics (no email content)",
       "send": "Send",
-      "sent": "Thanks, we got it."
+      "sent": "Thanks, we got it.",
+      "subtitle": "What works, what's missing? We read every message.",
+      "messageLabel": "Your message",
+      "tooShort": "Could you add a bit more detail? At least 5 characters.",
+      "diagnosticsPreview": "Included: {{details}}"
     },
     "android": {
       "title": "Phone notifications",
@@ -1110,7 +1434,31 @@
       "uploadConsent": "Send notification content to the server for analysis",
       "uploadNote": "When off, notifications are processed only on this device.",
       "privacy": "Verification codes and password-manager notifications are never stored.",
-      "excludedDefault": "Excluded by default"
+      "excludedDefault": "Excluded by default",
+      "subtitle": "Let shipping, payment and meeting notifications show up on Today too.",
+      "iosOnly": "This feature is Android-only",
+      "iosOnlyBody": "Reading phone notifications is only possible on Android.",
+      "unavailable": "Not available on this device",
+      "unavailableBody": "The notification listener module is not included in this build.",
+      "permissionKicker": "ACCESS",
+      "notGranted": "Access not granted",
+      "grantHint": "Enable Dijital Asistan in system settings, then come back.",
+      "refresh": "Check again",
+      "scopeKicker": "SCOPE",
+      "appsHint": "Messaging apps are captured only when you explicitly allow them.",
+      "messaging": "Messaging",
+      "noApps": "Couldn't load the app list.",
+      "consentKicker": "SERVER ANALYSIS",
+      "recentKicker": "RECENT NOTIFICATIONS",
+      "recentEmpty": "No captured notifications yet.",
+      "recentDevice": "On device only",
+      "recentInsight": "Added to Today",
+      "clearAll": "Clear all",
+      "cleared": "Notifications cleared",
+      "proTitle": "Phone notifications are a Pro feature.",
+      "proBody": "Shipping, payment and meeting notifications show up on Today.",
+      "proCta": "Go Pro",
+      "saved": "Saved"
     }
   },
   "paywall": {

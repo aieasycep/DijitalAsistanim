@@ -3,9 +3,10 @@ import type {
   AccountKind,
   ConnectedAccount,
   DataSourceControls,
+  EdgeFunctionRequest,
   OAuthStartRequest,
 } from '@da/domain';
-import type { AccountsApi, OnboardingApi } from '../datasource';
+import type { AccountsApi, DeviceApprovalResult, OnboardingApi } from '../datasource';
 import { ClientApiError } from '../errors';
 import { exec, read, write, type SupabaseContext } from './client';
 import { deviceAccountToRow, toConnectedAccount } from './mappers';
@@ -155,9 +156,16 @@ export function createAccountsApi(ctx: SupabaseContext): AccountsApi {
       });
     },
 
-    upsertDeviceEvents: async (accountId, events) => {
-      if (events.length === 0) return;
-      await ctx.call('device-calendar-upsert', { accountId, events });
+    /**
+     * `approvalResult` finalises a device-executed approval (the function accepts an empty event list in
+     * that case); a plain sync with nothing to upload is a no-op.
+     */
+    upsertDeviceEvents: async (accountId, events, approvalResult) => {
+      if (events.length === 0 && !approvalResult) return;
+      const body: EdgeFunctionRequest<'device-calendar-upsert'> & {
+        approvalResult?: DeviceApprovalResult;
+      } = { accountId, events, ...(approvalResult ? { approvalResult } : {}) };
+      await ctx.call('device-calendar-upsert', body);
     },
   };
 }

@@ -138,6 +138,20 @@ export interface ProfileApi {
   }): Promise<void>;
 }
 
+/**
+ * Outcome of a device-executed approval (calendar_create / calendar_update on EventKit or the Android
+ * provider). The backend keeps such approvals `executing` with `executionResult.handler = 'device'`;
+ * the app finalises them through `upsertDeviceEvents` (see supabase/functions/device-calendar-upsert).
+ */
+export interface DeviceApprovalResult {
+  approvalId: UUID;
+  outcome: 'executed' | 'failed';
+  /** Native event identifier written on the device (executed outcome). */
+  externalEventId?: string;
+  /** Short, content-free code such as `device_write_failed` (failed outcome, ≤ 80 chars). */
+  failureReason?: string;
+}
+
 export interface AccountsApi {
   listAccounts(): Promise<ConnectedAccount[]>;
   /** Google / Microsoft: returns authorization URL to open in a browser session; callback lands on the app deep link. */
@@ -160,10 +174,14 @@ export interface AccountsApi {
   disconnect(accountId: UUID): Promise<void>;
   reconnect(accountId: UUID, redirectTo: string): Promise<OAuthStartResponse>;
   syncNow(input?: { accountId?: UUID; resource?: 'mail' | 'calendar' | 'tasks' }): Promise<void>;
-  /** Uploads device-calendar events (read on device) so the backend can reason over them. */
+  /**
+   * Uploads device-calendar events (read on device) so the backend can reason over them. When the upload
+   * finalises a device-executed approval, `approvalResult` moves it to `executed` / `failed`.
+   */
   upsertDeviceEvents(
     accountId: UUID,
     events: Omit<CalendarEvent, 'userId' | 'createdAt' | 'updatedAt' | 'id'>[],
+    approvalResult?: DeviceApprovalResult,
   ): Promise<void>;
 }
 
