@@ -1,8 +1,9 @@
 import type { CalendarEvent, ConnectedAccount, OAuthStartResponse, UUID } from '@da/domain';
 import { oauthStartRequestSchema } from '@da/validation';
-import type { AccountsApi } from '../../datasource';
+import type { AccountsApi, DeviceApprovalResult } from '../../datasource';
 import { ClientApiError } from '../../errors';
 import type { DemoContext } from '../context';
+import { emitPending } from '../core/approvals';
 import { appendAudit } from '../core/audit';
 import { syncConflicts } from '../core/calendar';
 import { DEFAULT_CONTROLS, GOOGLE_READ_SCOPES } from '../fixtures/accounts';
@@ -43,6 +44,65 @@ function findAccount(state: DemoState, id: UUID, includeDeleted = false): Connec
   const account = state.accounts.find((a) => a.id === id && (includeDeleted || !a.deletedAt));
   if (!account) throw notFound('Hesap', id);
   return account;
+}
+
+/**
+ * Mirrors device-calendar-upsert: an approval the device executed moves from `executing` (handler
+ * `device`) to `executed` / `failed`. Any other state is left untouched (idempotent re-uploads).
+ */
+function applyDeviceApprovalResult(
+  ctx: DemoContext,
+  s: DemoState,
+  accountId: UUID,
+  result: DeviceApprovalResult,
+  now: string,
+): void {
+  const approval = s.approvals.find((a) => a.id === result.approvalId);
+  if (!approval || approval.status !== 'executing') return;
+  const handler = (approval.executionResult as { handler?: unknown } | null)?.handler;
+  if (handler !== 'device') return;
+  if (result.outcome === 'executed') {
+    approval.status = 'executed';
+    approval.executedAt = now;
+    approval.updatedAt = now;
+    approval.failureReason = null;
+    approval.executionResult = {
+      handler: 'device',
+      externalEventId: result.externalEventId ?? null,
+    };
+    if (result.externalEventId) {
+      const event = s.events.find(
+        (e) => e.accountId === accountId && e.externalEventId === result.externalEventId,
+      );
+      if (event) event.isAiCreated = true;
+    }
+    if (approval.insightId) {
+      const insight = s.insights.find((i) => i.id === approval.insightId);
+      if (insight && insight.status === 'active') {
+        insight.status = 'completed';
+        insight.updatedAt = now;
+      }
+    }
+    appendAudit(ctx, s, 'approval.execute', {
+      targetType: 'approval_action',
+      targetId: approval.id,
+      metadata: { type: approval.type, kind: 'device' },
+    });
+    appendAudit(ctx, s, 'calendar.write', {
+      targetType: 'calendar_event',
+      targetId: result.externalEventId ?? null,
+      metadata: { op: approval.type === 'calendar_update' ? 'update' : 'create', kind: 'device' },
+    });
+    return;
+  }
+  approval.status = 'failed';
+  approval.failureReason = result.failureReason ?? 'device_write_failed';
+  approval.updatedAt = now;
+  appendAudit(ctx, s, 'approval.fail', {
+    targetType: 'approval_action',
+    targetId: approval.id,
+    metadata: { type: approval.type, kind: 'device', reason: approval.failureReason },
+  });
 }
 
 function demoEmailFor(state: DemoState, provider: 'google' | 'microsoft'): string {
@@ -322,7 +382,7 @@ export function createAccountsApi(ctx: DemoContext): AccountsApi {
           });
         });
       }),
-    upsertDeviceEvents: (accountId, events) =>
+    upsertDeviceEvents: (accountId, events, approvalResult) =>
       ctx.run(() => {
         ctx.store.mutate((s) => {
           findAccount(s, accountId);
@@ -346,7 +406,9 @@ export function createAccountsApi(ctx: DemoContext): AccountsApi {
             s.events.push(created);
           }
           syncConflicts(s, ctx.clock, () => ctx.nextId(), now);
+          if (approvalResult) applyDeviceApprovalResult(ctx, s, accountId, approvalResult, now);
         });
+        if (approvalResult) emitPending(ctx);
       }),
   };
 }

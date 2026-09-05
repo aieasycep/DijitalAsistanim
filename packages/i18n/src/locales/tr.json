@@ -597,7 +597,13 @@
     "set": "Hatırlatıcı kuruldu · {{time}}",
     "cancelled": "Hatırlatıcı iptal edildi",
     "permissionTitle": "Bildirim izni gerekiyor",
-    "permissionBody": "Hatırlatıcıların çalışması için bildirimlere izin ver."
+    "permissionBody": "Hatırlatıcıların çalışması için bildirimlere izin ver.",
+    "aiMeta": "Takvimine göre: {{time}}",
+    "customPick": "Zamanı seç",
+    "pastTime": "Seçtiğin zaman geçmişte kaldı.",
+    "whyDefault": "Hatırlatıcı istedin: {{time}}",
+    "loadFailed": "Öneriler yüklenemedi.",
+    "dueLabel": "Son tarih {{time}}"
   },
   "approvals": {
     "title": "Onay Bekleyenler",
@@ -630,7 +636,64 @@
     "editSaved": "Değişiklikler kaydedildi",
     "scopeNeeded": "Bu işlem için ek izin gerekiyor.",
     "conflictRemote": "Etkinlik takvimde değişmiş. Yenile ve tekrar bak.",
-    "history": "GEÇMİŞ"
+    "history": "GEÇMİŞ",
+    "subtitle": "{{count}} işlem onayını bekliyor. Hiçbiri sen onaylamadan yapılmaz.",
+    "subtitleEmpty": "Onay bekleyen işlem yok.",
+    "pendingSection": "BEKLEYENLER",
+    "historyEmpty": "Henüz geçmiş yok.",
+    "trust": "Önemli işlemler sen onaylamadan gerçekleştirilmez. Toplu onay yok; her kart tek tek.",
+    "offlineHint": "Çevrimdışı — onaylar bağlanınca uygulanır.",
+    "pendingStatus": "Onay bekliyor",
+    "executedAt": "Tamamlandı · {{time}}",
+    "executedToast": "Onaylandı · {{what}}",
+    "executingBody": "Sen onayladın; işlem uygulanıyor.",
+    "deviceExecuting": "Cihaz takvimine yazılıyor…",
+    "failedBody": "İşlem uygulanamadı. Tekrar deneyebilirsin.",
+    "expiredBody": "Bu öneri artık geçerli değil.",
+    "rejectedBody": "Reddedildi. Bu tür önerileri daha az yapacağım.",
+    "rejectedToast": "Reddedildi · Bu tür önerileri azaltacağım",
+    "edited": "Düzenlendi",
+    "editInvalid": "Bu alanı kontrol et.",
+    "editEndBeforeStart": "Bitiş, başlangıçtan sonra olmalı.",
+    "editEmailInvalid": "Geçerli e-posta adresleri gir (virgülle ayır).",
+    "noDate": "Tarih yok",
+    "clearDate": "Tarihi kaldır",
+    "fields": {
+      "subject": "Konu",
+      "bodyText": "Mesaj",
+      "to": "Kime",
+      "title": "Başlık",
+      "startAt": "Başlangıç",
+      "endAt": "Bitiş",
+      "location": "Yer",
+      "dueAt": "Son tarih",
+      "remindAt": "Hatırlatma zamanı",
+      "text": "Taahhüt",
+      "dueText": "Ne zaman",
+      "when": "Ne zaman"
+    },
+    "failureReasons": {
+      "connection_expired": "Hesap bağlantısının süresi dolmuş.",
+      "scope_required": "Bu işlem için ek izin gerekiyor.",
+      "provider_unavailable": "Sağlayıcı geçici olarak yanıt vermedi.",
+      "rate_limited": "Sağlayıcı çok fazla istek aldı; biraz sonra tekrar dene.",
+      "target_missing": "Hedef kayıt artık bulunamıyor.",
+      "invalid_payload": "İşlem içeriği geçersiz; düzenleyip tekrar dene.",
+      "account_missing": "Bağlı hesap bulunamadı.",
+      "device_write_failed": "Cihaz takvimine yazılamadı. Takvim iznini kontrol et.",
+      "unknown": "Beklenmeyen bir hata oluştu."
+    },
+    "scopeSheet": {
+      "title": "Ek izin gerekli",
+      "body": "{{account}} hesabı için yazma izni henüz verilmedi. İzni verdikten sonra işlem yeniden denenir.",
+      "cta": "İzin ver",
+      "reconnectTitle": "Bağlantıyı yenile",
+      "reconnectBody": "{{account}} bağlantısının süresi dolmuş. Yeniden bağla; sonra işlem tekrar denenir.",
+      "reconnectCta": "Yeniden bağla",
+      "granted": "İzin verildi · yeniden deneniyor",
+      "noAccount": "Bu işlemin hesabı bulunamadı.",
+      "cancelled": "İzin verilmedi. İstediğinde tekrar deneyebilirsin."
+    }
   },
   "person": {
     "lastContact": "Son iletişim",
@@ -1507,7 +1570,19 @@
     "trialUntil": "Deneme · {{date}} tarihine kadar",
     "referralBonus": "Davet bonusu",
     "quotaTitle": "Günlük AI kotan doldu.",
-    "quotaBody": "Ücretsiz planda günlük asistan kullanımı sınırlı. Pro ile sınırsız devam et."
+    "quotaBody": "Ücretsiz planda günlük asistan kullanımı sınırlı. Pro ile sınırsız devam et.",
+    "kicker": "DİJİTAL ASİSTAN PRO",
+    "subtitle": "Öğle ve akşam brifingleri, toplantı hazırlığı ve daha fazlası.",
+    "freeIncludes": "Free şeffaf: 1 mail, 1 takvim, sabah brifingi, sınırlı AI.",
+    "perMonth": "ayda {{price}}",
+    "savings": "%{{percent}} tasarruf",
+    "legalTrial": "{{days}} gün sonra {{price}}. Bitmeden 24 saat önce hatırlatırız. İstediğin zaman iptal.",
+    "legalNoTrial": "{{price}}. İstediğin zaman iptal.",
+    "loadingPrices": "Fiyatlar yükleniyor…",
+    "storeUnavailableBody": "Satın alma şu anda yapılamıyor. Daha sonra tekrar dene.",
+    "cancelled": "Satın alma iptal edildi.",
+    "pending": "Ödeme onay bekliyor. Tamamlanınca Pro açılır.",
+    "selectPlan": "{{plan}} planını seç"
   },
   "referral": {
     "title": "Arkadaşını Davet Et",
@@ -1526,7 +1601,16 @@
     "invalid": "Bu kod geçersiz.",
     "self": "Kendi kodunu kullanamazsın.",
     "already": "Bu hesap zaten bir davet kodu kullandı.",
-    "message": "Dijital Asistan'ı dene: bugün bilmen gerekenleri sen sormadan söyler. Kodum: {{code}} {{url}}"
+    "message": "Dijital Asistan'ı dene: bugün bilmen gerekenleri sen sormadan söyler. Kodum: {{code}} {{url}}",
+    "heroBody": "Arkadaşın ilk brifingini aldığında Pro süreniz otomatik uzar.",
+    "link": "Davet bağlantın",
+    "bonusUntil": "Bonus Pro · {{date}} tarihine kadar",
+    "noBonus": "Henüz kazanılan bonus yok.",
+    "codePlaceholder": "Davet kodu",
+    "rejected": "Bu kod kullanılamadı.",
+    "expired": "Bu kodun süresi dolmuş.",
+    "limit": "Bu kodun kullanım sınırına ulaşıldı.",
+    "redeeming": "Kontrol ediliyor…"
   },
   "lifeEvents": {
     "shipment": "Kargo",
@@ -1581,6 +1665,16 @@
       "directions": "Yol Tarifi",
       "remind": "Hatırlat",
       "done": "Tamamlandı"
+    }
+  },
+  "oauth": {
+    "title": "Bağlantı tamamlanıyor",
+    "completing": "Hesap bağlanıyor…",
+    "done": "Hesap bağlandı",
+    "backToIntegrations": "Bağlantılara dön",
+    "providers": {
+      "google": "Google",
+      "microsoft": "Microsoft"
     }
   },
   "errors": {

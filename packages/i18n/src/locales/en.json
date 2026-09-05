@@ -597,7 +597,13 @@
     "set": "Reminder set · {{time}}",
     "cancelled": "Reminder cancelled",
     "permissionTitle": "Notification permission needed",
-    "permissionBody": "Allow notifications so reminders can work."
+    "permissionBody": "Allow notifications so reminders can work.",
+    "aiMeta": "Based on your calendar: {{time}}",
+    "customPick": "Pick a time",
+    "pastTime": "That time has already passed.",
+    "whyDefault": "You asked to be reminded: {{time}}",
+    "loadFailed": "Couldn't load suggestions.",
+    "dueLabel": "Due {{time}}"
   },
   "approvals": {
     "title": "Pending approvals",
@@ -630,7 +636,64 @@
     "editSaved": "Changes saved",
     "scopeNeeded": "This action needs an extra permission.",
     "conflictRemote": "The event changed in your calendar. Refresh and check again.",
-    "history": "HISTORY"
+    "history": "HISTORY",
+    "subtitle": "{{count}} actions await your approval. None of them happen before you approve.",
+    "subtitleEmpty": "No actions awaiting approval.",
+    "pendingSection": "PENDING",
+    "historyEmpty": "No history yet.",
+    "trust": "Important actions never run before you approve. No bulk approval; one card at a time.",
+    "offlineHint": "Offline — approvals apply once you're back online.",
+    "pendingStatus": "Awaiting approval",
+    "executedAt": "Done · {{time}}",
+    "executedToast": "Approved · {{what}}",
+    "executingBody": "You approved it; the action is being applied.",
+    "deviceExecuting": "Writing to the device calendar…",
+    "failedBody": "The action couldn't be applied. You can try again.",
+    "expiredBody": "This suggestion is no longer valid.",
+    "rejectedBody": "Rejected. I'll make fewer suggestions like this.",
+    "rejectedToast": "Rejected · I'll suggest this less",
+    "edited": "Edited",
+    "editInvalid": "Check this field.",
+    "editEndBeforeStart": "End must be after start.",
+    "editEmailInvalid": "Enter valid email addresses (comma separated).",
+    "noDate": "No date",
+    "clearDate": "Remove date",
+    "fields": {
+      "subject": "Subject",
+      "bodyText": "Message",
+      "to": "To",
+      "title": "Title",
+      "startAt": "Start",
+      "endAt": "End",
+      "location": "Location",
+      "dueAt": "Due date",
+      "remindAt": "Reminder time",
+      "text": "Commitment",
+      "dueText": "When",
+      "when": "When"
+    },
+    "failureReasons": {
+      "connection_expired": "The account connection has expired.",
+      "scope_required": "This action needs an extra permission.",
+      "provider_unavailable": "The provider didn't respond for now.",
+      "rate_limited": "The provider received too many requests; try again shortly.",
+      "target_missing": "The target item can no longer be found.",
+      "invalid_payload": "The action content is invalid; edit it and try again.",
+      "account_missing": "The connected account wasn't found.",
+      "device_write_failed": "Couldn't write to the device calendar. Check the calendar permission.",
+      "unknown": "An unexpected error occurred."
+    },
+    "scopeSheet": {
+      "title": "Extra permission needed",
+      "body": "Write access hasn't been granted for {{account}} yet. Once you grant it, the action is retried.",
+      "cta": "Grant permission",
+      "reconnectTitle": "Renew connection",
+      "reconnectBody": "The {{account}} connection has expired. Reconnect, then the action is retried.",
+      "reconnectCta": "Reconnect",
+      "granted": "Permission granted · retrying",
+      "noAccount": "The account for this action wasn't found.",
+      "cancelled": "Permission not granted. You can try again whenever you like."
+    }
   },
   "person": {
     "lastContact": "Last contact",
@@ -1511,7 +1574,19 @@
     "trialUntil": "Trial · until {{date}}",
     "referralBonus": "Referral bonus",
     "quotaTitle": "Your daily AI quota is used up.",
-    "quotaBody": "The free plan limits daily assistant use. Continue without limits with Pro."
+    "quotaBody": "The free plan limits daily assistant use. Continue without limits with Pro.",
+    "kicker": "DİJİTAL ASİSTAN PRO",
+    "subtitle": "Midday and evening briefings, meeting prep and more.",
+    "freeIncludes": "Free is transparent: 1 mailbox, 1 calendar, the morning briefing, limited AI.",
+    "perMonth": "{{price}} per month",
+    "savings": "Save {{percent}}%",
+    "legalTrial": "{{price}} after {{days}} days. We remind you 24 hours before it ends. Cancel anytime.",
+    "legalNoTrial": "{{price}}. Cancel anytime.",
+    "loadingPrices": "Loading prices…",
+    "storeUnavailableBody": "Purchases aren't possible right now. Please try again later.",
+    "cancelled": "Purchase cancelled.",
+    "pending": "Payment is pending. Pro unlocks once it completes.",
+    "selectPlan": "Select the {{plan}} plan"
   },
   "referral": {
     "title": "Invite a friend",
@@ -1530,7 +1605,16 @@
     "invalid": "This code is invalid.",
     "self": "You can't use your own code.",
     "already": "This account already used an invite code.",
-    "message": "Try Dijital Asistan: it tells you what you need to know today before you ask. My code: {{code}} {{url}}"
+    "message": "Try Dijital Asistan: it tells you what you need to know today before you ask. My code: {{code}} {{url}}",
+    "heroBody": "When your friend gets their first briefing, both Pro periods extend automatically.",
+    "link": "Your invite link",
+    "bonusUntil": "Bonus Pro · until {{date}}",
+    "noBonus": "No bonus earned yet.",
+    "codePlaceholder": "Invite code",
+    "rejected": "This code couldn't be used.",
+    "expired": "This code has expired.",
+    "limit": "This code has reached its limit.",
+    "redeeming": "Checking…"
   },
   "lifeEvents": {
     "shipment": "Shipment",
@@ -1585,6 +1669,16 @@
       "directions": "Directions",
       "remind": "Remind me",
       "done": "Done"
+    }
+  },
+  "oauth": {
+    "title": "Finishing connection",
+    "completing": "Connecting your account…",
+    "done": "Account connected",
+    "backToIntegrations": "Back to connections",
+    "providers": {
+      "google": "Google",
+      "microsoft": "Microsoft"
     }
   },
   "errors": {
