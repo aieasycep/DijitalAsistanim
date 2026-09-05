@@ -550,11 +550,34 @@ export async function runExportsJob(admin: Db, now: string): Promise<JobResult> 
 
 // --- Initial analysis (backfill) ---------------------------------------------------------------------------
 
+/**
+ * Without `userId` (scheduled tick): resume stale runs (a function instance died mid-analysis).
+ * With `userId`: run the first analysis for that user now.
+ */
 export async function runBackfillJob(
   admin: Db,
   now: string,
-  input: { userId: string },
+  input: { userId?: string },
 ): Promise<JobResult> {
+  if (!input.userId) {
+    const staleBefore = new Date(Date.parse(now) - 15 * 60_000).toISOString();
+    const { data: stale } = await admin
+      .from('first_analysis_runs')
+      .select('user_id')
+      .not('step', 'in', '("done","failed")')
+      .lt('started_at', staleBefore)
+      .limit(3);
+    let processed = 0;
+    for (const r of (stale ?? []) as { user_id: string }[]) {
+      await admin
+        .from('first_analysis_runs')
+        .update({ started_at: now, error: null })
+        .eq('user_id', r.user_id);
+      const res = await runBackfillJob(admin, now, { userId: r.user_id });
+      processed += res.processed;
+    }
+    return { processed, details: { resumed: (stale ?? []).length } };
+  }
   const userId = input.userId;
   const { data: runRow } = await admin
     .from('first_analysis_runs')

@@ -81,7 +81,6 @@ Deno.serve(
         result = await runExportsJob(admin, now);
         break;
       case 'backfill':
-        if (!input.userId) throw new AppError('validation', 'backfill için userId gerekli.');
         result = await runBackfillJob(admin, now, { userId: input.userId });
         break;
       case 'pipeline': {

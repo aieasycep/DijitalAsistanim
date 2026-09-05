@@ -56,6 +56,8 @@ export interface WidgetSnapshot {
   signedIn: boolean;
   /** `counts`: lock-screen privacy is `generic` — no titles anywhere. */
   privacy: 'full' | 'counts';
+  /** Locale used for labels and locale-aware casing (Turkish İ/ı). */
+  locale: Locale;
   headline: string;
   /** Number highlighted in the headline (briefing `highlightNumber`) when present. */
   highlight: number | null;
@@ -114,7 +116,18 @@ export function deepLinkForInsight(insight: Pick<Insight, 'entityType' | 'entity
 // Snapshot builder (pure)
 // ---------------------------------------------------------------------------
 
-function ctx(opts: BuildSnapshotOptions): { locale: Locale; timezone: string } {
+const LOCALE_TAG: Record<Locale, string> = { tr: 'tr-TR', en: 'en-GB' };
+
+/** Locale-aware casing: `toLocaleUpperCase()` without a tag turns Turkish "İ" into "I". */
+export function upper(value: string, locale: Locale): string {
+  return value.toLocaleUpperCase(LOCALE_TAG[locale]);
+}
+
+export function lower(value: string, locale: Locale): string {
+  return value.toLocaleLowerCase(LOCALE_TAG[locale]);
+}
+
+function ctx(opts: Partial<BuildSnapshotOptions>): { locale: Locale; timezone: string } {
   const prefs = readCache<UserPreferences>(CacheKeys.preferences);
   let deviceTz = 'Europe/Istanbul';
   try {
@@ -141,15 +154,16 @@ function priorityLabel(i: Insight, c: { locale: Locale; timezone: string }): str
   return null;
 }
 
-function countsOnlyTitle(count: number): string {
-  return `${count} ${t('flow.filters.important').toLocaleLowerCase()} ${t('common.items')}`;
+function countsOnlyTitle(count: number, locale: Locale): string {
+  return `${count} ${lower(t('flow.filters.important'), locale)} ${t('common.items')}`;
 }
 
-export function emptySnapshot(signedIn: boolean, now = new Date()): WidgetSnapshot {
+export function emptySnapshot(signedIn: boolean, now = new Date(), locale: Locale = ctx({}).locale): WidgetSnapshot {
   return {
     updatedAt: now.toISOString(),
     signedIn,
     privacy: 'full',
+    locale,
     headline: signedIn ? t('today.headlineZero') : t('widgets.signInHint'),
     highlight: null,
     itemCount: 0,
@@ -169,7 +183,7 @@ export function emptySnapshot(signedIn: boolean, now = new Date()): WidgetSnapsh
 /** Builds the widget snapshot from a Today feed. Pure apart from reading cached locale/timezone. */
 export function buildWidgetSnapshot(today: TodayFeed | null, opts: BuildSnapshotOptions): WidgetSnapshot {
   const now = opts.now ?? new Date();
-  if (!opts.signedIn || !today) return emptySnapshot(opts.signedIn, now);
+  if (!opts.signedIn || !today) return emptySnapshot(opts.signedIn, now, opts.locale);
   const c = ctx(opts);
   const counts = opts.privacy === 'generic';
 
@@ -182,7 +196,7 @@ export function buildWidgetSnapshot(today: TodayFeed | null, opts: BuildSnapshot
 
   const priorities: WidgetPriority[] = activePriorities.slice(0, MAX_WIDGET_PRIORITIES).map((i, index) => ({
     id: i.id,
-    title: counts ? countsOnlyTitle(index + 1) : i.title,
+    title: counts ? countsOnlyTitle(index + 1, c.locale) : i.title,
     timeLabel: priorityLabel(i, c),
     badge: i.badge,
     deepLink: counts ? widgetSchemeUrl(DeepLinks.today()) : deepLinkForInsight(i),
@@ -207,7 +221,7 @@ export function buildWidgetSnapshot(today: TodayFeed | null, opts: BuildSnapshot
   const followUp: WidgetFollowUp | null =
     openFollowUps > 0
       ? {
-          title: counts || !first ? `${openFollowUps} ${t('widgets.openFollowUps').toLocaleLowerCase()}` : first.title,
+          title: counts || !first ? `${openFollowUps} ${lower(t('widgets.openFollowUps'), c.locale)}` : first.title,
           sub: counts || !first ? null : (first.subtitle ?? first.timeLabel ?? null),
           deepLink: widgetSchemeUrl(DeepLinks.followUps()),
         }
@@ -221,6 +235,7 @@ export function buildWidgetSnapshot(today: TodayFeed | null, opts: BuildSnapshot
     updatedAt: now.toISOString(),
     signedIn: true,
     privacy: counts ? 'counts' : 'full',
+    locale: c.locale,
     headline,
     highlight: highlight !== null && headline.includes(String(highlight)) ? highlight : null,
     itemCount,
@@ -269,11 +284,12 @@ function todayUrl(): string {
 export function snapshotToNextImportantProps(s: WidgetSnapshot): NextImportantProps {
   const top = s.priorities[0] ?? null;
   const first = top?.timeLabel ?? s.nextEvent?.time ?? null;
-  const countLabel = countsOnlyTitle(s.itemCount);
+  const countLabel = countsOnlyTitle(s.itemCount, s.locale);
   const inlineLabel = s.itemCount === 0 ? t('widgets.allClear') : first ? `${countLabel} · ${first}` : countLabel;
+  const kicker = upper(t('widgets.nextImportant'), s.locale);
   return {
     signedIn: s.signedIn,
-    kicker: t('widgets.nextImportant').toLocaleUpperCase(),
+    kicker,
     item: top
       ? {
           title: top.title,
@@ -285,11 +301,11 @@ export function snapshotToNextImportantProps(s: WidgetSnapshot): NextImportantPr
       : null,
     count: s.itemCount,
     inlineLabel,
-    circularLabel: t('flow.filters.important').toLocaleUpperCase(),
+    circularLabel: upper(t('flow.filters.important'), s.locale),
     rectangular: s.nextEvent
-      ? { kicker: `${t('widgets.nextImportant').toLocaleUpperCase()} · ${s.nextEvent.time}`, title: s.nextEvent.title, sub: s.nextEvent.sub, deepLink: s.nextEvent.deepLink }
+      ? { kicker: `${kicker} · ${s.nextEvent.time}`, title: s.nextEvent.title, sub: s.nextEvent.sub, deepLink: s.nextEvent.deepLink }
       : top
-        ? { kicker: t('widgets.nextImportant').toLocaleUpperCase(), title: top.title, sub: top.timeLabel, deepLink: top.deepLink }
+        ? { kicker, title: top.title, sub: top.timeLabel, deepLink: top.deepLink }
         : null,
     emptyTitle: t('widgets.allClear'),
     signedOutTitle: t('widgets.signInHint'),
@@ -300,7 +316,7 @@ export function snapshotToNextImportantProps(s: WidgetSnapshot): NextImportantPr
 export function snapshotToTodayPrioritiesProps(s: WidgetSnapshot): TodayPrioritiesProps {
   return {
     signedIn: s.signedIn,
-    header: t('widgets.priorities', { count: s.priorities.length }).toLocaleUpperCase(),
+    header: upper(t('widgets.priorities', { count: s.priorities.length }), s.locale),
     timeLabel: s.generatedAtLabel,
     rows: s.priorities.map((p) => ({ id: p.id, title: p.title, time: p.timeLabel, tone: toneOf(p.badge), deepLink: p.deepLink })),
     emptyTitle: t('widgets.allClear'),
@@ -317,16 +333,16 @@ function splitHeadline(headline: string, highlight: number | null): { before: st
   return { before: headline.slice(0, idx), highlight: token, after: headline.slice(idx + token.length) };
 }
 
-function briefKicker(kind: BriefingKind | null): string {
+function briefKicker(kind: BriefingKind | null, locale: Locale): string {
   switch (kind) {
     case 'midday':
       return t('briefing.middayKicker');
     case 'evening':
       return t('today.eveningReady');
     case 'weekly':
-      return t('briefing.weeklySubtitle').toLocaleUpperCase();
+      return upper(t('briefing.weeklySubtitle'), locale);
     default:
-      return t('widgets.brief').toLocaleUpperCase();
+      return upper(t('widgets.brief'), locale);
   }
 }
 
@@ -336,16 +352,16 @@ export function snapshotToDailyBriefProps(s: WidgetSnapshot): DailyBriefProps {
   const [h = '', m = ''] = (s.nextEvent?.time ?? '').split(':');
   return {
     signedIn: s.signedIn,
-    briefKicker: briefKicker(s.briefingKind),
+    briefKicker: briefKicker(s.briefingKind, s.locale),
     headlineBefore: parts.before,
     highlight: parts.highlight,
     headlineAfter: parts.after,
     listenLabel: s.audioDurationMin && s.briefingKind ? t('today.listen', { minutes: s.audioDurationMin }) : null,
     briefingUrl: widgetSchemeUrl(s.briefingKind ? `${briefingPath}${briefingPath.includes('?') ? '&' : '?'}autoplay=1` : briefingPath),
-    nextEventKicker: t('widgets.nextEvent').toLocaleUpperCase(),
+    nextEventKicker: upper(t('widgets.nextEvent'), s.locale),
     nextEvent: s.nextEvent ? { hour: h, minute: m, title: s.nextEvent.title, sub: s.nextEvent.sub, deepLink: s.nextEvent.deepLink } : null,
     noEventLabel: t('empty.meetings'),
-    followUpKicker: t('widgets.openFollowUps').toLocaleUpperCase(),
+    followUpKicker: upper(t('widgets.openFollowUps'), s.locale),
     followUp: s.followUp ? { title: s.followUp.title, sub: s.followUp.sub, deepLink: s.followUp.deepLink } : null,
     emptyTitle: t('widgets.allClear'),
     signedOutTitle: t('widgets.signInHint'),
