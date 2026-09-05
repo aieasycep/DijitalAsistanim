@@ -257,7 +257,16 @@
     "emptyTitle": "Akış sakin.",
     "emptyBody": "Yeni bir gelişme olduğunda burada görürsün.",
     "emptyFilter": "Bu filtrede bir şey yok.",
-    "endOfFeed": "Hepsi bu kadar."
+    "endOfFeed": "Hepsi bu kadar.",
+    "meta": "{{count}} konu · {{important}} önemli",
+    "capture": "Ekle",
+    "learnedShowMore": "Öğrendim · Bunu daha sık göstereceğim",
+    "learnedStop": "Öğrendim · Bunu artık takip etmeyeceğim",
+    "mailNeedsAttentionHint": "Bugünkü mailler, altı başlıkta",
+    "mailIntelligenceKicker": "MAİL ZEKÂSI · BUGÜN",
+    "mailArrived": "mail geldi",
+    "mailNone": "Bugün dikkat gerektiren mail yok.",
+    "mailReadForYou": "{{read}} tanesini senin için okudum; {{low}} düşük öncelikli, {{info}} bilgilendirme."
   },
   "email": {
     "aiSummary": "AI ÖZETİ",
@@ -292,7 +301,20 @@
       "failed": "Gönderilemedi. Tekrar denemek ister misin?",
       "needsScope": "Göndermek için Gmail gönderme iznine ihtiyaç var.",
       "grantScope": "İzin Ver",
-      "aiNotice": "AI hiçbir maili sen onaylamadan göndermez."
+      "aiNotice": "AI hiçbir maili sen onaylamadan göndermez.",
+      "kicker": "YANIT TASLAĞI",
+      "recipient": "Kime",
+      "followUpTone": "Takip",
+      "toLine": "Kime: {{to}}",
+      "toneLine": "Ton: {{tone}}",
+      "draftKicker": "AI TASLAĞI · {{tone}}",
+      "generating": "Taslak hazırlanıyor…",
+      "editable": "Düzenlenebilir",
+      "placeholder": "Yanıtını yaz…",
+      "basedOn": "DAYANAK",
+      "discardTitle": "Düzenlemeler silinsin mi?",
+      "discardBody": "Taslakta yaptığın değişiklikler kaybolacak.",
+      "discard": "Vazgeç ve çık"
     },
     "waiting": {
       "title": "Senden Beklenenler",
@@ -301,7 +323,8 @@
       "soon": "Yakında",
       "expected": "Ne bekleniyor?",
       "waitingFor": "{{duration}}dır bekliyor",
-      "empty": "Senden cevap bekleyen kimse yok."
+      "empty": "Senden cevap bekleyen kimse yok.",
+      "subtitle": "{{count}} kişi cevabını bekliyor."
     },
     "followUp": {
       "title": "Takip Etmen Gerekenler",
@@ -314,8 +337,21 @@
       "close": "Takibi Kapat",
       "askInMeeting": "Toplantıda Sor",
       "closed": "Takip kapatıldı",
-      "empty": "Bekleyen takip yok."
-    }
+      "empty": "Bekleyen takip yok.",
+      "subtitle": "{{count}} gönderdiğin mail yanıtsız. En eskisi {{days}} gün.",
+      "snooze": "Ertele",
+      "snoozedUntil": "Takip ertelendi · {{date}}",
+      "allAnswered": "Gönderdiğin tüm maillere yanıt gelmiş.",
+      "muteHint": "Bir kişiyi “Takip etme” dersen, o kişiden bekleyen mailleri bir daha göstermem."
+    },
+    "toYou": "Sana",
+    "you": "Sen",
+    "threadCount": "{{count}} mail",
+    "noSummary": "Özet hazırlanamadı.",
+    "suggestedActions": "ÖNERİLEN AKSİYONLAR",
+    "followUpSection": "TAKİP",
+    "commitmentsSection": "TAAHHÜTLER",
+    "calendarNeeded": "Takvime eklemek için bağlı bir takvim gerekiyor."
   },
   "plan": {
     "title": "Plan",
@@ -341,10 +377,25 @@
       "ignore": "Yoksay",
       "ignored": "Çakışma yoksayıldı",
       "resolved": "Çakışma çözüldü",
-      "noSilentMove": "Toplantı sen onaylamadan taşınmaz."
+      "noSilentMove": "Toplantı sen onaylamadan taşınmaz.",
+      "overlap": "{{minutes}} dk çakışma",
+      "kicker": "TAKVİM ÇAKIŞMASI",
+      "headline": "Bu iki etkinlik çakışıyor.",
+      "howToResolve": "Nasıl çözelim?"
     },
     "planned": "Planlandı · {{time}}",
-    "timelineUpdated": "Zaman çizelgesi güncellendi"
+    "timelineUpdated": "Zaman çizelgesi güncellendi",
+    "previousWeek": "Önceki hafta",
+    "nextWeek": "Sonraki hafta",
+    "allDay": "Tüm gün",
+    "online": "Online",
+    "dueAt": "Son saat {{time}}",
+    "task": "Görev",
+    "commitment": "Taahhüt",
+    "conflicts": "ÇAKIŞMALAR",
+    "conflictCount": "{{count}} çakışma",
+    "prepBlockTitle": "Hazırlık · {{event}}",
+    "bufferBlockTitle": "Ara"
   },
   "meeting": {
     "prepTitle": "Toplantıya Hazırlan",
@@ -373,10 +424,21 @@
       "newCommitment": "Yeni Taahhüt",
       "save": "Kaydet",
       "nothing": "Takip gerekmiyor",
-      "saved": "Taahhüt kaydedildi"
+      "saved": "Taahhüt kaydedildi",
+      "kicker": "TOPLANTI SONRASI",
+      "proposals": "{{count}} YENİ TAAHHÜT",
+      "review": "Yeşil işaret “tespit edildi” demek; kayıt yalnızca onayınla olur.",
+      "recording": "dinleniyor",
+      "nothingDone": "Tamam, takip gerekmiyor.",
+      "noProposals": "Notunda bir taahhüt bulamadım. Kaydettim, takip gerekmiyor."
     },
     "empty": "Bu toplantı için ek bağlam bulamadım.",
-    "prepUnavailable": "Hazırlık notu şu an oluşturulamadı."
+    "prepUnavailable": "Hazırlık notu şu an oluşturulamadı.",
+    "talkingPointsTitle": "Kısa ve net: bunları konuş.",
+    "fromInvite": "Takvim davetinden çıkarıldı",
+    "preparing": "Hazırlık notu hazırlanıyor…",
+    "summaryTitle": "Nerede kalmıştınız?",
+    "started": "Başladı"
   },
   "commitments": {
     "title": "Taahhütler",
@@ -393,7 +455,25 @@
     "completed": "Tamamlandı",
     "postponed": "Ertelendi · {{date}}",
     "saidAfterMeeting": "Toplantı sonrası “{{quote}}” dedin.",
-    "quote": "“{{quote}}”"
+    "quote": "“{{quote}}”",
+    "commitment": "Taahhüt",
+    "from": "Kimden",
+    "subtitle": "{{open}} açık, {{late}} gecikmiş.",
+    "completedToast": "Taahhüt tamamlandı",
+    "postponeTitle": "Ne zamana erteleyelim?",
+    "postponeOptions": {
+      "tomorrow": "Yarın",
+      "threeDays": "3 gün sonra",
+      "week": "1 hafta sonra"
+    },
+    "statuses": {
+      "proposed": "ÖNERİLEN",
+      "overdue": "GECİKMİŞ",
+      "today": "BUGÜN",
+      "open": "AÇIK",
+      "completed": "TAMAMLANDI",
+      "postponed": "ERTELENDİ"
+    }
   },
   "assistant": {
     "title": "Asistan",
@@ -428,8 +508,17 @@
       "permissionBody": "Sesli soru sormak için mikrofona erişim gerekiyor.",
       "openSettings": "Ayarları Aç",
       "writeDetected": "Bunu yapmadan önce onayına sunuyorum.",
-      "transcribeFailed": "Sesi anlayamadım. Tekrar dener misin?"
-    }
+      "transcribeFailed": "Sesi anlayamadım. Tekrar dener misin?",
+      "typeInstead": "Yazarak sor",
+      "answer": "YANIT",
+      "noStt": "Ses tanıma şu an kullanılamıyor. Yazarak sorabilirsin."
+    },
+    "newChat": "Yeni sohbet",
+    "threads": "Sohbetler",
+    "noThreads": "Henüz sohbet yok.",
+    "openApproval": "Onayı Gör",
+    "errorRetry": "Yanıt alınamadı.",
+    "personScope": "{{name}} hakkında konuşuyoruz"
   },
   "search": {
     "placeholder": "Hafızada ara…",
@@ -446,6 +535,17 @@
     "mode": {
       "semantic": "Anlamsal arama",
       "fts": "Metin araması"
+    },
+    "suggestionsKicker": "BUNLARI SORABİLİRSİN",
+    "hint": "Mailler, takvim, notlar ve belgeler arasında doğal dille ara.",
+    "kinds": {
+      "email": "MAİLLER",
+      "event": "TAKVİM",
+      "person": "KİŞİLER",
+      "life_event": "KİŞİSEL",
+      "commitment": "TAAHHÜTLER",
+      "task": "GÖREVLER",
+      "memory": "HAFIZA"
     }
   },
   "capture": {
@@ -473,7 +573,13 @@
     "linkBlocked": "Bu bağlantı açılamıyor.",
     "quota": "Bugünlük ücretsiz yakalama hakkın doldu.",
     "sharedFrom": "Paylaşıldı",
-    "saved": "Kaydedildi"
+    "saved": "Kaydedildi",
+    "kicker": "EKLE",
+    "analyze": "Analiz Et",
+    "permissionDenied": "İzin verilmedi. Ayarlar’dan açabilirsin.",
+    "privacy": "İçerik yalnızca sen “Analiz Et” deyince işlenir; ham dosya cihazında kalır.",
+    "sourceLabel": "Yakalama",
+    "noDate": "Kaynakta tarih bulunamadı."
   },
   "reminder": {
     "title": "Ne zaman hatırlatayım?",
@@ -1091,7 +1197,43 @@
     "openTracking": "Takip sayfasını aç",
     "noTrackingLink": "Takip bağlantısı kaynakta yok.",
     "notInSource": "Kaynakta belirtilmemiş",
-    "neverPays": "Ödeme uygulama içinden yapılmaz; yalnızca kaynağa yönlendirilirsin."
+    "neverPays": "Ödeme uygulama içinden yapılmaz; yalnızca kaynağa yönlendirilirsin.",
+    "details": "DETAYLAR",
+    "markDone": "Tamamlandı",
+    "doneToast": "Tamamlandı olarak işaretlendi",
+    "fields": {
+      "carrier": "Kargo firması",
+      "trackingNumber": "Takip numarası",
+      "merchant": "Satıcı",
+      "deliveryWindow": "Teslimat aralığı",
+      "flightNumber": "Uçuş",
+      "airline": "Havayolu",
+      "route": "Rota",
+      "departureAt": "Kalkış",
+      "arrivalAt": "Varış",
+      "pnr": "PNR",
+      "venue": "Mekân",
+      "address": "Adres",
+      "reservationAt": "Rezervasyon saati",
+      "partySize": "Kişi sayısı",
+      "amount": "Tutar",
+      "dueAt": "Son ödeme",
+      "payee": "Alıcı",
+      "serviceName": "Servis",
+      "renewsAt": "Yenilenme",
+      "securityEvent": "Olay",
+      "device": "Cihaz",
+      "location": "Konum"
+    },
+    "actions": {
+      "track": "Takip Et",
+      "check_in": "Check-in",
+      "open_link": "Bağlantıyı Aç",
+      "pay": "Ödemeye Git",
+      "directions": "Yol Tarifi",
+      "remind": "Hatırlat",
+      "done": "Tamamlandı"
+    }
   },
   "errors": {
     "oauthFailed": "Bağlantı kurulamadı.",
@@ -1186,6 +1328,10 @@
     "selectChapter": "{{title}} bölümüne git",
     "timePicker": "{{label}} saatini seç",
     "remove": "Kaldır",
-    "page": "Sayfa {{current}} / {{total}}"
+    "page": "Sayfa {{current}} / {{total}}",
+    "showCategory": "Bu kategorideki mailleri göster",
+    "selectDay": "{{date}} gününü seç",
+    "record": "Kayda başla",
+    "stopRecording": "Kaydı bitir"
   }
 }

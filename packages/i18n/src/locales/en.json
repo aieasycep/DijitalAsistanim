@@ -257,7 +257,16 @@
     "emptyTitle": "The flow is quiet.",
     "emptyBody": "New developments will show up here.",
     "emptyFilter": "Nothing in this filter.",
-    "endOfFeed": "That's everything."
+    "endOfFeed": "That's everything.",
+    "meta": "{{count}} items · {{important}} important",
+    "capture": "Add",
+    "learnedShowMore": "Got it · I will show this more often",
+    "learnedStop": "Got it · I will stop following this",
+    "mailNeedsAttentionHint": "Today's mail in six buckets",
+    "mailIntelligenceKicker": "MAIL INTELLIGENCE · TODAY",
+    "mailArrived": "mails arrived",
+    "mailNone": "No mail needs your attention today.",
+    "mailReadForYou": "I read {{read}} of them for you; {{low}} low priority, {{info}} informational."
   },
   "email": {
     "aiSummary": "AI SUMMARY",
@@ -292,7 +301,20 @@
       "failed": "Couldn't send. Try again?",
       "needsScope": "Sending needs the Gmail send permission.",
       "grantScope": "Grant permission",
-      "aiNotice": "The AI never sends an email without your approval."
+      "aiNotice": "The AI never sends an email without your approval.",
+      "kicker": "REPLY DRAFT",
+      "recipient": "To",
+      "followUpTone": "Follow-up",
+      "toLine": "To: {{to}}",
+      "toneLine": "Tone: {{tone}}",
+      "draftKicker": "AI DRAFT · {{tone}}",
+      "generating": "Drafting…",
+      "editable": "Editable",
+      "placeholder": "Write your reply…",
+      "basedOn": "BASED ON",
+      "discardTitle": "Discard your edits?",
+      "discardBody": "The changes you made to the draft will be lost.",
+      "discard": "Discard and leave"
     },
     "waiting": {
       "title": "Waiting for you",
@@ -301,7 +323,8 @@
       "soon": "Soon",
       "expected": "What's expected?",
       "waitingFor": "waiting for {{duration}}",
-      "empty": "Nobody is waiting on you."
+      "empty": "Nobody is waiting on you.",
+      "subtitle": "{{count}} people are waiting for your reply."
     },
     "followUp": {
       "title": "To follow up",
@@ -314,8 +337,21 @@
       "close": "Close follow-up",
       "askInMeeting": "Ask in meeting",
       "closed": "Follow-up closed",
-      "empty": "No pending follow-ups."
-    }
+      "empty": "No pending follow-ups.",
+      "subtitle": "{{count}} of your sent mails are unanswered. The oldest is {{days}} days.",
+      "snooze": "Snooze",
+      "snoozedUntil": "Follow-up snoozed · {{date}}",
+      "allAnswered": "Every mail you sent has been answered.",
+      "muteHint": "If you say “stop following” for a person, I will no longer show mails waiting on them."
+    },
+    "toYou": "To you",
+    "you": "You",
+    "threadCount": "{{count}} mails",
+    "noSummary": "The summary could not be prepared.",
+    "suggestedActions": "SUGGESTED ACTIONS",
+    "followUpSection": "FOLLOW-UP",
+    "commitmentsSection": "COMMITMENTS",
+    "calendarNeeded": "Connect a calendar to add this event."
   },
   "plan": {
     "title": "Plan",
@@ -341,10 +377,25 @@
       "ignore": "Ignore",
       "ignored": "Conflict ignored",
       "resolved": "Conflict resolved",
-      "noSilentMove": "Meetings are never moved without your approval."
+      "noSilentMove": "Meetings are never moved without your approval.",
+      "overlap": "{{minutes}} min overlap",
+      "kicker": "CALENDAR CONFLICT",
+      "headline": "These two events overlap.",
+      "howToResolve": "How should we resolve it?"
     },
     "planned": "Scheduled · {{time}}",
-    "timelineUpdated": "Timeline updated"
+    "timelineUpdated": "Timeline updated",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "allDay": "All day",
+    "online": "Online",
+    "dueAt": "Due {{time}}",
+    "task": "Task",
+    "commitment": "Commitment",
+    "conflicts": "CONFLICTS",
+    "conflictCount": "{{count}} conflicts",
+    "prepBlockTitle": "Prep · {{event}}",
+    "bufferBlockTitle": "Buffer"
   },
   "meeting": {
     "prepTitle": "Prepare for meeting",
@@ -373,10 +424,21 @@
       "newCommitment": "New commitment",
       "save": "Save",
       "nothing": "Nothing to follow up",
-      "saved": "Commitment saved"
+      "saved": "Commitment saved",
+      "kicker": "AFTER THE MEETING",
+      "proposals": "{{count}} NEW COMMITMENTS",
+      "review": "The green check means “detected”; nothing is saved until you approve.",
+      "recording": "listening",
+      "nothingDone": "Okay, no follow-up needed.",
+      "noProposals": "I found no commitment in your note. Saved, nothing to follow up."
     },
     "empty": "I couldn't find extra context for this meeting.",
-    "prepUnavailable": "The prep note couldn't be generated right now."
+    "prepUnavailable": "The prep note couldn't be generated right now.",
+    "talkingPointsTitle": "Short and clear: talk about these.",
+    "fromInvite": "Extracted from the calendar invite",
+    "preparing": "Preparing your prep note…",
+    "summaryTitle": "Where did you leave off?",
+    "started": "Started"
   },
   "commitments": {
     "title": "Commitments",
@@ -393,7 +455,25 @@
     "completed": "Done",
     "postponed": "Postponed · {{date}}",
     "saidAfterMeeting": "After the meeting you said “{{quote}}”.",
-    "quote": "“{{quote}}”"
+    "quote": "“{{quote}}”",
+    "commitment": "Commitment",
+    "from": "From",
+    "subtitle": "{{open}} open, {{late}} overdue.",
+    "completedToast": "Commitment completed",
+    "postponeTitle": "Postpone until when?",
+    "postponeOptions": {
+      "tomorrow": "Tomorrow",
+      "threeDays": "In 3 days",
+      "week": "In a week"
+    },
+    "statuses": {
+      "proposed": "SUGGESTED",
+      "overdue": "OVERDUE",
+      "today": "TODAY",
+      "open": "OPEN",
+      "completed": "DONE",
+      "postponed": "POSTPONED"
+    }
   },
   "assistant": {
     "title": "Assistant",
@@ -428,8 +508,17 @@
       "permissionBody": "Asking by voice needs microphone access.",
       "openSettings": "Open settings",
       "writeDetected": "I'll ask for your approval before doing this.",
-      "transcribeFailed": "I couldn't understand that. Try again?"
-    }
+      "transcribeFailed": "I couldn't understand that. Try again?",
+      "typeInstead": "Type instead",
+      "answer": "ANSWER",
+      "noStt": "Speech recognition is unavailable right now. You can type your question."
+    },
+    "newChat": "New chat",
+    "threads": "Chats",
+    "noThreads": "No chats yet.",
+    "openApproval": "See approval",
+    "errorRetry": "No answer received.",
+    "personScope": "Talking about {{name}}"
   },
   "search": {
     "placeholder": "Search memory…",
@@ -446,6 +535,17 @@
     "mode": {
       "semantic": "Semantic search",
       "fts": "Text search"
+    },
+    "suggestionsKicker": "YOU CAN ASK",
+    "hint": "Search mail, calendar, notes and documents in plain language.",
+    "kinds": {
+      "email": "MAIL",
+      "event": "CALENDAR",
+      "person": "PEOPLE",
+      "life_event": "PERSONAL",
+      "commitment": "COMMITMENTS",
+      "task": "TASKS",
+      "memory": "MEMORY"
     }
   },
   "capture": {
@@ -473,7 +573,13 @@
     "linkBlocked": "This link can't be opened.",
     "quota": "You've used today's free captures.",
     "sharedFrom": "Shared",
-    "saved": "Saved"
+    "saved": "Saved",
+    "kicker": "ADD",
+    "analyze": "Analyze",
+    "permissionDenied": "Permission not granted. You can enable it in Settings.",
+    "privacy": "Content is processed only when you tap “Analyze”; the raw file stays on your device.",
+    "sourceLabel": "Capture",
+    "noDate": "No date found in the source."
   },
   "reminder": {
     "title": "When should I remind you?",
@@ -1095,7 +1201,43 @@
     "openTracking": "Open tracking page",
     "noTrackingLink": "No tracking link in the source.",
     "notInSource": "Not stated in the source",
-    "neverPays": "Payments are never made in the app; you're only taken to the source."
+    "neverPays": "Payments are never made in the app; you're only taken to the source.",
+    "details": "DETAILS",
+    "markDone": "Done",
+    "doneToast": "Marked as done",
+    "fields": {
+      "carrier": "Carrier",
+      "trackingNumber": "Tracking number",
+      "merchant": "Merchant",
+      "deliveryWindow": "Delivery window",
+      "flightNumber": "Flight",
+      "airline": "Airline",
+      "route": "Route",
+      "departureAt": "Departure",
+      "arrivalAt": "Arrival",
+      "pnr": "PNR",
+      "venue": "Venue",
+      "address": "Address",
+      "reservationAt": "Reservation time",
+      "partySize": "Party size",
+      "amount": "Amount",
+      "dueAt": "Due date",
+      "payee": "Payee",
+      "serviceName": "Service",
+      "renewsAt": "Renews on",
+      "securityEvent": "Event",
+      "device": "Device",
+      "location": "Location"
+    },
+    "actions": {
+      "track": "Track",
+      "check_in": "Check in",
+      "open_link": "Open link",
+      "pay": "Go to payment",
+      "directions": "Directions",
+      "remind": "Remind me",
+      "done": "Done"
+    }
   },
   "errors": {
     "oauthFailed": "Couldn't connect.",
@@ -1190,6 +1332,10 @@
     "selectChapter": "Go to chapter {{title}}",
     "timePicker": "Choose the {{label}} time",
     "remove": "Remove",
-    "page": "Page {{current}} of {{total}}"
+    "page": "Page {{current}} of {{total}}",
+    "showCategory": "Show the mails in this category",
+    "selectDay": "Select {{date}}",
+    "record": "Start recording",
+    "stopRecording": "Stop recording"
   }
 }

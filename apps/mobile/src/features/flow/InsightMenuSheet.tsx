@@ -37,13 +37,13 @@ export function InsightMenuSheet({ insight, onClose }: InsightMenuSheetProps) {
       }),
     onSuccess: (_, input) => {
       toast.show({
-        message:
-          input.kind === 'show_more' ? t('today.dismissedToast') : t('today.dismissedToast'),
+        message: input.kind === 'show_more' ? t('flow.learnedShowMore') : t('flow.learnedStop'),
         icon: 'learning',
         iconTone: 'primary',
       });
     },
-    onError: (e) => toast.show({ message: describeError(e, t).title, icon: 'conflict', iconTone: 'critical' }),
+    onError: (e) =>
+      toast.show({ message: describeError(e, t).title, icon: 'conflict', iconTone: 'critical' }),
   });
 
   const makeVip = useMutation({
@@ -52,14 +52,22 @@ export function InsightMenuSheet({ insight, onClose }: InsightMenuSheetProps) {
       if (contactId) {
         await ds.people.setVip(contactId, true);
       } else {
-        await ds.people.addVip({ displayName: target.source.person ?? target.title, notifyAlways: true });
+        await ds.people.addVip({
+          displayName: target.source.person ?? target.title,
+          notifyAlways: true,
+        });
       }
     },
     onSuccess: async (_, target) => {
       await queryClient.invalidateQueries({ queryKey: ['vips'] });
-      toast.show({ message: t('today.vipToast', { name: target.source.person ?? '' }), icon: 'vip', iconTone: 'primary' });
+      toast.show({
+        message: t('today.vipToast', { name: target.source.person ?? '' }),
+        icon: 'vip',
+        iconTone: 'primary',
+      });
     },
-    onError: (e) => toast.show({ message: describeError(e, t).title, icon: 'conflict', iconTone: 'critical' }),
+    onError: (e) =>
+      toast.show({ message: describeError(e, t).title, icon: 'conflict', iconTone: 'critical' }),
   });
 
   const run = useCallback(
