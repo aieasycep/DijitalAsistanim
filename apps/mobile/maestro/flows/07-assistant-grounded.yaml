@@ -1,0 +1,37 @@
+# Flow H — Assistant → question → grounded answer → source open
+appId: ${APP_ID}
+tags: [critical, flow-h]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- tapOn:
+    text: 'Asistan'
+- assertVisible:
+    id: 'assistant-screen'
+- assertVisible:
+    text: 'ÖNERİLEN SORULAR'
+- tapOn:
+    id: 'assistant-suggestion-0'
+- extendedWaitUntil:
+    visible:
+      id: 'assistant-source-0'
+    timeout: 30000
+- assertVisible:
+    text: 'KAYNAKLAR'
+- tapOn:
+    id: 'assistant-source-0'
+- extendedWaitUntil:
+    visible:
+      id: 'email-screen'
+    timeout: 15000
+- back
+- tapOn:
+    id: 'assistant-input'
+- inputText: 'Mehmet ile en son ne konuştuk?'
+- tapOn:
+    id: 'assistant-send'
+- extendedWaitUntil:
+    visible:
+      text: '.*Mehmet.*'
+    timeout: 30000
+- assertVisible:
+    id: 'assistant-card-0'

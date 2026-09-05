@@ -1,0 +1,36 @@
+# Flow K — Approval Center → Edit → Approve → execute
+appId: ${APP_ID}
+tags: [critical, flow-k]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- tapOn:
+    id: 'today-approvals'
+- assertVisible:
+    text: 'Onay Bekleyenler'
+- tapOn:
+    id: 'approval-00000000-0000-4000-8000-000000003302'
+- assertVisible:
+    text: 'Takvim etkinliği oluştur'
+- tapOn:
+    id: 'approval-edit'
+- tapOn:
+    id: 'approval-edit-field-title'
+- eraseText: 60
+- inputText: 'Girişim Programı başvurusu (son kontrol)'
+- tapOn:
+    id: 'approval-edit-save'
+- assertVisible:
+    text: 'Değişiklikler kaydedildi'
+- assertVisible:
+    text: 'Girişim Programı başvurusu (son kontrol)'
+- tapOn:
+    id: 'approval-approve'
+- extendedWaitUntil:
+    visible:
+      text: 'Tamamlandı'
+    timeout: 20000
+- back
+- tapOn:
+    text: 'Plan'
+- assertVisible:
+    text: 'Girişim Programı başvurusu (son kontrol)'

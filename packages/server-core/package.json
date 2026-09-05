@@ -1,0 +1,28 @@
+{
+  "name": "@da/server-core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runtime-agnostic backend logic for Dijital Asistan (runs in Deno Edge Functions and Node tests): priority engine, ingestion pipeline, AI providers, extraction, entitlements, approvals, crypto, provider adapters.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@da/domain": "workspace:*",
+    "@da/validation": "workspace:*",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "typescript": "5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

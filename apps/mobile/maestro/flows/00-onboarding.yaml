@@ -1,0 +1,45 @@
+# Flow A — Install → Sign In → Connect Gmail/demo → Connect Calendar/demo → Permissions → First Analysis → Aha → Notification Permission → Today
+appId: ${APP_ID}
+tags: [critical, flow-a]
+---
+- launchApp:
+    clearState: true
+- assertVisible:
+    id: 'welcome-page-0'
+- assertVisible:
+    text: 'Dijital hayatın artık tek yerde.'
+- tapOn:
+    id: 'welcome-next'
+- assertVisible:
+    text: 'Gürültüyü azalt.'
+- tapOn:
+    id: 'welcome-start'
+- assertVisible:
+    id: 'auth-apple'
+- assertVisible:
+    id: 'auth-google'
+- tapOn:
+    id: 'auth-email'
+- tapOn:
+    id: 'auth-email-input'
+- inputText: 'yunus@example.com'
+- tapOn:
+    id: 'auth-email-submit'
+- tapOn:
+    id: 'auth-otp-input'
+- inputText: '123456'
+- tapOn:
+    id: 'auth-otp-submit'
+- extendedWaitUntil:
+    visible:
+      text: 'Dijital hayatını bağla.'
+    timeout: 15000
+- runFlow: ../subflows/complete-onboarding.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'today-screen'
+    timeout: 30000
+- assertVisible:
+    text: 'Günaydın, Yunus'
+- assertVisible:
+    id: 'today-hero-cta'

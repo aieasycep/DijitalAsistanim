@@ -1,0 +1,43 @@
+{
+  "name": "@da/ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "React Native component library for Dijital Asistan — theme-aware primitives and card patterns from the Claude Design system.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo 'ui components are tested from apps/mobile (jest-expo)'"
+  },
+  "peerDependencies": {
+    "expo-haptics": "*",
+    "expo-linear-gradient": "*",
+    "react": "*",
+    "react-native": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-reanimated": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-svg": "*"
+  },
+  "dependencies": {
+    "@da/design-tokens": "workspace:*",
+    "@da/domain": "workspace:*",
+    "@da/i18n": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.0",
+    "expo-haptics": "~57.0.2",
+    "expo-linear-gradient": "~57.0.1",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-reanimated": "4.5.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-svg": "15.15.4",
+    "typescript": "5.9.3"
+  }
+}

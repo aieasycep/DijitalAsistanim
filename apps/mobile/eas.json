@@ -1,0 +1,59 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote",
+    "promptToConfigurePushNotifications": false
+  },
+  "build": {
+    "base": {
+      "node": "22.12.0",
+      "pnpm": "10.33.0",
+      "env": {
+        "EXPO_PUBLIC_DATA_MODE": "supabase"
+      }
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "env": {
+        "APP_ENV": "development",
+        "EXPO_PUBLIC_DATA_MODE": "demo"
+      },
+      "ios": { "simulator": true },
+      "android": { "buildType": "apk" }
+    },
+    "development-device": {
+      "extends": "development",
+      "ios": { "simulator": false }
+    },
+    "preview": {
+      "extends": "base",
+      "distribution": "internal",
+      "channel": "preview",
+      "env": { "APP_ENV": "preview" },
+      "android": { "buildType": "apk" }
+    },
+    "production": {
+      "extends": "base",
+      "channel": "production",
+      "autoIncrement": true,
+      "env": { "APP_ENV": "production" },
+      "ios": { "resourceClass": "m-medium" },
+      "android": { "buildType": "app-bundle" }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "",
+        "appleTeamId": ""
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
+      }
+    }
+  }
+}

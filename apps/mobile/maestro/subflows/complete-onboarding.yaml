@@ -1,0 +1,68 @@
+appId: ${APP_ID}
+---
+# Connect (demo) → calendar permission → briefing prefs → personalization → VIP → analysis → aha → notifications
+- tapOn:
+    id: 'connect-card-google'
+- extendedWaitUntil:
+    visible:
+      text: 'Bağlandı'
+    timeout: 15000
+- tapOn:
+    id: 'connect-card-apple'
+- extendedWaitUntil:
+    visible:
+      id: 'connect-continue'
+    timeout: 15000
+- tapOn:
+    id: 'connect-continue'
+- runFlow:
+    when:
+      visible:
+        id: 'calperm-cta'
+    commands:
+      - tapOn:
+          id: 'calperm-cta'
+      - runFlow:
+          when:
+            visible:
+              text: 'Allow'
+          commands:
+            - tapOn: 'Allow'
+      - runFlow:
+          when:
+            visible:
+              text: 'İzin Ver'
+          commands:
+            - tapOn: 'İzin Ver'
+- runFlow:
+    when:
+      visible:
+        id: 'calperm-skip'
+    commands:
+      - tapOn:
+          id: 'calperm-skip'
+- tapOn:
+    id: 'bprefs-continue'
+- tapOn:
+    id: 'interest-work'
+- tapOn:
+    id: 'interest-deadlines'
+- tapOn:
+    id: 'personalization-continue'
+- tapOn:
+    id: 'vip-skip'
+- extendedWaitUntil:
+    visible:
+      id: 'aha-cta'
+    timeout: 45000
+- assertVisible:
+    text: 'Hazır.'
+- tapOn:
+    id: 'aha-cta'
+- runFlow:
+    when:
+      visible:
+        id: 'notif-later'
+    commands:
+      - tapOn:
+          id: 'notif-later'

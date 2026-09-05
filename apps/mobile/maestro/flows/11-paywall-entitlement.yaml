@@ -1,0 +1,36 @@
+# Flow L — Paywall → product → purchase/mock purchase → entitlement changes
+appId: ${APP_ID}
+tags: [critical, flow-l]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- tapOn:
+    id: 'today-avatar'
+- tapOn:
+    id: 'settings-row-subscription'
+- tapOn:
+    id: 'subscription-upgrade'
+- assertVisible:
+    id: 'paywall-screen'
+- assertVisible:
+    text: "Dijital Asistan'ın tamamını aç."
+- assertVisible:
+    id: 'paywall-free'
+- tapOn:
+    id: 'paywall-plan-annual'
+- assertVisible:
+    text: 'En Avantajlı'
+- tapOn:
+    id: 'paywall-cta'
+- extendedWaitUntil:
+    visible:
+      text: 'Pro açıldı.*'
+    timeout: 20000
+- back
+- assertVisible:
+    text: 'Pro aktif'
+- tapOn:
+    id: 'paywall-restore'
+- extendedWaitUntil:
+    visible:
+      text: '.*geri yükle.*'
+    timeout: 15000
