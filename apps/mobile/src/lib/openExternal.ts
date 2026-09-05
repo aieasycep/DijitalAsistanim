@@ -23,9 +23,14 @@ export async function openExternal(url: string): Promise<boolean> {
 }
 
 /** Opens the platform mail client on a specific message when a web URL is known, else the provider inbox. */
-export function providerMailUrl(webUrl: string | null | undefined, provider: 'gmail' | 'outlook'): string {
+export function providerMailUrl(
+  webUrl: string | null | undefined,
+  provider: 'gmail' | 'outlook',
+): string {
   if (webUrl) return webUrl;
-  return provider === 'gmail' ? 'https://mail.google.com/mail/u/0/#inbox' : 'https://outlook.live.com/mail/0/';
+  return provider === 'gmail'
+    ? 'https://mail.google.com/mail/u/0/#inbox'
+    : 'https://outlook.live.com/mail/0/';
 }
 
 /** Deep link into the native maps app for a location string. */

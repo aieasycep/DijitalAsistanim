@@ -11,7 +11,11 @@ export interface SectionKickerProps {
 
 /** Section kicker 12/600 +8% caps, 4px inset, optional count meta (design: "ÖNCELİKLERİN · 5 konu"). */
 export function SectionKicker({ label, meta, tone = 'default', style }: SectionKickerProps) {
-  const toneMap = { default: 'tertiary', onGradient: 'onGradientMuted', primary: 'primary' } as const;
+  const toneMap = {
+    default: 'tertiary',
+    onGradient: 'onGradientMuted',
+    primary: 'primary',
+  } as const;
   return (
     <View style={[styles.row, style]} accessibilityRole="header">
       <Text variant="kicker" tone={toneMap[tone]}>
@@ -27,5 +31,11 @@ export function SectionKicker({ label, meta, tone = 'default', style }: SectionK
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 4, paddingTop: 4 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    paddingTop: 4,
+  },
 });

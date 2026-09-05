@@ -44,7 +44,16 @@ import type {
   TodayResponse,
   TranscribeResponse,
 } from './api';
-import type { AndroidNotificationItem, Briefing, CalendarEvent, Capture, ConnectedAccount, DataExportRequest, ISODate, UUID } from './entities';
+import type {
+  AndroidNotificationItem,
+  Briefing,
+  CalendarEvent,
+  Capture,
+  ConnectedAccount,
+  DataExportRequest,
+  ISODate,
+  UUID,
+} from './entities';
 
 export interface FunctionContract<Req, Res> {
   method: 'GET' | 'POST';
@@ -54,16 +63,25 @@ export interface FunctionContract<Req, Res> {
   _res?: Res;
 }
 
-const fn = <Req, Res>(method: 'GET' | 'POST', verifyJwt = true): FunctionContract<Req, Res> => ({ method, verifyJwt });
+const fn = <Req, Res>(method: 'GET' | 'POST', verifyJwt = true): FunctionContract<Req, Res> => ({
+  method,
+  verifyJwt,
+});
 
 export const EDGE_FUNCTIONS = {
   // OAuth / accounts
   'oauth-start': fn<OAuthStartRequest, OAuthStartResponse>('POST'),
   'oauth-google-callback': fn<{ code: string; state: string }, { redirect: string }>('GET', false),
-  'oauth-microsoft-callback': fn<{ code: string; state: string }, { redirect: string }>('GET', false),
+  'oauth-microsoft-callback': fn<{ code: string; state: string }, { redirect: string }>(
+    'GET',
+    false,
+  ),
   'accounts-disconnect': fn<{ accountId: UUID }, { ok: true; revoked: boolean }>('POST'),
   'accounts-sync-now': fn<SyncNowRequest, { queued: number }>('POST'),
-  'device-calendar-upsert': fn<{ accountId: UUID; events: Omit<CalendarEvent, 'userId' | 'createdAt' | 'updatedAt' | 'id'>[] }, { upserted: number }>('POST'),
+  'device-calendar-upsert': fn<
+    { accountId: UUID; events: Omit<CalendarEvent, 'userId' | 'createdAt' | 'updatedAt' | 'id'>[] },
+    { upserted: number }
+  >('POST'),
   // Onboarding
   'initial-analysis-start': fn<InitialAnalysisStartRequest, InitialAnalysisStatusResponse>('POST'),
   'initial-analysis-status': fn<Record<string, never>, InitialAnalysisStatusResponse>('GET'),
@@ -86,7 +104,9 @@ export const EDGE_FUNCTIONS = {
   'reminders-suggest': fn<SmartReminderSuggestRequest, SmartReminderSuggestResponse>('POST'),
   // Assistant & search
   'assistant-ask': fn<AssistantAskRequest, AssistantAskResponse>('POST'),
-  'assistant-suggested-questions': fn<{ contactId?: UUID | null }, SuggestedQuestionsResponse>('GET'),
+  'assistant-suggested-questions': fn<{ contactId?: UUID | null }, SuggestedQuestionsResponse>(
+    'GET',
+  ),
   'assistant-transcribe': fn<FormData, TranscribeResponse | { provider: 'device' }>('POST'),
   search: fn<SearchRequest, SearchResponse>('POST'),
   // Capture & people
@@ -100,23 +120,52 @@ export const EDGE_FUNCTIONS = {
   entitlement: fn<Record<string, never>, EntitlementResponse>('GET'),
   'billing-link-revenuecat': fn<{ appUserId: string }, { ok: true }>('POST'),
   'referral-status': fn<Record<string, never>, ReferralStatusResponse>('GET'),
-  'referral-redeem': fn<ReferralRedeemRequest, { ok: boolean; reason?: string; bonusDays?: number }>('POST'),
+  'referral-redeem': fn<
+    ReferralRedeemRequest,
+    { ok: boolean; reason?: string; bonusDays?: number }
+  >('POST'),
   // Privacy
   'privacy-export-request': fn<Record<string, never>, DataExportRequest>('POST'),
   'privacy-export-status': fn<{ id?: UUID }, ExportStatusResponse | null>('GET'),
   'privacy-delete-account': fn<DeleteAccountRequest, { ok: true }>('POST'),
   // Android
-  'android-notifications-ingest': fn<{ items: Omit<AndroidNotificationItem, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'analysis' | 'insightId'>[] }, { accepted: number }>('POST'),
+  'android-notifications-ingest': fn<
+    {
+      items: Omit<
+        AndroidNotificationItem,
+        'id' | 'userId' | 'createdAt' | 'updatedAt' | 'analysis' | 'insightId'
+      >[];
+    },
+    { accepted: number }
+  >('POST'),
   // Webhooks & cron (no user JWT; verified by signature / secret)
   'webhook-gmail': fn<unknown, { ok: true }>('POST', false),
   'webhook-microsoft': fn<unknown, { ok: true }>('POST', false),
   'webhook-revenuecat': fn<unknown, { ok: true }>('POST', false),
-  'cron-dispatch': fn<{ job: 'briefings' | 'sync-poll' | 'reminders' | 'followups' | 'renew-subscriptions' | 'retention' | 'exports' | 'backfill'; date?: ISODate }, { ok: true; processed: number }>('POST', false),
+  'cron-dispatch': fn<
+    {
+      job:
+        | 'briefings'
+        | 'sync-poll'
+        | 'reminders'
+        | 'followups'
+        | 'renew-subscriptions'
+        | 'retention'
+        | 'exports'
+        | 'backfill';
+      date?: ISODate;
+    },
+    { ok: true; processed: number }
+  >('POST', false),
 } as const;
 
 export type EdgeFunctionName = keyof typeof EDGE_FUNCTIONS;
-export type EdgeFunctionRequest<N extends EdgeFunctionName> = NonNullable<(typeof EDGE_FUNCTIONS)[N]['_req']>;
-export type EdgeFunctionResponse<N extends EdgeFunctionName> = NonNullable<(typeof EDGE_FUNCTIONS)[N]['_res']>;
+export type EdgeFunctionRequest<N extends EdgeFunctionName> = NonNullable<
+  (typeof EDGE_FUNCTIONS)[N]['_req']
+>;
+export type EdgeFunctionResponse<N extends EdgeFunctionName> = NonNullable<
+  (typeof EDGE_FUNCTIONS)[N]['_res']
+>;
 
 /** Accounts / provider → ConnectedAccount typed helper re-export for adapters. */
 export type ConnectedAccountRow = ConnectedAccount;

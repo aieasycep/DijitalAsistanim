@@ -1,7 +1,8 @@
 /**
  * Structured logger with secret/PII redaction. Never log email bodies, tokens, or free text.
  */
-const SECRET_KEYS = /token|secret|password|authorization|apikey|api_key|cookie|refresh|access|bodytext|body_text|content|snippet|subject|draft/i;
+const SECRET_KEYS =
+  /token|secret|password|authorization|apikey|api_key|cookie|refresh|access|bodytext|body_text|content|snippet|subject|draft/i;
 
 export function redact(value: unknown, depth = 0): unknown {
   if (depth > 4) return '[depth]';
@@ -23,7 +24,12 @@ export function redact(value: unknown, depth = 0): unknown {
 type Level = 'debug' | 'info' | 'warn' | 'error';
 
 function emit(level: Level, message: string, meta?: Record<string, unknown>): void {
-  const line = JSON.stringify({ level, message, ts: new Date().toISOString(), ...(meta ? (redact(meta) as Record<string, unknown>) : {}) });
+  const line = JSON.stringify({
+    level,
+    message,
+    ts: new Date().toISOString(),
+    ...(meta ? (redact(meta) as Record<string, unknown>) : {}),
+  });
   if (level === 'error') console.error(line);
   else if (level === 'warn') console.warn(line);
   else console.info(line);

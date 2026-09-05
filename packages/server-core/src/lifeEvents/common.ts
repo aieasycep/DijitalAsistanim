@@ -52,6 +52,10 @@ export interface Ctx {
   /** Lowercased subject + first 400 chars of the body. */
   head: string;
   subjectLower: string;
+  /** Lowercased body only (subject excluded) — replies are judged on what the sender actually wrote. */
+  bodyLower: string;
+  /** Subject starts with Re:/Ynt:/Fwd:/İlt: — the subject line then belongs to an earlier mail. */
+  isReply: boolean;
   from: { name: string | null; email: string };
   senderDomain: string;
   senderOrg: string | null;
@@ -204,6 +208,8 @@ export function buildContext(input: { subject: string; from: { name?: string | n
     lower,
     head: lower.slice(0, subject.length + 1 + HEAD_LEN),
     subjectLower: lower.slice(0, subject.length),
+    bodyLower: lower.slice(subject.length + 1),
+    isReply: /^(?:\s*(?:re|ynt|fwd?|fw|ilt|yan|cevap|aw|wg)\s*:\s*)+/iu.test(subject),
     from: { name: input.from.name ?? null, email: input.from.email },
     senderDomain: emailDomain(input.from.email),
     senderOrg: senderOrgName(input.from),
@@ -288,7 +294,8 @@ export function pickAmount(lower: string, amounts: AmountHit[], labels: RegExp):
 }
 
 export function formatAmount(amount: number, currency: string, locale: Locale): string {
-  const fmt = new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  const fractional = Math.abs(amount - Math.round(amount)) > 1e-9;
+  const fmt = new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', { minimumFractionDigits: fractional ? 2 : 0, maximumFractionDigits: 2 });
   const num = fmt.format(amount);
   if (currency === 'TRY') return `${num} TL`;
   return `${num} ${currency}`;

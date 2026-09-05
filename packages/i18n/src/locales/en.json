@@ -383,11 +383,7 @@
       "processing": "Understanding…",
       "tapToSpeak": "Tap to speak",
       "release": "Release to finish",
-      "examples": [
-        "What's on today?",
-        "Do I need to reply to Mehmet?",
-        "Read my briefing."
-      ],
+      "examples": ["What's on today?", "Do I need to reply to Mehmet?", "Read my briefing."],
       "permissionTitle": "Microphone permission needed",
       "permissionBody": "Asking by voice needs microphone access.",
       "openSettings": "Open settings",

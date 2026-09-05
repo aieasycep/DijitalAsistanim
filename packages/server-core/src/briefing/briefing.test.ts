@@ -292,6 +292,7 @@ describe('briefing · candidates', () => {
     expect(c.sections.map((s) => s.section)).toEqual(['changes', 'rest_of_day']);
     expect(c.sections[0]?.items.map((i) => i.entityId)).toEqual(['e7']);
     expect(c.sections[1]?.items.map((i) => [i.title, i.meta])).toEqual([
+      ['Trendyol siparişin bugün geliyor.', 'Bugün'],
       ['Mehmet ile müşteri toplantısı', '14:30 · 60 dk · Ofis'],
       ['Ürün gözden geçirme', '16:00 · 30 dk · Online'],
       ["Ahmet senden bugün 17:00'ye kadar revize teklif bekliyor.", 'Bugün 17:00'],
@@ -337,7 +338,8 @@ describe('briefing · fallback composition', () => {
     expect(b.counts).toMatchObject({ importantEmails: 3, events: 3, followUps: 2, deadlines: 3, total: 5, analyzedEmails: 46, analyzedCalendars: 1, analyzedDays: 3 });
     expect(b.mood).toBe('Bugün dengeli bir günün var.');
     expect(b.narrative.startsWith('Öğlene kadar toplantın bulunmuyor. Saat 14:30\'da Mehmet ile müşteri toplantısı var.')).toBe(true);
-    expect(b.narrative).toContain("Toplantı öncesinde Mehmet Yılmaz'dan gelen son maile bakman faydalı olabilir.");
+    expect(b.narrative).toContain("Toplantı öncesinde Mehmet Yılmaz'a gönderdiğin son maile bakman faydalı olabilir.");
+    expect(b.narrative).toContain("En acili: Ahmet senden bugün 17:00'ye kadar revize teklif bekliyor.");
     expect(b.narrative).toContain('Gelen 46 mail arasında 3 konu dikkat gerektiriyor.');
     expect(b.narrative.split(/(?<=\.)\s/).length).toBeLessThanOrEqual(5);
     expect(b.audio?.provider).toBe('device_tts');
@@ -413,7 +415,9 @@ describe('briefing · fallback composition', () => {
     expect(turkishAblative('Mehmet Yılmaz')).toBe("Mehmet Yılmaz'dan");
     expect(turkishAblative('Selin Kaya')).toBe("Selin Kaya'dan");
     expect(turkishAblative('Ahmet')).toBe("Ahmet'ten");
-    expect(ttsFriendly('Trendyol siparişin 14:00–18:00 arasında geliyor · %8 indirim · TK2412 İstanbul → Antalya, saat 09:15')).toBe('Trendyol siparişin 14:00 ile 18:00 arası arasında geliyor, yüzde 8 indirim, TK2412 İstanbul - Antalya, saat 09:15');
+    expect(ttsFriendly('Trendyol siparişin 14:00–18:00 arasında geliyor · %8 indirim · TK2412 İstanbul → Antalya, saat 09:15')).toBe('Trendyol siparişin 14:00 ile 18:00 arasında geliyor, yüzde 8 indirim, TK2412 İstanbul - Antalya, saat 09:15');
+    expect(ttsFriendly('Toplantı 14:30, teslimat 14:00–18:00.')).toBe('Toplantı saat 14:30, teslimat 14:00 ile 18:00.');
+    expect(ttsFriendly('Delivery 14:00–18:00, meeting 14:30.', 'en')).toBe('Delivery from 14:00 to 18:00, meeting at 14:30.');
     expect(estimateReadSeconds('bir iki üç')).toBe(10);
     expect(estimateReadSeconds(Array.from({ length: 300 }, () => 'kelime').join(' '))).toBe(120);
     expect(estimateReadSeconds('')).toBe(0);
@@ -458,7 +462,7 @@ describe('briefing · AI merge, carry-over and share card', () => {
     expect(merged.items.some((i) => i.candidateId.startsWith('nope'))).toBe(false);
     expect(merged.audio?.chapters.map((ch) => ch.title)).toEqual(['Genel', 'Öncelikler']);
     expect(merged.audio?.chapters[1]?.text).toBe('Ahmet revize teklif bekliyor, saat 17:00.');
-    expect(merged.items.every((i) => i.chapterIndex === null || i.chapterIndex < 2)).toBe(true);
+    expect(merged.items.every((i) => i.chapterIndex === null || i.chapterIndex === undefined || i.chapterIndex < 2)).toBe(true);
     expect(merged.estimatedReadSec).toBe(estimateReadSeconds(merged.audio?.script ?? ''));
   });
   it('rejects a headline whose number contradicts the highlight number and keeps fallback audio when the script is empty', () => {

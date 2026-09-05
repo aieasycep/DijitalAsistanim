@@ -8,9 +8,23 @@
 import type { DecideApprovalResponse } from '@da/domain';
 import { decideApprovalRequestSchema } from '@da/validation';
 import { applyEdit, transition } from '@da/server-core/approvals';
-import { accountIdOf, loadAccount, loadApproval, loadApprovalContext, persistApproval } from '../_shared/approvals.ts';
+import {
+  accountIdOf,
+  loadAccount,
+  loadApproval,
+  loadApprovalContext,
+  persistApproval,
+} from '../_shared/approvals.ts';
 import { executeApproval } from '../_shared/execute.ts';
-import { adminClient, assertMethod, audit, handler, json, parseInput, requireUser } from '../_shared/mod.ts';
+import {
+  adminClient,
+  assertMethod,
+  audit,
+  handler,
+  json,
+  parseInput,
+  requireUser,
+} from '../_shared/mod.ts';
 
 Deno.serve(
   handler(async (req) => {
@@ -25,7 +39,14 @@ Deno.serve(
     if (input.decision === 'reject') {
       const rejected = transition(approval, 'rejected', { now, locale: ctx.locale });
       await persistApproval(admin, rejected);
-      await audit(admin, { userId: user.id, action: 'approval.reject', actor: 'user', targetType: 'approval_action', targetId: approval.id, metadata: { type: approval.type } });
+      await audit(admin, {
+        userId: user.id,
+        action: 'approval.reject',
+        actor: 'user',
+        targetType: 'approval_action',
+        targetId: approval.id,
+        metadata: { type: approval.type },
+      });
       const response: DecideApprovalResponse = { approval: rejected, status: rejected.status };
       return json(response);
     }
@@ -34,14 +55,33 @@ Deno.serve(
     const account = accountId ? await loadAccount(admin, user.id, accountId) : null;
 
     if (input.editedPayload) {
-      approval = applyEdit(approval, input.editedPayload, { now, timezone: ctx.timezone, locale: ctx.locale, provider: account?.provider ?? null });
+      approval = applyEdit(approval, input.editedPayload, {
+        now,
+        timezone: ctx.timezone,
+        locale: ctx.locale,
+        provider: account?.provider ?? null,
+      });
       await persistApproval(admin, approval);
-      await audit(admin, { userId: user.id, action: 'approval.edit', actor: 'user', targetType: 'approval_action', targetId: approval.id, metadata: { type: approval.type } });
+      await audit(admin, {
+        userId: user.id,
+        action: 'approval.edit',
+        actor: 'user',
+        targetType: 'approval_action',
+        targetId: approval.id,
+        metadata: { type: approval.type },
+      });
     }
 
     const approved = transition(approval, 'approved', { now, locale: ctx.locale });
     await persistApproval(admin, approved);
-    await audit(admin, { userId: user.id, action: 'approval.approve', actor: 'user', targetType: 'approval_action', targetId: approval.id, metadata: { type: approval.type, edited: approved.editedByUser } });
+    await audit(admin, {
+      userId: user.id,
+      action: 'approval.approve',
+      actor: 'user',
+      targetType: 'approval_action',
+      targetId: approval.id,
+      metadata: { type: approval.type, edited: approved.editedByUser },
+    });
 
     const result = await executeApproval(admin, approved, { actor: 'user', ctx });
     const response: DecideApprovalResponse = {

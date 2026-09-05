@@ -14,13 +14,26 @@ export interface ApprovalContext {
 
 /** Locale + timezone used for change-summary lines ("Yarın 09:10"). */
 export async function loadApprovalContext(admin: Db, userId: string): Promise<ApprovalContext> {
-  const { data } = await admin.from('user_preferences').select('locale, timezone').eq('user_id', userId).maybeSingle();
+  const { data } = await admin
+    .from('user_preferences')
+    .select('locale, timezone')
+    .eq('user_id', userId)
+    .maybeSingle();
   const row = data as { locale: Locale; timezone: string } | null;
   return { locale: row?.locale ?? 'tr', timezone: row?.timezone ?? 'Europe/Istanbul' };
 }
 
-export async function loadApproval(db: Db, userId: string, approvalId: string): Promise<ApprovalAction> {
-  const { data, error } = await db.from('approval_actions').select('*').eq('id', approvalId).eq('user_id', userId).maybeSingle();
+export async function loadApproval(
+  db: Db,
+  userId: string,
+  approvalId: string,
+): Promise<ApprovalAction> {
+  const { data, error } = await db
+    .from('approval_actions')
+    .select('*')
+    .eq('id', approvalId)
+    .eq('user_id', userId)
+    .maybeSingle();
   if (error) throw new AppError('internal', `Onay okunamadı: ${error.message}`);
   if (!data) throw new AppError('not_found', 'Onay bulunamadı.');
   return camelize<ApprovalAction>(data);
@@ -54,7 +67,10 @@ export function approvalToRow(a: ApprovalAction): Record<string, unknown> {
 }
 
 /** Insert a new approval; when the idempotency key already exists the existing row id is returned. */
-export async function insertApproval(admin: Db, approval: ApprovalAction): Promise<{ id: string; created: boolean }> {
+export async function insertApproval(
+  admin: Db,
+  approval: ApprovalAction,
+): Promise<{ id: string; created: boolean }> {
   const { data: existing } = await admin
     .from('approval_actions')
     .select('id')
@@ -97,11 +113,28 @@ export function accountIdOf(approval: ApprovalAction): string | null {
   return typeof p.accountId === 'string' && p.accountId.length > 0 ? p.accountId : null;
 }
 
-export async function loadAccount(admin: Db, userId: string, accountId: string): Promise<ConnectedAccount | null> {
-  const { data } = await admin.from('connected_accounts').select('*').eq('id', accountId).eq('user_id', userId).is('deleted_at', null).maybeSingle();
+export async function loadAccount(
+  admin: Db,
+  userId: string,
+  accountId: string,
+): Promise<ConnectedAccount | null> {
+  const { data } = await admin
+    .from('connected_accounts')
+    .select('*')
+    .eq('id', accountId)
+    .eq('user_id', userId)
+    .is('deleted_at', null)
+    .maybeSingle();
   return data ? camelize<ConnectedAccount>(data) : null;
 }
 
 export function isApprovalType(value: string): value is ApprovalActionType {
-  return ['email_send', 'calendar_create', 'calendar_update', 'task_create', 'reminder_create', 'commitment_create'].includes(value);
+  return [
+    'email_send',
+    'calendar_create',
+    'calendar_update',
+    'task_create',
+    'reminder_create',
+    'commitment_create',
+  ].includes(value);
 }

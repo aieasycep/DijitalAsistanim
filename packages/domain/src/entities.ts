@@ -164,6 +164,8 @@ export interface SyncState extends UserOwned, Timestamps {
   lastRunAt?: ISODateTime | null;
   lastSuccessAt?: ISODateTime | null;
   backfillUntil?: ISODateTime | null;
+  /** Continuation token of a multi-page backfill listing. */
+  backfillPageToken?: string | null;
   errorCount: number;
   lastError?: string | null;
 }
@@ -245,7 +247,17 @@ export interface EmailAnalysis {
 }
 
 export interface SuggestedAction {
-  kind: 'reply' | 'create_task' | 'add_to_calendar' | 'remind' | 'open_original' | 'follow_up' | 'track' | 'check_in' | 'pay' | 'open_link';
+  kind:
+    | 'reply'
+    | 'create_task'
+    | 'add_to_calendar'
+    | 'remind'
+    | 'open_original'
+    | 'follow_up'
+    | 'track'
+    | 'check_in'
+    | 'pay'
+    | 'open_link';
   label: string;
   payload?: Record<string, unknown>;
 }
@@ -360,7 +372,15 @@ export interface Reminder extends UserOwned, Timestamps {
   option: ReminderOption;
   status: ReminderStatus;
   /** What the reminder points to */
-  targetType?: 'email_thread' | 'calendar_event' | 'task' | 'commitment' | 'life_event' | 'insight' | 'follow_up' | null;
+  targetType?:
+    | 'email_thread'
+    | 'calendar_event'
+    | 'task'
+    | 'commitment'
+    | 'life_event'
+    | 'insight'
+    | 'follow_up'
+    | null;
   targetId?: UUID | null;
   source?: SourceRef | null;
   /** For smart reminders: why this time was chosen */
@@ -412,7 +432,19 @@ export interface FollowUp extends UserOwned, Timestamps {
 export interface InsightAction {
   id: string;
   label: string;
-  kind: SuggestedAction['kind'] | 'prepare' | 'plan' | 'postpone' | 'complete' | 'snooze' | 'view_source' | 'suggest_time' | 'see_options' | 'ask_in_meeting' | 'wallet' | 'alarm';
+  kind:
+    | SuggestedAction['kind']
+    | 'prepare'
+    | 'plan'
+    | 'postpone'
+    | 'complete'
+    | 'snooze'
+    | 'view_source'
+    | 'suggest_time'
+    | 'see_options'
+    | 'ask_in_meeting'
+    | 'wallet'
+    | 'alarm';
   primary: boolean;
   payload?: Record<string, unknown>;
 }
@@ -421,7 +453,16 @@ export interface Insight extends UserOwned, Timestamps, SoftDelete {
   id: UUID;
   kind: InsightKind;
   /** Badge tone label key: ACİL / SON TARİH / TOPLANTI / TAKİP / KİŞİSEL / TAAHHÜT / TAKVİM / GÜVENLİK */
-  badge: 'urgent' | 'deadline' | 'meeting' | 'follow_up' | 'personal' | 'commitment' | 'calendar' | 'security' | 'waiting';
+  badge:
+    | 'urgent'
+    | 'deadline'
+    | 'meeting'
+    | 'follow_up'
+    | 'personal'
+    | 'commitment'
+    | 'calendar'
+    | 'security'
+    | 'waiting';
   title: string;
   subtitle?: string | null;
   /** Why it is important (bottom sheet "Neden önemli?") */
@@ -437,7 +478,15 @@ export interface Insight extends UserOwned, Timestamps, SoftDelete {
   source: SourceRef;
   actions: InsightAction[];
   /** Backing entity */
-  entityType: 'email_thread' | 'calendar_event' | 'task' | 'commitment' | 'follow_up' | 'life_event' | 'suggestion' | 'conflict';
+  entityType:
+    | 'email_thread'
+    | 'calendar_event'
+    | 'task'
+    | 'commitment'
+    | 'follow_up'
+    | 'life_event'
+    | 'suggestion'
+    | 'conflict';
   entityId: UUID;
   /** Flow filter tags */
   tags: ('important' | 'mail' | 'calendar' | 'follow_up' | 'personal')[];
@@ -687,7 +736,9 @@ export interface CalendarUpdatePayload {
   eventId: UUID;
   externalEventId: string;
   expectedProviderUpdatedAt?: ISODateTime | null;
-  changes: Partial<Pick<CalendarCreatePayload, 'title' | 'startAt' | 'endAt' | 'location' | 'description'>>;
+  changes: Partial<
+    Pick<CalendarCreatePayload, 'title' | 'startAt' | 'endAt' | 'location' | 'description'>
+  >;
 }
 export interface TaskCreatePayload {
   accountId?: UUID | null;
@@ -725,7 +776,8 @@ export type ApprovalPayloadMap = {
   commitment_create: CommitmentCreatePayload;
 };
 
-export interface ApprovalAction<T extends ApprovalActionType = ApprovalActionType> extends UserOwned, Timestamps {
+export interface ApprovalAction<T extends ApprovalActionType = ApprovalActionType>
+  extends UserOwned, Timestamps {
   id: UUID;
   type: T;
   status: ApprovalStatus;
@@ -748,7 +800,18 @@ export interface ApprovalAction<T extends ApprovalActionType = ApprovalActionTyp
   executionResult?: Record<string, unknown> | null;
   failureReason?: string | null;
   attemptCount: number;
-  requestedBy: 'assistant' | 'voice' | 'capture' | 'email_detail' | 'plan' | 'post_meeting' | 'reminder' | 'follow_up' | 'conflict' | 'midday' | 'evening';
+  requestedBy:
+    | 'assistant'
+    | 'voice'
+    | 'capture'
+    | 'email_detail'
+    | 'plan'
+    | 'post_meeting'
+    | 'reminder'
+    | 'follow_up'
+    | 'conflict'
+    | 'midday'
+    | 'evening';
   /** Backing insight to update once executed */
   insightId?: UUID | null;
   /** Progressive OAuth: scope that must be granted before execution */
@@ -825,11 +888,27 @@ export interface CaptureAnalysis {
   title: string;
   summary: string;
   /** Extracted, only when explicitly present. */
-  event?: { title: string; startAt?: ISODateTime | null; endAt?: ISODateTime | null; location?: string | null; dateText?: string | null } | null;
+  event?: {
+    title: string;
+    startAt?: ISODateTime | null;
+    endAt?: ISODateTime | null;
+    location?: string | null;
+    dateText?: string | null;
+  } | null;
   task?: { title: string; dueAt?: ISODateTime | null } | null;
   deadline?: { title: string; dueAt?: ISODateTime | null; dueText?: string | null } | null;
-  person?: { name: string; email?: string | null; phone?: string | null; company?: string | null } | null;
-  payment?: { payee?: string | null; amount?: number | null; currency?: string | null; dueAt?: ISODateTime | null } | null;
+  person?: {
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    company?: string | null;
+  } | null;
+  payment?: {
+    payee?: string | null;
+    amount?: number | null;
+    currency?: string | null;
+    dueAt?: ISODateTime | null;
+  } | null;
   keyPoints: string[];
   dates: { text: string; iso?: ISODateTime | null }[];
   suggestedActions: SuggestedAction[];

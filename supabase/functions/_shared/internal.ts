@@ -5,7 +5,16 @@
 import { getEnv } from './env.ts';
 import { log } from './log.ts';
 
-export type CronJob = 'briefings' | 'sync-poll' | 'reminders' | 'followups' | 'renew-subscriptions' | 'retention' | 'exports' | 'backfill' | 'pipeline';
+export type CronJob =
+  | 'briefings'
+  | 'sync-poll'
+  | 'reminders'
+  | 'followups'
+  | 'renew-subscriptions'
+  | 'retention'
+  | 'exports'
+  | 'backfill'
+  | 'pipeline';
 
 export function kickJob(job: CronJob, payload: Record<string, unknown> = {}): void {
   const env = getEnv();
@@ -15,15 +24,26 @@ export function kickJob(job: CronJob, payload: Record<string, unknown> = {}): vo
   }
   fetch(`${env.supabaseUrl}/functions/v1/cron-dispatch`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-internal-secret': env.internalSecret, apikey: env.supabaseAnonKey },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-internal-secret': env.internalSecret,
+      apikey: env.supabaseAnonKey,
+    },
     body: JSON.stringify({ job, ...payload }),
-  }).catch((e: unknown) => log.warn('kickJob failed', { job, error: e instanceof Error ? e.message : 'unknown' }));
+  }).catch((e: unknown) =>
+    log.warn('kickJob failed', { job, error: e instanceof Error ? e.message : 'unknown' }),
+  );
 }
 
 /** Mark sync states due now so the poller picks them up on its next pass. */
 export async function markSyncDue(
   admin: { from: (table: string) => ReturnType<import('./db.ts').Db['from']> },
-  filter: { accountId?: string; userId?: string; subscriptionId?: string; resource?: 'mail' | 'calendar' | 'tasks' },
+  filter: {
+    accountId?: string;
+    userId?: string;
+    subscriptionId?: string;
+    resource?: 'mail' | 'calendar' | 'tasks';
+  },
 ): Promise<number> {
   let q = admin.from('sync_states').update({ last_run_at: null });
   if (filter.accountId) q = q.eq('account_id', filter.accountId);

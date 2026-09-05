@@ -27,7 +27,8 @@ export const DeepLinks = {
   capture: (captureId?: string) => (captureId ? `/capture?id=${captureId}` : '/capture'),
   search: (q?: string) => (q ? `/search?q=${encodeURIComponent(q)}` : '/search'),
   settings: (section?: string) => (section ? `/settings/${section}` : '/settings'),
-  paywall: (context?: string) => (context ? `/paywall?context=${encodeURIComponent(context)}` : '/paywall'),
+  paywall: (context?: string) =>
+    context ? `/paywall?context=${encodeURIComponent(context)}` : '/paywall',
   referral: (code?: string) => (code ? `/referral?code=${encodeURIComponent(code)}` : '/referral'),
   oauthCallback: (provider: string) => `/oauth/${provider}`,
 } as const;

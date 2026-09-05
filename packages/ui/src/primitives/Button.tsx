@@ -5,7 +5,15 @@ import { Icon } from './Icon';
 import { Pressable, type PressableProps } from './Pressable';
 import { Text } from './Text';
 
-export type ButtonVariant = 'primary' | 'tonal' | 'dark' | 'surface' | 'destructive' | 'ghost' | 'ghostSecondary' | 'onGradient';
+export type ButtonVariant =
+  | 'primary'
+  | 'tonal'
+  | 'dark'
+  | 'surface'
+  | 'destructive'
+  | 'ghost'
+  | 'ghostSecondary'
+  | 'onGradient';
 export type ButtonSize = 'lg' | 'md' | 'sm' | 'inline' | 'ghost';
 
 export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> {
@@ -46,10 +54,28 @@ export function Button({
   const c = theme.colors;
   const isGhost = variant === 'ghost' || variant === 'ghostSecondary';
   const height =
-    size === 'lg' ? theme.sizes.buttonLarge : size === 'md' ? theme.sizes.buttonMedium : size === 'sm' ? theme.sizes.buttonSmall : size === 'inline' ? theme.sizes.buttonInline : theme.sizes.buttonGhost;
-  const radius = size === 'lg' ? theme.radius.lg : size === 'sm' || size === 'inline' ? theme.radius.sm : isGhost ? theme.radius.xs : theme.radius.md;
+    size === 'lg'
+      ? theme.sizes.buttonLarge
+      : size === 'md'
+        ? theme.sizes.buttonMedium
+        : size === 'sm'
+          ? theme.sizes.buttonSmall
+          : size === 'inline'
+            ? theme.sizes.buttonInline
+            : theme.sizes.buttonGhost;
+  const radius =
+    size === 'lg'
+      ? theme.radius.lg
+      : size === 'sm' || size === 'inline'
+        ? theme.radius.sm
+        : isGhost
+          ? theme.radius.xs
+          : theme.radius.md;
 
-  const palette: Record<ButtonVariant, { bg: string; fg: string; shadow?: boolean; ring?: string }> = {
+  const palette: Record<
+    ButtonVariant,
+    { bg: string; fg: string; shadow?: boolean; ring?: string }
+  > = {
     primary: { bg: c.primary, fg: c.onPrimary },
     tonal: { bg: c.primarySoft, fg: c.primaryText },
     dark: { bg: c.inverseSurface, fg: c.inkInverse },
@@ -70,7 +96,13 @@ export function Button({
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
       testID={testID}
-      hapticOnPress={variant === 'destructive' ? 'warning' : variant === 'primary' && size === 'lg' ? 'light' : null}
+      hapticOnPress={
+        variant === 'destructive'
+          ? 'warning'
+          : variant === 'primary' && size === 'lg'
+            ? 'light'
+            : null
+      }
       style={[
         styles.base,
         {
@@ -92,9 +124,19 @@ export function Button({
         {loading ? (
           <ActivityIndicator size="small" color={p.fg} style={styles.iconLeft} />
         ) : icon && iconPosition === 'left' ? (
-          <Icon name={icon} size={size === 'lg' || size === 'md' ? 20 : 18} color={p.fg} filled={iconFilled} style={styles.iconLeft} />
+          <Icon
+            name={icon}
+            size={size === 'lg' || size === 'md' ? 20 : 18}
+            color={p.fg}
+            filled={iconFilled}
+            style={styles.iconLeft}
+          />
         ) : null}
-        <Text variant={isGhost || size === 'sm' || size === 'inline' ? 'action' : 'button'} color={p.fg} numberOfLines={1}>
+        <Text
+          variant={isGhost || size === 'sm' || size === 'inline' ? 'action' : 'button'}
+          color={p.fg}
+          numberOfLines={1}
+        >
           {text}
         </Text>
         {!loading && icon && iconPosition === 'right' ? (

@@ -66,7 +66,13 @@ export function ListRow({
     <View
       style={[
         styles.row,
-        { minHeight: minHeight ?? theme.layout.listRowMinHeight, paddingVertical: theme.layout.listRowPaddingV, borderTopWidth: divider ? StyleSheet.hairlineWidth : 0, borderTopColor: c.hairline, opacity: disabled ? 0.4 : 1 },
+        {
+          minHeight: minHeight ?? theme.layout.listRowMinHeight,
+          paddingVertical: theme.layout.listRowPaddingV,
+          borderTopWidth: divider ? StyleSheet.hairlineWidth : 0,
+          borderTopColor: c.hairline,
+          opacity: disabled ? 0.4 : 1,
+        },
         style,
       ]}
     >
@@ -77,7 +83,12 @@ export function ListRow({
           </View>
         ) : null)}
       <View style={styles.texts}>
-        <Text variant="bodyMedium" tone={done ? 'secondary' : 'ink'} numberOfLines={2} style={done ? styles.strike : undefined}>
+        <Text
+          variant="bodyMedium"
+          tone={done ? 'secondary' : 'ink'}
+          numberOfLines={2}
+          style={done ? styles.strike : undefined}
+        >
           {title}
         </Text>
         {meta ? (
@@ -88,7 +99,11 @@ export function ListRow({
       </View>
       {trailing ??
         (trailingText ? (
-          <Text variant="caption" color={trailingColor} style={trailingTone !== 'tertiary' ? styles.trailingStrong : undefined}>
+          <Text
+            variant="caption"
+            color={trailingColor}
+            style={trailingTone !== 'tertiary' ? styles.trailingStrong : undefined}
+          >
             {trailingText}
           </Text>
         ) : onPress ? (

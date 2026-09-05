@@ -43,7 +43,17 @@ export function fontFor(family: 'sans' | 'serif', weight: string, italic = false
 }
 
 export const Text = forwardRef<RNText, TextProps>(function Text(
-  { variant = 'body', tone = 'ink', align, tabular, color, style, children, maxFontSizeMultiplier = 1.4, ...rest },
+  {
+    variant = 'body',
+    tone = 'ink',
+    align,
+    tabular,
+    color,
+    style,
+    children,
+    maxFontSizeMultiplier = 1.4,
+    ...rest
+  },
   ref,
 ) {
   const theme = useTheme();
@@ -78,7 +88,12 @@ export const Text = forwardRef<RNText, TextProps>(function Text(
   }, [theme, variant, tone, color, align, tabular]);
 
   return (
-    <RNText ref={ref} style={[computed, style]} maxFontSizeMultiplier={maxFontSizeMultiplier} {...rest}>
+    <RNText
+      ref={ref}
+      style={[computed, style]}
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
+      {...rest}
+    >
       {children}
     </RNText>
   );

@@ -7,7 +7,13 @@
  * timestamps, fingerprints, analysis). Everything provider-specific that the domain entity does
  * not carry (thread id, RFC message ids, read state) is added explicitly.
  */
-import type { CalendarEvent, EmailMessage, EmailParticipant, EmailThread, TaskItem } from '@da/domain';
+import type {
+  CalendarEvent,
+  EmailMessage,
+  EmailParticipant,
+  EmailThread,
+  TaskItem,
+} from '@da/domain';
 import type { FetchLike } from '../safefetch/fetch';
 
 /** Injected fetch (the global in edge functions, a stub in tests). */

@@ -28,18 +28,40 @@ function tintFor(name: string): 'green' | 'blue' {
   return h % 2 === 0 ? 'green' : 'blue';
 }
 
-export function Avatar({ name, imageUrl, size = 40, variant = 'tinted', vip = false, style }: AvatarProps) {
+export function Avatar({
+  name,
+  imageUrl,
+  size = 40,
+  variant = 'tinted',
+  vip = false,
+  style,
+}: AvatarProps) {
   const theme = useTheme();
   const c = theme.colors;
   const tint = tintFor(name);
-  const bg = variant === 'ink' ? c.inverseSurface : tint === 'green' ? c.avatarGreenBg : c.avatarBlueBg;
+  const bg =
+    variant === 'ink' ? c.inverseSurface : tint === 'green' ? c.avatarGreenBg : c.avatarBlueBg;
   const fg = variant === 'ink' ? c.inkInverse : tint === 'green' ? c.avatarGreenFg : c.avatarBlueFg;
   const fontSize = size <= 28 ? 11 : size <= 40 ? 13 : size <= 56 ? 18 : 24;
   return (
-    <View style={[{ width: size, height: size }, style]} accessibilityRole="image" accessibilityLabel={name}>
-      <View style={[styles.circle, { width: size, height: size, borderRadius: size / 2, backgroundColor: bg }]}>
+    <View
+      style={[{ width: size, height: size }, style]}
+      accessibilityRole="image"
+      accessibilityLabel={name}
+    >
+      <View
+        style={[
+          styles.circle,
+          { width: size, height: size, borderRadius: size / 2, backgroundColor: bg },
+        ]}
+      >
         {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={{ width: size, height: size, borderRadius: size / 2 }} contentFit="cover" transition={120} />
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: size, height: size, borderRadius: size / 2 }}
+            contentFit="cover"
+            transition={120}
+          />
         ) : (
           <Text variant="chip" color={fg} style={{ fontSize, lineHeight: fontSize + 4 }}>
             {initialsOf(name)}
@@ -57,5 +79,12 @@ export function Avatar({ name, imageUrl, size = 40, variant = 'tinted', vip = fa
 
 const styles = StyleSheet.create({
   circle: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  vip: { position: 'absolute', right: -2, bottom: -2, borderRadius: 999, padding: 2, borderWidth: 1 },
+  vip: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    borderRadius: 999,
+    padding: 2,
+    borderWidth: 1,
+  },
 });

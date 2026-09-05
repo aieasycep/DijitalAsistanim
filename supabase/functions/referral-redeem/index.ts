@@ -6,7 +6,16 @@
 import { referralRedeemSchema } from '@da/validation';
 import { AppError } from '@da/server-core/errors';
 import { normalizeReferralCode, validateRedemption } from '@da/server-core/referral';
-import { adminClient, assertMethod, audit, enforceRateLimit, handler, json, parseInput, requireUser } from '../_shared/mod.ts';
+import {
+  adminClient,
+  assertMethod,
+  audit,
+  enforceRateLimit,
+  handler,
+  json,
+  parseInput,
+  requireUser,
+} from '../_shared/mod.ts';
 
 const THIRTY_DAYS_MS = 30 * 24 * 3600 * 1000;
 
@@ -21,11 +30,25 @@ Deno.serve(
     const code = normalizeReferralCode(input.code);
 
     const [{ data: me }, { data: referrerRow }, { data: myRedemption }] = await Promise.all([
-      admin.from('profiles').select('id, created_at, locale, referred_by_code').eq('id', user.id).single(),
+      admin
+        .from('profiles')
+        .select('id, created_at, locale, referred_by_code')
+        .eq('id', user.id)
+        .single(),
       admin.from('profiles').select('id').eq('referral_code', code).maybeSingle(),
-      admin.from('referrals').select('id').eq('referred_user_id', user.id).eq('status', 'redeemed').maybeSingle(),
+      admin
+        .from('referrals')
+        .select('id')
+        .eq('referred_user_id', user.id)
+        .eq('status', 'redeemed')
+        .maybeSingle(),
     ]);
-    const profile = me as { id: string; created_at: string; locale: 'tr' | 'en'; referred_by_code: string | null } | null;
+    const profile = me as {
+      id: string;
+      created_at: string;
+      locale: 'tr' | 'en';
+      referred_by_code: string | null;
+    } | null;
     if (!profile) throw new AppError('not_found', 'Profil bulunamadı.');
     const referrerUserId = (referrerRow as { id: string } | null)?.id ?? null;
 
@@ -35,12 +58,29 @@ Deno.serve(
     if (referrerUserId) {
       const since = new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
       const [{ count }, { data: devices }, { data: credit }] = await Promise.all([
-        admin.from('referrals').select('id', { count: 'exact', head: true }).eq('referrer_user_id', referrerUserId).eq('status', 'redeemed').gte('redeemed_at', since),
-        admin.from('referrals').select('device_fingerprint_hash').eq('referred_user_id', referrerUserId).not('device_fingerprint_hash', 'is', null),
-        admin.from('referral_credits').select('expires_at').eq('user_id', referrerUserId).order('expires_at', { ascending: false }).limit(1).maybeSingle(),
+        admin
+          .from('referrals')
+          .select('id', { count: 'exact', head: true })
+          .eq('referrer_user_id', referrerUserId)
+          .eq('status', 'redeemed')
+          .gte('redeemed_at', since),
+        admin
+          .from('referrals')
+          .select('device_fingerprint_hash')
+          .eq('referred_user_id', referrerUserId)
+          .not('device_fingerprint_hash', 'is', null),
+        admin
+          .from('referral_credits')
+          .select('expires_at')
+          .eq('user_id', referrerUserId)
+          .order('expires_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
       referrerRedemptionsLast30d = count ?? 0;
-      referrerDeviceHashes = ((devices ?? []) as { device_fingerprint_hash: string }[]).map((d) => d.device_fingerprint_hash);
+      referrerDeviceHashes = ((devices ?? []) as { device_fingerprint_hash: string }[]).map(
+        (d) => d.device_fingerprint_hash,
+      );
       referrerCreditExpiresAt = (credit as { expires_at: string } | null)?.expires_at ?? null;
     }
 
@@ -89,16 +129,39 @@ Deno.serve(
       throw new AppError('internal', `Davet kaydedilemedi: ${error?.message ?? ''}`);
     }
     const referralId = (referral as { id: string }).id;
-    const { error: creditErr } = await admin.from('referral_credits').insert(
-      result.credits.map((c) => ({ user_id: c.userId, referral_id: referralId, days: c.days, starts_at: c.startsAt, expires_at: c.expiresAt, role: c.role })),
-    );
+    const { error: creditErr } = await admin
+      .from('referral_credits')
+      .insert(
+        result.credits.map((c) => ({
+          user_id: c.userId,
+          referral_id: referralId,
+          days: c.days,
+          starts_at: c.startsAt,
+          expires_at: c.expiresAt,
+          role: c.role,
+        })),
+      );
     if (creditErr) throw new AppError('internal', `Bonus tanımlanamadı: ${creditErr.message}`);
     await admin.from('profiles').update({ referred_by_code: code }).eq('id', user.id);
 
     const bonusDays = result.credits.find((c) => c.role === 'referred')?.days ?? 0;
     await Promise.all([
-      audit(admin, { userId: user.id, action: 'referral.redeem', actor: 'user', targetType: 'referral', targetId: referralId, metadata: { role: 'referred', days: bonusDays } }),
-      audit(admin, { userId: result.referrerUserId, action: 'referral.redeem', actor: 'system', targetType: 'referral', targetId: referralId, metadata: { role: 'referrer', days: bonusDays } }),
+      audit(admin, {
+        userId: user.id,
+        action: 'referral.redeem',
+        actor: 'user',
+        targetType: 'referral',
+        targetId: referralId,
+        metadata: { role: 'referred', days: bonusDays },
+      }),
+      audit(admin, {
+        userId: result.referrerUserId,
+        action: 'referral.redeem',
+        actor: 'system',
+        targetType: 'referral',
+        targetId: referralId,
+        metadata: { role: 'referrer', days: bonusDays },
+      }),
     ]);
     return json({ ok: true as const, bonusDays });
   }),

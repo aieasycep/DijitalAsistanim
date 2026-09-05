@@ -1,5 +1,9 @@
 import { forwardRef, useCallback } from 'react';
-import { Pressable as RNPressable, type PressableProps as RNPressableProps, type View } from 'react-native';
+import {
+  Pressable as RNPressable,
+  type PressableProps as RNPressableProps,
+  type View,
+} from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { motion } from '@da/design-tokens';
 import { useThemeContext } from '../theme/ThemeProvider';
@@ -20,7 +24,18 @@ export interface PressableProps extends RNPressableProps {
  * Every interactive element in the app goes through this so behaviour stays consistent.
  */
 export const Pressable = forwardRef<View, PressableProps>(function Pressable(
-  { pressScale = motion.scale.buttonPressed, hapticOnPress = null, ensureTouchTarget = true, onPressIn, onPressOut, onPress, style, hitSlop, disabled, ...rest },
+  {
+    pressScale = motion.scale.buttonPressed,
+    hapticOnPress = null,
+    ensureTouchTarget = true,
+    onPressIn,
+    onPressOut,
+    onPress,
+    style,
+    hitSlop,
+    disabled,
+    ...rest
+  },
   ref,
 ) {
   const { reducedMotion, hapticsEnabled } = useThemeContext();

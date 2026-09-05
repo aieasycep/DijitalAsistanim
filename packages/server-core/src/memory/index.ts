@@ -370,12 +370,8 @@ export function canonicalNumber(s: string): string {
   return frac ? `${digits}.${frac}` : digits;
 }
 
-function digitsOnly(s: string): string {
-  return s.replace(/\D+/g, '');
-}
-
 function dateKey(day: string, month: string, year?: string): string {
-  const m = /^\d+$/.test(month) ? Number(month) : monthIndex(month);
+  const m = /^\d+$/.test(month) ? Number(month) : monthIndex(month.toLocaleLowerCase('tr-TR'));
   if (!m || m < 1 || m > 12) return '';
   return `${Number(day)}-${m}${year ? `-${year.length === 2 ? `20${year}` : year}` : ''}`;
 }
@@ -518,12 +514,16 @@ export function termOverlap(query: string | undefined, text: string): number {
   return hits / tokens.length;
 }
 
+/**
+ * Retrieval scores (vector / FTS rank) are authoritative with a small recency tie-break; entities
+ * without a score are ranked by term overlap, capped below a strong retrieval hit in semantic mode.
+ */
 function relevance(query: string | undefined, text: string, date: string, nowMs: number, mode: 'semantic' | 'fts', given?: number): number {
   const rec = recencyScore(date, nowMs);
-  if (typeof given === 'number') return Math.max(0, Math.min(1, given)) * 0.8 + rec * 0.2;
-  const overlap = termOverlap(query, text);
+  if (typeof given === 'number') return Math.max(0, Math.min(1, given)) * 0.9 + rec * 0.1;
   if (!query) return rec;
-  return mode === 'fts' ? overlap * 0.8 + rec * 0.2 : overlap * 0.6 + rec * 0.4;
+  const overlap = termOverlap(query, text);
+  return mode === 'fts' ? overlap * 0.7 + rec * 0.3 : overlap * 0.5 + rec * 0.3;
 }
 
 /** Map memory chunks and entity hits into the unified SearchResult list, best first. */

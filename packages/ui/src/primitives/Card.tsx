@@ -4,7 +4,16 @@ import { motion } from '@da/design-tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { Pressable, type PressableProps } from './Pressable';
 
-export type CardVariant = 'default' | 'listGroup' | 'hero' | 'aiInsight' | 'inverse' | 'suggested' | 'selected' | 'paper' | 'flat';
+export type CardVariant =
+  | 'default'
+  | 'listGroup'
+  | 'hero'
+  | 'aiInsight'
+  | 'inverse'
+  | 'suggested'
+  | 'selected'
+  | 'paper'
+  | 'flat';
 
 export interface CardProps extends ViewProps {
   variant?: CardVariant;
@@ -22,15 +31,41 @@ export interface CardProps extends ViewProps {
  * Card patterns: shadow-2, no border in light; #1F1E1B + 6% white hairline in dark.
  * Dashed border only means "suggested / not yet real". Selected = 2px indigo ring.
  */
-export function Card({ variant = 'default', padding, radius, onPress, onLongPress, accessibilityLabel, style, children, testID, ...rest }: CardProps) {
+export function Card({
+  variant = 'default',
+  padding,
+  radius,
+  onPress,
+  onLongPress,
+  accessibilityLabel,
+  style,
+  children,
+  testID,
+  ...rest
+}: CardProps) {
   const theme = useTheme();
   const c = theme.colors;
-  const r = radius ?? (variant === 'hero' ? theme.radius.hero : variant === 'listGroup' ? theme.radius.xl : theme.radius.xxl);
+  const r =
+    radius ??
+    (variant === 'hero'
+      ? theme.radius.hero
+      : variant === 'listGroup'
+        ? theme.radius.xl
+        : theme.radius.xxl);
 
-  const base: ViewStyle = { borderRadius: r, overflow: variant === 'hero' || variant === 'aiInsight' ? 'hidden' : undefined };
+  const base: ViewStyle = {
+    borderRadius: r,
+    overflow: variant === 'hero' || variant === 'aiInsight' ? 'hidden' : undefined,
+  };
   const pad: ViewStyle = (() => {
     if (typeof padding === 'number') return { padding };
-    if (padding) return { paddingHorizontal: padding.horizontal, paddingVertical: padding.vertical, paddingTop: padding.top, paddingBottom: padding.bottom };
+    if (padding)
+      return {
+        paddingHorizontal: padding.horizontal,
+        paddingVertical: padding.vertical,
+        paddingTop: padding.top,
+        paddingBottom: padding.bottom,
+      };
     if (variant === 'listGroup') return { paddingVertical: 4, paddingHorizontal: 16 };
     if (variant === 'hero') return { paddingHorizontal: 22, paddingTop: 22, paddingBottom: 20 };
     if (variant === 'inverse') return { padding: 22 };
@@ -42,7 +77,12 @@ export function Card({ variant = 'default', padding, radius, onPress, onLongPres
       case 'inverse':
         return { backgroundColor: c.inverseSurface };
       case 'suggested':
-        return { backgroundColor: c.suggestedSurface, borderWidth: 1, borderStyle: 'dashed', borderColor: c.suggestedBorder };
+        return {
+          backgroundColor: c.suggestedSurface,
+          borderWidth: 1,
+          borderStyle: 'dashed',
+          borderColor: c.suggestedBorder,
+        };
       case 'selected':
         return { backgroundColor: c.surface, borderWidth: 2, borderColor: c.focusRing };
       case 'paper':
@@ -51,12 +91,21 @@ export function Card({ variant = 'default', padding, radius, onPress, onLongPres
         return { backgroundColor: c.surface2 };
       default:
         return theme.isDark
-          ? { backgroundColor: c.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.cardRing }
+          ? {
+              backgroundColor: c.surface,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: theme.cardRing,
+            }
           : { backgroundColor: c.surface };
     }
   })();
 
-  const shadow = variant === 'suggested' || variant === 'flat' || variant === 'paper' ? null : variant === 'hero' ? theme.shadows.brand : theme.shadows.s2;
+  const shadow =
+    variant === 'suggested' || variant === 'flat' || variant === 'paper'
+      ? null
+      : variant === 'hero'
+        ? theme.shadows.brand
+        : theme.shadows.s2;
 
   const content =
     variant === 'hero' || variant === 'aiInsight' ? (

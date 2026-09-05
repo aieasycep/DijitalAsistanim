@@ -12,7 +12,8 @@ export function camelize<T = Record<string, unknown>>(value: unknown): T {
   if (Array.isArray(value)) return value.map((v) => camelize(v)) as unknown as T;
   if (value && typeof value === 'object' && !(value instanceof Date)) {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[camelKey(k)] = camelize(v);
+    for (const [k, v] of Object.entries(value as Record<string, unknown>))
+      out[camelKey(k)] = camelize(v);
     return out as T;
   }
   return value as T;
@@ -33,5 +34,10 @@ export function nowIso(): string {
 }
 
 export function localDateKey(iso: string | Date, timezone: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(iso));
 }

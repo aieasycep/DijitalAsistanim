@@ -4,7 +4,16 @@
  */
 import { deleteAccountRequestSchema } from '@da/validation';
 import { AppError } from '@da/server-core/errors';
-import { adminClient, assertMethod, audit, getEnv, handler, json, parseInput, requireUser } from '../_shared/mod.ts';
+import {
+  adminClient,
+  assertMethod,
+  audit,
+  getEnv,
+  handler,
+  json,
+  parseInput,
+  requireUser,
+} from '../_shared/mod.ts';
 import { revokeAccountCredentials } from '../_shared/credentials.ts';
 import { log } from '../_shared/log.ts';
 
@@ -49,17 +58,33 @@ Deno.serve(
     await parseInput(req, deleteAccountRequestSchema);
     const admin = adminClient();
 
-    const { data: accounts } = await admin.from('connected_accounts').select('id').eq('user_id', user.id);
+    const { data: accounts } = await admin
+      .from('connected_accounts')
+      .select('id')
+      .eq('user_id', user.id);
     for (const a of (accounts ?? []) as { id: string }[]) {
       await revokeAccountCredentials(admin, a.id);
     }
     let removedFiles = 0;
     for (const bucket of BUCKETS) removedFiles += await deletePrefix(bucket, user.id);
 
-    const { data: profile } = await admin.from('profiles').select('revenuecat_app_user_id').eq('id', user.id).maybeSingle();
-    await unlinkRevenueCat((profile as { revenuecat_app_user_id: string | null } | null)?.revenuecat_app_user_id ?? null);
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('revenuecat_app_user_id')
+      .eq('id', user.id)
+      .maybeSingle();
+    await unlinkRevenueCat(
+      (profile as { revenuecat_app_user_id: string | null } | null)?.revenuecat_app_user_id ?? null,
+    );
 
-    await audit(admin, { userId: user.id, action: 'account.delete', actor: 'user', targetType: 'user', targetId: user.id, metadata: { accounts: (accounts ?? []).length, removedFiles } });
+    await audit(admin, {
+      userId: user.id,
+      action: 'account.delete',
+      actor: 'user',
+      targetType: 'user',
+      targetId: user.id,
+      metadata: { accounts: (accounts ?? []).length, removedFiles },
+    });
     await admin.from('audit_logs').update({ user_id: null, ip: null }).eq('user_id', user.id);
 
     const { error } = await admin.auth.admin.deleteUser(user.id);

@@ -13,7 +13,7 @@ import { clamp, normalizeText, stripQuotedHistory, truncate, uniqBy } from '../u
 import { analyzeEnglishClause, composeEnglish } from './english';
 import { detectVocative, splitClauses, splitSentences, stripSignature, type Span } from './segment';
 import { firstNameOf, resolveFullName, stripHonorifics, type ClauseAnalysis } from './shared';
-import { analyzeTurkishClause, composeTurkish, isKnownDeliverable, normalizeNounPhrase, turkishAccusative } from './turkish';
+import { analyzeTurkishClause, composeTurkish, isKnownDeliverable } from './turkish';
 import { RE_EXPECTATION, RE_FIRST_PERSON_FORMS, RE_GENERIC_FUTURE, RE_REQUEST_CONDITIONAL, RE_REQUEST_IMPERATIVE, RE_REQUEST_NEED, RE_REQUEST_QUESTION, RE_REQUEST_VERBAL_NOUN } from './verbs';
 import type { CommitmentCandidate, CommitmentDraft, CommitmentDue, ExtractCommitmentsInput, NormalizeCommitmentOptions } from './types';
 
@@ -226,6 +226,3 @@ export function toCommitmentDraft(candidate: CommitmentCandidate, source: Source
     deletedAt: null,
   };
 }
-
-/** Exposed for tests and callers that build their own labels. */
-export const commitmentInternals = { turkishAccusative, normalizeNounPhrase };

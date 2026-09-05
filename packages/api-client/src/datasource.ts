@@ -33,7 +33,6 @@ import type {
   DraftReplyRequest,
   DraftReplyResponse,
   EmailDetailResponse,
-  EmailThread,
   EntitlementState,
   FirstAnalysisProgress,
   FlowFilter,

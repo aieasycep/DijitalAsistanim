@@ -20,12 +20,33 @@ export interface EmptyStateProps {
 }
 
 /** Calm, positive empty/error states ("Her şey kontrol altında."). Error tone uses the coral icon tile. */
-export function EmptyState({ icon = 'check', title, body, actionLabel, onAction, secondaryLabel, onSecondary, tone = 'calm', compact = false, style, testID }: EmptyStateProps) {
+export function EmptyState({
+  icon = 'check',
+  title,
+  body,
+  actionLabel,
+  onAction,
+  secondaryLabel,
+  onSecondary,
+  tone = 'calm',
+  compact = false,
+  style,
+  testID,
+}: EmptyStateProps) {
   const theme = useTheme();
   const c = theme.colors;
   return (
-    <View style={[styles.wrap, compact ? styles.compact : null, style]} testID={testID} accessibilityRole="summary">
-      <View style={[styles.tile, { backgroundColor: tone === 'error' ? c.criticalSoft : c.primarySoft }]}>
+    <View
+      style={[styles.wrap, compact ? styles.compact : null, style]}
+      testID={testID}
+      accessibilityRole="summary"
+    >
+      <View
+        style={[
+          styles.tile,
+          { backgroundColor: tone === 'error' ? c.criticalSoft : c.primarySoft },
+        ]}
+      >
         <Icon name={icon} size={24} color={tone === 'error' ? c.criticalText : c.primaryText} />
       </View>
       <Text variant="h3" align="center" style={styles.title}>
@@ -36,8 +57,23 @@ export function EmptyState({ icon = 'check', title, body, actionLabel, onAction,
           {body}
         </Text>
       ) : null}
-      {actionLabel && onAction ? <Button label={actionLabel} variant={tone === 'error' ? 'tonal' : 'primary'} size="sm" onPress={onAction} style={styles.action} /> : null}
-      {secondaryLabel && onSecondary ? <Button label={secondaryLabel} variant="ghostSecondary" size="ghost" onPress={onSecondary} /> : null}
+      {actionLabel && onAction ? (
+        <Button
+          label={actionLabel}
+          variant={tone === 'error' ? 'tonal' : 'primary'}
+          size="sm"
+          onPress={onAction}
+          style={styles.action}
+        />
+      ) : null}
+      {secondaryLabel && onSecondary ? (
+        <Button
+          label={secondaryLabel}
+          variant="ghostSecondary"
+          size="ghost"
+          onPress={onSecondary}
+        />
+      ) : null}
     </View>
   );
 }
@@ -45,7 +81,14 @@ export function EmptyState({ icon = 'check', title, body, actionLabel, onAction,
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 24 },
   compact: { paddingVertical: 20 },
-  tile: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  tile: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
   title: { maxWidth: 300 },
   body: { marginTop: 6, maxWidth: 300 },
   action: { marginTop: 14 },

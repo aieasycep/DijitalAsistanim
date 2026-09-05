@@ -16,12 +16,38 @@ export interface IconButtonProps extends Omit<PressableProps, 'style' | 'childre
 }
 
 /** Circular icon button (back 36 · mic 40 primary · overlay chips on gradients). */
-export function IconButton({ icon, accessibilityLabel, variant = 'surface', size = 36, iconSize = 20, filled, color, style, ...rest }: IconButtonProps) {
+export function IconButton({
+  icon,
+  accessibilityLabel,
+  variant = 'surface',
+  size = 36,
+  iconSize = 20,
+  filled,
+  color,
+  style,
+  ...rest
+}: IconButtonProps) {
   const theme = useTheme();
   const c = theme.colors;
   const bg =
-    variant === 'primary' ? c.primary : variant === 'dark' ? c.inverseSurface : variant === 'onGradient' ? c.onGradientChip : variant === 'plain' ? 'transparent' : c.surface;
-  const fg = color ?? (variant === 'primary' ? c.onPrimary : variant === 'dark' ? c.inkInverse : variant === 'onGradient' ? c.onGradientText : c.ink);
+    variant === 'primary'
+      ? c.primary
+      : variant === 'dark'
+        ? c.inverseSurface
+        : variant === 'onGradient'
+          ? c.onGradientChip
+          : variant === 'plain'
+            ? 'transparent'
+            : c.surface;
+  const fg =
+    color ??
+    (variant === 'primary'
+      ? c.onPrimary
+      : variant === 'dark'
+        ? c.inkInverse
+        : variant === 'onGradient'
+          ? c.onGradientText
+          : c.ink);
   return (
     <Pressable
       accessibilityRole="button"
@@ -30,7 +56,9 @@ export function IconButton({ icon, accessibilityLabel, variant = 'surface', size
         styles.base,
         { width: size, height: size, borderRadius: size / 2, backgroundColor: bg },
         variant === 'surface' && !theme.isDark ? theme.shadows.s1 : null,
-        variant === 'surface' && theme.isDark ? { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.cardRing } : null,
+        variant === 'surface' && theme.isDark
+          ? { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.cardRing }
+          : null,
         style,
       ]}
       {...rest}

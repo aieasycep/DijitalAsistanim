@@ -5,12 +5,30 @@
 import { oauthStartRequestSchema } from '@da/validation';
 import { AppError } from '@da/server-core/errors';
 import { planOAuthStart, scopeGroupFor } from '@da/server-core/oauth';
-import { assertMethod, audit, enforceRateLimit, getEnv, handler, hasOAuthClient, json, parseInput, requireUser } from '../_shared/mod.ts';
-import { getCipher, oauthStateSecret, providerClientConfig, redirectUriFor } from '../_shared/credentials.ts';
+import {
+  assertMethod,
+  audit,
+  enforceRateLimit,
+  getEnv,
+  handler,
+  hasOAuthClient,
+  json,
+  parseInput,
+  requireUser,
+} from '../_shared/mod.ts';
+import {
+  getCipher,
+  oauthStateSecret,
+  providerClientConfig,
+  redirectUriFor,
+} from '../_shared/credentials.ts';
 
 function assertRedirectAllowed(redirectTo: string): void {
   const env = getEnv();
-  const ok = redirectTo.startsWith(`${env.appScheme}://`) || redirectTo.startsWith(`${env.webUrl.replace(/\/$/, '')}/app/`) || /^exp(o)?:\/\//.test(redirectTo);
+  const ok =
+    redirectTo.startsWith(`${env.appScheme}://`) ||
+    redirectTo.startsWith(`${env.webUrl.replace(/\/$/, '')}/app/`) ||
+    /^exp(o)?:\/\//.test(redirectTo);
   if (!ok) throw new AppError('validation', 'Geçersiz yönlendirme adresi.');
 }
 
@@ -23,9 +41,13 @@ Deno.serve(
     await enforceRateLimit('oauth_start', user.id);
 
     if (!hasOAuthClient(input.provider)) {
-      throw new AppError('provider_unavailable', `${input.provider === 'google' ? 'Google' : 'Microsoft'} bağlantısı bu ortamda yapılandırılmamış.`, {
-        status: 503,
-      });
+      throw new AppError(
+        'provider_unavailable',
+        `${input.provider === 'google' ? 'Google' : 'Microsoft'} bağlantısı bu ortamda yapılandırılmamış.`,
+        {
+          status: 503,
+        },
+      );
     }
     const client = providerClientConfig(input.provider);
 
@@ -41,13 +63,25 @@ Deno.serve(
         .maybeSingle();
       if (error || !account) throw new AppError('not_found', 'Hesap bulunamadı.');
       const row = account as { email: string | null; granted_scopes: string[]; provider: string };
-      if (row.provider !== input.provider) throw new AppError('validation', 'Hesap sağlayıcısı uyuşmuyor.');
+      if (row.provider !== input.provider)
+        throw new AppError('validation', 'Hesap sağlayıcısı uyuşmuyor.');
       existingGrantedScopes = row.granted_scopes ?? [];
       loginHint = row.email;
       existingGroups = (['email_send', 'calendar_create', 'task_create'] as const)
         .map((t) => scopeGroupFor(t))
         .filter((g): g is 'mail_send' | 'calendar_write' | 'tasks_write' => g !== null)
-        .filter((g) => existingGrantedScopes.some((s) => s.toLowerCase().includes(g === 'mail_send' ? 'send' : g === 'calendar_write' ? 'calendar' : 'tasks') && !s.toLowerCase().includes('readonly') && !s.toLowerCase().endsWith('.read')));
+        .filter((g) =>
+          existingGrantedScopes.some(
+            (s) =>
+              s
+                .toLowerCase()
+                .includes(
+                  g === 'mail_send' ? 'send' : g === 'calendar_write' ? 'calendar' : 'tasks',
+                ) &&
+              !s.toLowerCase().includes('readonly') &&
+              !s.toLowerCase().endsWith('.read'),
+          ),
+        );
     }
 
     const plan = await planOAuthStart({
@@ -82,7 +116,12 @@ Deno.serve(
       actor: 'user',
       targetType: 'oauth_state',
       targetId: plan.nonce,
-      metadata: { provider: input.provider, kinds: input.kinds.join(','), scopeGroup: input.scopeGroup ?? 'read', newScopes: plan.newScopes.length },
+      metadata: {
+        provider: input.provider,
+        kinds: input.kinds.join(','),
+        scopeGroup: input.scopeGroup ?? 'read',
+        newScopes: plan.newScopes.length,
+      },
     });
 
     return json({ authorizationUrl: plan.authorizationUrl, state: plan.state });

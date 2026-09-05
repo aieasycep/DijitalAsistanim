@@ -4,7 +4,10 @@
  */
 export type AnalyticsEventMap = {
   onboarding_started: { platform: 'ios' | 'android' };
-  account_connected: { provider: 'google' | 'microsoft' | 'apple' | 'device'; kind: 'email' | 'calendar' | 'tasks' };
+  account_connected: {
+    provider: 'google' | 'microsoft' | 'apple' | 'device';
+    kind: 'email' | 'calendar' | 'tasks';
+  };
   calendar_connected: { provider: 'google' | 'microsoft' | 'apple' | 'device' };
   first_analysis_completed: { durationMs: number; emailsFound: number; insights: number };
   first_brief_opened: { itemCount: number };
@@ -21,4 +24,15 @@ export type AnalyticsEventMap = {
 export type AnalyticsEventName = keyof AnalyticsEventMap;
 
 /** Keys that must never appear in any analytics property (defense in depth). */
-export const ANALYTICS_FORBIDDEN_KEYS = ['body', 'subject', 'name', 'email', 'text', 'message', 'content', 'query', 'snippet', 'draft'] as const;
+export const ANALYTICS_FORBIDDEN_KEYS = [
+  'body',
+  'subject',
+  'name',
+  'email',
+  'text',
+  'message',
+  'content',
+  'query',
+  'snippet',
+  'draft',
+] as const;

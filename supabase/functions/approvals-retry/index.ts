@@ -8,7 +8,15 @@ import { MAX_EXECUTION_ATTEMPTS } from '@da/server-core/approvals';
 import { AppError } from '@da/server-core/errors';
 import { loadApproval, loadApprovalContext } from '../_shared/approvals.ts';
 import { executeApproval } from '../_shared/execute.ts';
-import { adminClient, assertMethod, handler, json, parseInput, requireUser, uuidParam } from '../_shared/mod.ts';
+import {
+  adminClient,
+  assertMethod,
+  handler,
+  json,
+  parseInput,
+  requireUser,
+  uuidParam,
+} from '../_shared/mod.ts';
 
 const schema = z.object({ approvalId: uuidParam });
 
@@ -26,10 +34,16 @@ Deno.serve(
       return json(response);
     }
     if (approval.status !== 'approved' && approval.status !== 'failed') {
-      throw new AppError('conflict', 'Bu işlem yeniden denenemez.', { details: { status: approval.status } });
+      throw new AppError('conflict', 'Bu işlem yeniden denenemez.', {
+        details: { status: approval.status },
+      });
     }
     if (approval.attemptCount >= MAX_EXECUTION_ATTEMPTS) {
-      throw new AppError('conflict', 'Deneme sınırına ulaşıldı. İşlemi yeniden oluşturman gerekiyor.', { details: { attemptCount: approval.attemptCount } });
+      throw new AppError(
+        'conflict',
+        'Deneme sınırına ulaşıldı. İşlemi yeniden oluşturman gerekiyor.',
+        { details: { attemptCount: approval.attemptCount } },
+      );
     }
 
     const result = await executeApproval(admin, approval, { actor: 'user', ctx });

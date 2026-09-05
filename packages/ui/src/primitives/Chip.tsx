@@ -14,7 +14,13 @@ export interface FilterChipProps {
 }
 
 /** Filter chip: 34 high, selected = ink background. */
-export function FilterChip({ label, selected = false, disabled = false, onPress, testID }: FilterChipProps) {
+export function FilterChip({
+  label,
+  selected = false,
+  disabled = false,
+  onPress,
+  testID,
+}: FilterChipProps) {
   const theme = useTheme();
   const c = theme.colors;
   return (
@@ -28,7 +34,11 @@ export function FilterChip({ label, selected = false, disabled = false, onPress,
       testID={testID}
       style={[
         styles.filter,
-        { height: theme.sizes.filterChip, backgroundColor: selected ? c.inverseSurface : theme.isDark ? c.surface2 : c.background, opacity: disabled ? 0.4 : 1 },
+        {
+          height: theme.sizes.filterChip,
+          backgroundColor: selected ? c.inverseSurface : theme.isDark ? c.surface2 : c.background,
+          opacity: disabled ? 0.4 : 1,
+        },
       ]}
     >
       <Text variant="chip" color={selected ? c.inkInverse : c.inkSecondary}>
@@ -49,7 +59,15 @@ export interface MetaChipProps {
 }
 
 /** Meta chip: 30 high, icon 15 — e.g. "Yarın", "VIP", "18 dk". */
-export function MetaChip({ label, icon, iconFilled, tone = 'neutral', onPress, accessibilityLabel, style }: MetaChipProps) {
+export function MetaChip({
+  label,
+  icon,
+  iconFilled,
+  tone = 'neutral',
+  onPress,
+  accessibilityLabel,
+  style,
+}: MetaChipProps) {
   const theme = useTheme();
   const c = theme.colors;
   const tones = {
@@ -70,14 +88,30 @@ export function MetaChip({ label, icon, iconFilled, tone = 'neutral', onPress, a
   );
   if (!onPress) return inner;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+    >
       {inner}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  filter: { paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  meta: { paddingHorizontal: 10, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
+  filter: {
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  meta: {
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+  },
   metaText: { fontWeight: '600' },
 });

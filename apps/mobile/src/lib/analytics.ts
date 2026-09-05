@@ -2,7 +2,11 @@
  * Privacy-safe analytics. PostHog when EXPO_PUBLIC_POSTHOG_KEY is set, otherwise a no-op.
  * Events and properties are strictly typed (AnalyticsEventMap) and scrubbed of forbidden keys.
  */
-import { ANALYTICS_FORBIDDEN_KEYS, type AnalyticsEventMap, type AnalyticsEventName } from '@da/domain';
+import {
+  ANALYTICS_FORBIDDEN_KEYS,
+  type AnalyticsEventMap,
+  type AnalyticsEventName,
+} from '@da/domain';
 import { env } from './env';
 
 interface Sink {
@@ -12,7 +16,12 @@ interface Sink {
   screen(name: string): void;
 }
 
-const noop: Sink = { capture: () => undefined, identify: () => undefined, reset: () => undefined, screen: () => undefined };
+const noop: Sink = {
+  capture: () => undefined,
+  identify: () => undefined,
+  reset: () => undefined,
+  screen: () => undefined,
+};
 
 let sink: Sink = noop;
 let ready = false;
@@ -43,7 +52,8 @@ export async function setupAnalytics(): Promise<void> {
 function scrub(props: Record<string, unknown>): Record<string, string | number | boolean> {
   const out: Record<string, string | number | boolean> = {};
   for (const [k, v] of Object.entries(props)) {
-    if ((ANALYTICS_FORBIDDEN_KEYS as readonly string[]).some((f) => k.toLowerCase().includes(f))) continue;
+    if ((ANALYTICS_FORBIDDEN_KEYS as readonly string[]).some((f) => k.toLowerCase().includes(f)))
+      continue;
     if (typeof v === 'string') {
       if (v.length > 80 || /@/.test(v)) continue;
       out[k] = v;

@@ -7,8 +7,21 @@ import type { ApprovalAction } from '@da/domain';
 import { createApprovalRequestSchema } from '@da/validation';
 import { createApproval } from '@da/server-core/approvals';
 import { AppError } from '@da/server-core/errors';
-import { accountIdOf, insertApproval, loadAccount, loadApprovalContext } from '../_shared/approvals.ts';
-import { adminClient, assertMethod, audit, handler, json, parseInput, requireUser } from '../_shared/mod.ts';
+import {
+  accountIdOf,
+  insertApproval,
+  loadAccount,
+  loadApprovalContext,
+} from '../_shared/approvals.ts';
+import {
+  adminClient,
+  assertMethod,
+  audit,
+  handler,
+  json,
+  parseInput,
+  requireUser,
+} from '../_shared/mod.ts';
 
 Deno.serve(
   handler(async (req) => {
@@ -34,11 +47,24 @@ Deno.serve(
         insightId: input.insightId ?? null,
         idempotencyKey: input.idempotencyKey,
       },
-      { userId: user.id, now: new Date().toISOString(), locale: ctx.locale, timezone: ctx.timezone, provider: account?.provider ?? null },
+      {
+        userId: user.id,
+        now: new Date().toISOString(),
+        locale: ctx.locale,
+        timezone: ctx.timezone,
+        provider: account?.provider ?? null,
+      },
     );
     const { id, created } = await insertApproval(admin, approval);
     if (created) {
-      await audit(admin, { userId: user.id, action: 'approval.create', actor: 'user', targetType: 'approval_action', targetId: id, metadata: { type: input.type, requestedBy: input.requestedBy } });
+      await audit(admin, {
+        userId: user.id,
+        action: 'approval.create',
+        actor: 'user',
+        targetType: 'approval_action',
+        targetId: id,
+        metadata: { type: input.type, requestedBy: input.requestedBy },
+      });
     }
     return json({ approvalId: id });
   }),

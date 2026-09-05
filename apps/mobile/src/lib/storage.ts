@@ -30,7 +30,9 @@ export function getCache(): MMKV {
   if (!key) {
     key = randomKey();
     try {
-      SecureStore.setItem(MMKV_KEY_NAME, key, { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY });
+      SecureStore.setItem(MMKV_KEY_NAME, key, {
+        keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+      });
     } catch {
       // If the keychain is unavailable (rare), fall back to an ephemeral key: cache becomes session-only.
     }
@@ -48,7 +50,9 @@ export const secureStore: KeyValueStorage = {
     }
   },
   async setItem(key, value) {
-    await SecureStore.setItemAsync(key, value, { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY });
+    await SecureStore.setItemAsync(key, value, {
+      keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+    });
   },
   async removeItem(key) {
     await SecureStore.deleteItemAsync(key);

@@ -54,7 +54,11 @@ export async function requireUser(req: Request): Promise<{ user: AuthedUser; db:
 export function requireInternal(req: Request): void {
   const env = getEnv();
   const provided = req.headers.get('x-internal-secret') ?? '';
-  if (!env.internalSecret || provided.length === 0 || !timingSafeEqual(provided, env.internalSecret)) {
+  if (
+    !env.internalSecret ||
+    provided.length === 0 ||
+    !timingSafeEqual(provided, env.internalSecret)
+  ) {
     throw new AppError('forbidden', 'İç çağrı doğrulanamadı.');
   }
 }
@@ -71,7 +75,8 @@ export function timingSafeEqual(a: string, b: string): boolean {
 /** Throw a typed error for a PostgREST error. */
 export function dbError(error: { message: string; code?: string } | null, context: string): never {
   const code = error?.code ?? '';
-  if (code === 'PGRST116' || code === '42P01') throw new AppError('not_found', `${context}: bulunamadı`);
+  if (code === 'PGRST116' || code === '42P01')
+    throw new AppError('not_found', `${context}: bulunamadı`);
   if (code === '42501') throw new AppError('forbidden', `${context}: izin yok`);
   if (code === '23505') throw new AppError('conflict', `${context}: zaten var`);
   throw new AppError('internal', `${context}: ${error?.message ?? 'bilinmeyen hata'}`);
@@ -79,7 +84,11 @@ export function dbError(error: { message: string; code?: string } | null, contex
 
 /** Load profile + preferences + notification prefs for a user (admin client). */
 export async function loadUserContext(db: Db, userId: string) {
-  const [{ data: profile, error: pErr }, { data: prefs, error: prefErr }, { data: notif, error: nErr }] = await Promise.all([
+  const [
+    { data: profile, error: pErr },
+    { data: prefs, error: prefErr },
+    { data: notif, error: nErr },
+  ] = await Promise.all([
     db.from('profiles').select('*').eq('id', userId).single(),
     db.from('user_preferences').select('*').eq('user_id', userId).maybeSingle(),
     db.from('notification_preferences').select('*').eq('user_id', userId).maybeSingle(),

@@ -15,17 +15,33 @@ export function describeError(e: unknown, t: TFunction): ErrorCopy {
     case 'offline':
       return { title: t('errors.offline'), body: t('errors.offlineBody'), recovery: 'retry' };
     case 'oauth_expired':
-      return { title: t('errors.oauthExpired'), body: t('errors.oauthExpiredBody'), recovery: 'reconnect' };
+      return {
+        title: t('errors.oauthExpired'),
+        body: t('errors.oauthExpiredBody'),
+        recovery: 'reconnect',
+      };
     case 'scope_required':
       return { title: t('approvals.scopeNeeded'), recovery: 'grant_scope' };
     case 'rate_limited':
-      return { title: t('errors.rateLimited'), body: t('errors.rateLimitedBody'), recovery: 'wait' };
+      return {
+        title: t('errors.rateLimited'),
+        body: t('errors.rateLimitedBody'),
+        recovery: 'wait',
+      };
     case 'quota_exceeded':
       return { title: t('paywall.quotaTitle'), body: t('paywall.quotaBody'), recovery: 'upgrade' };
     case 'ai_unavailable':
-      return { title: t('errors.aiUnavailable'), body: t('errors.aiUnavailableBody'), recovery: 'retry' };
+      return {
+        title: t('errors.aiUnavailable'),
+        body: t('errors.aiUnavailableBody'),
+        recovery: 'retry',
+      };
     case 'provider_unavailable':
-      return { title: t('errors.syncDelayed'), body: t('errors.syncDelayedBody'), recovery: 'retry' };
+      return {
+        title: t('errors.syncDelayed'),
+        body: t('errors.syncDelayedBody'),
+        recovery: 'retry',
+      };
     case 'not_found':
       return { title: t('errors.notFound'), recovery: 'none' };
     case 'validation':

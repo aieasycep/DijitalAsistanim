@@ -1,6 +1,18 @@
 import { useEffect } from 'react';
-import { StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import {
+  StyleSheet,
+  View,
+  type DimensionValue,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { motion } from '@da/design-tokens';
 import { useTheme, useThemeContext } from '../theme/ThemeProvider';
 
@@ -18,14 +30,29 @@ export function Skeleton({ width = '100%', height = 14, radius, style }: Skeleto
   const p = useSharedValue(0);
   useEffect(() => {
     if (reducedMotion) return;
-    p.value = withRepeat(withTiming(1, { duration: motion.duration.shimmer, easing: Easing.linear }), -1, false);
+    p.value = withRepeat(
+      withTiming(1, { duration: motion.duration.shimmer, easing: Easing.linear }),
+      -1,
+      false,
+    );
   }, [p, reducedMotion]);
-  const anim = useAnimatedStyle(() => ({ opacity: reducedMotion ? 1 : 0.55 + 0.45 * Math.abs(Math.sin(p.value * Math.PI)) }));
+  const anim = useAnimatedStyle(() => ({
+    opacity: reducedMotion ? 1 : 0.55 + 0.45 * Math.abs(Math.sin(p.value * Math.PI)),
+  }));
   return (
     <Animated.View
       accessibilityLabel="Yükleniyor"
       accessibilityRole="progressbar"
-      style={[{ width, height, borderRadius: radius ?? height / 2, backgroundColor: theme.colors.skeletonBase }, anim, style]}
+      style={[
+        {
+          width,
+          height,
+          borderRadius: radius ?? height / 2,
+          backgroundColor: theme.colors.skeletonBase,
+        },
+        anim,
+        style,
+      ]}
     />
   );
 }
@@ -34,7 +61,19 @@ export function Skeleton({ width = '100%', height = 14, radius, style }: Skeleto
 export function CardSkeleton({ style }: { style?: StyleProp<ViewStyle> }) {
   const theme = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: theme.colors.surface, borderRadius: theme.radius.xxl, borderWidth: theme.isDark ? StyleSheet.hairlineWidth : 0, borderColor: theme.cardRing }, theme.shadows.s2, style]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.colors.surface,
+          borderRadius: theme.radius.xxl,
+          borderWidth: theme.isDark ? StyleSheet.hairlineWidth : 0,
+          borderColor: theme.cardRing,
+        },
+        theme.shadows.s2,
+        style,
+      ]}
+    >
       <Skeleton width="30%" height={10} />
       <Skeleton width="92%" height={16} style={styles.gap} />
       <Skeleton width="70%" height={16} />

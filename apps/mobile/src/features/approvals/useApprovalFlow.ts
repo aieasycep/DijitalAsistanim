@@ -6,7 +6,12 @@ import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { qk } from '@da/api-client';
-import type { ApprovalAction, ApprovalActionType, CreateApprovalRequest, DecideApprovalResponse } from '@da/domain';
+import type {
+  ApprovalAction,
+  ApprovalActionType,
+  CreateApprovalRequest,
+  DecideApprovalResponse,
+} from '@da/domain';
 import { useToast } from '@da/ui';
 import { useTranslation } from 'react-i18next';
 import { useDataSource } from '@/hooks/useDataSource';
@@ -17,7 +22,19 @@ import { describeError } from '@/lib/errors';
 const APPROVAL_QUERY_PREFIX = ['approvals'] as const;
 
 /** Query keys whose data changes when an approval is executed (threads, plan, tasks, reminders, commitments, insights). */
-const SIDE_EFFECT_PREFIXES = [['today'], ['flow'], ['plan'], ['tasks'], ['reminders'], ['commitments'], ['thread'], ['followUps'], ['events'], ['waiting'], ['conflicts']];
+const SIDE_EFFECT_PREFIXES = [
+  ['today'],
+  ['flow'],
+  ['plan'],
+  ['tasks'],
+  ['reminders'],
+  ['commitments'],
+  ['thread'],
+  ['followUps'],
+  ['events'],
+  ['waiting'],
+  ['conflicts'],
+];
 
 export function useApprovalFlow() {
   const ds = useDataSource();
@@ -39,20 +56,27 @@ export function useApprovalFlow() {
   }, [ds, queryClient, setPendingApprovals]);
 
   const invalidateSideEffects = useCallback(async () => {
-    await Promise.all(SIDE_EFFECT_PREFIXES.map((key) => queryClient.invalidateQueries({ queryKey: key })));
+    await Promise.all(
+      SIDE_EFFECT_PREFIXES.map((key) => queryClient.invalidateQueries({ queryKey: key })),
+    );
   }, [queryClient]);
 
   const create = useMutation({
-    mutationFn: <T extends ApprovalActionType>(req: CreateApprovalRequest<T>) => ds.approvals.createApproval(req),
+    mutationFn: <T extends ApprovalActionType>(req: CreateApprovalRequest<T>) =>
+      ds.approvals.createApproval(req),
     onSuccess: () => void refreshPending(),
   });
 
   /** Creates the approval and opens its card. Returns the approval (or null when creation failed — a toast is shown). */
   const requestApproval = useCallback(
-    async <T extends ApprovalActionType>(req: CreateApprovalRequest<T>, opts: { navigate?: boolean } = {}): Promise<ApprovalAction<T> | null> => {
+    async <T extends ApprovalActionType>(
+      req: CreateApprovalRequest<T>,
+      opts: { navigate?: boolean } = {},
+    ): Promise<ApprovalAction<T> | null> => {
       try {
         const approval = await create.mutateAsync(req);
-        if (opts.navigate !== false) router.push({ pathname: '/approvals/[id]', params: { id: approval.id } });
+        if (opts.navigate !== false)
+          router.push({ pathname: '/approvals/[id]', params: { id: approval.id } });
         return approval as ApprovalAction<T>;
       } catch (e) {
         toast.show({ message: describeError(e, t).title, icon: 'error', iconTone: 'critical' });
@@ -63,10 +87,18 @@ export function useApprovalFlow() {
   );
 
   const decide = useMutation({
-    mutationFn: (input: { approvalId: string; decision: 'approve' | 'reject'; editedPayload?: Record<string, unknown> }) => ds.approvals.decideApproval(input),
+    mutationFn: (input: {
+      approvalId: string;
+      decision: 'approve' | 'reject';
+      editedPayload?: Record<string, unknown>;
+    }) => ds.approvals.decideApproval(input),
     onSuccess: async (result: DecideApprovalResponse, variables) => {
       queryClient.setQueryData(qk.approval(variables.approvalId), result.approval);
-      if (variables.decision === 'approve') track('action_approved', { actionType: result.approval.type, edited: result.approval.editedByUser });
+      if (variables.decision === 'approve')
+        track('action_approved', {
+          actionType: result.approval.type,
+          edited: result.approval.editedByUser,
+        });
       await refreshPending();
       if (result.status === 'executed') await invalidateSideEffects();
     },

@@ -37,8 +37,11 @@ export async function enforceRateLimit(policy: RatePolicy, subject: string): Pro
     // Fail open for reads but never block legitimate sync; log for visibility.
     return;
   }
-  const row = (Array.isArray(data) ? data[0] : data) as { allowed: boolean; remaining: number; retry_after_sec: number } | undefined;
+  const row = (Array.isArray(data) ? data[0] : data) as
+    { allowed: boolean; remaining: number; retry_after_sec: number } | undefined;
   if (row && !row.allowed) {
-    throw new AppError('rate_limited', 'Çok fazla istek. Kısa süre sonra tekrar dene.', { retryAfterSec: row.retry_after_sec });
+    throw new AppError('rate_limited', 'Çok fazla istek. Kısa süre sonra tekrar dene.', {
+      retryAfterSec: row.retry_after_sec,
+    });
   }
 }

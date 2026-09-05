@@ -8,7 +8,7 @@ import { BRIEFING_SECTIONS } from '@da/domain';
 import type { BriefingAi } from '@da/validation';
 import type { BriefingCandidate } from '../ai/prompts/briefing';
 import { durationMinutes, externalAttendees, hasPhysicalLocation, isSchedulable } from '../calendar';
-import { MONTHS_EN_TITLE, MONTHS_TR_TITLE, addDays, dateKey, formatClock, localToUtcIso, parseDateKey, turkishLocative, turkishNumberLocative } from '../dates';
+import { MONTHS_EN_TITLE, MONTHS_TR_TITLE, addDays, dateKey, formatClock, localToUtcIso, parseDateKey, turkishDative, turkishLocative, turkishNumberLocative } from '../dates';
 import { refreshFollowUpStatus, waitingDays } from '../followups';
 import { badgeLabel, formatDayOrDate, greetingFor, hasClockTime, selectTopInsights, sourceLabel, type InsightDraft } from '../insights';
 import { DAY, HOUR, localDateKey, localHour } from '../util';
@@ -189,7 +189,7 @@ function lifeEventIcon(type: LifeEvent['type']): string {
 }
 
 function eventIcon(event: CalendarEvent): string {
-  if (/(yemek|restoran|rezervasyon|dinner|lunch|brunch|kahvaltı)/i.test(event.title)) return 'restaurant';
+  if (/(yeme[kğ]|restoran|rezervasyon|dinner|lunch|brunch|kahvaltı)/i.test(event.title)) return 'restaurant';
   if (event.meetingUrl && !hasPhysicalLocation(event)) return 'videocam';
   return 'event';
 }
@@ -458,7 +458,9 @@ export function assembleBriefingCandidates(kind: BriefingKind, input: BriefingCo
       const rest: { item: BriefingItemDraft; at: number }[] = todayEvents.filter((e) => ms(e.endAt) > ctx.nowMs).map((e) => ({ item: fromEvent(e, 'rest_of_day', ctx), at: ms(e.startAt) }));
       for (const i of insights) {
         if (i.dueAt && ms(i.dueAt) > ctx.nowMs && localDateKey(i.dueAt, ctx.timezone) === ctx.today && i.entityType !== 'calendar_event' && i.kind !== 'suggestion') {
-          rest.push({ item: fromInsight(i, 'rest_of_day', ctx, formatDayOrDate(i.dueAt, fmt(ctx))), at: ms(i.dueAt) });
+          // Life events keep their own label (a delivery window is not a clock time).
+          const meta = i.kind === 'life_event' && i.timeLabel ? i.timeLabel : formatDayOrDate(i.dueAt, fmt(ctx));
+          rest.push({ item: fromInsight(i, 'rest_of_day', ctx, meta), at: ms(i.dueAt) });
         }
       }
       sections.set('rest_of_day', dedupe(rest.sort((a, b) => a.at - b.at).map((r) => r.item)));
@@ -538,14 +540,15 @@ export function estimateReadSeconds(text: string): number {
   return Math.max(10, Math.round((words / WORDS_PER_MINUTE) * 60));
 }
 
-/** Plain narration for TTS: times as "saat 14:00", ranges as "… ile … arası", no symbols. */
+/** Plain narration for TTS: times as "saat 14:00", ranges as "14:00 ile 18:00" ("from 14:00 to 18:00"), no symbols. */
 export function ttsFriendly(text: string, locale: Locale = 'tr'): string {
   const en = locale === 'en';
   let s = text;
-  s = s.replace(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/g, en ? 'from $1 to $2' : '$1 ile $2 arası');
+  s = s.replace(/(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})/g, en ? 'from $1 to $2' : '$1 ile $2');
   s = s.replace(/(?<!\d)(\d{1,2}:\d{2})(?!\d)/g, (_m, t: string, offset: number, whole: string) => {
     const before = whole.slice(Math.max(0, offset - 6), offset).toLocaleLowerCase('tr-TR');
-    if (/(saat|from|to|at)\s$/.test(before)) return t;
+    const after = whole.slice(offset + t.length, offset + t.length + 5).toLocaleLowerCase('tr-TR');
+    if (/(saat|from|to|at|ile)\s$/.test(before) || /^\s(ile|to)\b/.test(after)) return t;
     return en ? `at ${t}` : `saat ${t}`;
   });
   s = s.replace(/%\s?(\d+(?:[.,]\d+)?)/g, en ? '$1 percent' : 'yüzde $1');
@@ -652,11 +655,16 @@ function morningNarrative(candidates: BriefingCandidates, input: BriefingContext
     if (key) {
       sentences.push(en ? `At ${formatClock(key.startAt, ctx.timezone)} you have ${key.title}.` : `Saat ${clockLocative(key.startAt, ctx.timezone)} ${key.title} var.`);
       const attendeeNames = externalAttendees(key, { userEmail: ctx.userEmail }).map((a) => a.name?.trim().toLocaleLowerCase('tr-TR') ?? '');
-      const related = activeInsights(input, ctx).find((i) => i.entityType === 'email_thread' && i.source.person && attendeeNames.includes(i.source.person.trim().toLocaleLowerCase('tr-TR')));
-      if (related?.source.person) {
-        sentences.push(en ? `Before the meeting it may help to look at the latest email from ${related.source.person}.` : `Toplantı öncesinde ${turkishAblative(related.source.person)} gelen son maile bakman faydalı olabilir.`);
+      const withPerson = (i: InsightLike): boolean => !!i.source.person && attendeeNames.includes(i.source.person.trim().toLocaleLowerCase('tr-TR'));
+      const live = activeInsights(input, ctx);
+      // A mail received from the attendee, or the last mail the user sent them (open follow-up).
+      const received = live.find((i) => i.entityType === 'email_thread' && withPerson(i));
+      const sent = received ? null : live.find((i) => i.entityType === 'follow_up' && withPerson(i));
+      if (received?.source.person) {
+        sentences.push(en ? `Before the meeting it may help to look at the latest email from ${received.source.person}.` : `Toplantı öncesinde ${turkishAblative(received.source.person)} gelen son maile bakman faydalı olabilir.`);
+      } else if (sent?.source.person) {
+        sentences.push(en ? `Before the meeting it may help to look at the last email you sent to ${sent.source.person}.` : `Toplantı öncesinde ${turkishDative(sent.source.person)} gönderdiğin son maile bakman faydalı olabilir.`);
       }
-      if (timed.length > 1) sentences.push(en ? `You have ${timed.length} events in total today.` : `Bugün toplam ${timed.length} etkinliğin var.`);
     }
   }
   if (counts.analyzedEmails > 0) {
@@ -672,6 +680,7 @@ function morningNarrative(candidates: BriefingCandidates, input: BriefingContext
   }
   const urgent = itemsOf(candidates, 'priorities').find((it) => /^(Acil|Urgent)/.test(it.meta ?? ''));
   if (urgent) sentences.push(en ? `Most urgent: ${ensurePeriod(urgent.title)}` : `En acili: ${ensurePeriod(urgent.title)}`);
+  if (timed.length > 1 && sentences.length < 5) sentences.push(en ? `You have ${timed.length} events in total today.` : `Bugün toplam ${timed.length} etkinliğin var.`);
   const personal = itemsOf(candidates, 'personal')[0];
   if (personal && sentences.length < 5) sentences.push(ensurePeriod(personal.title));
   return sentences.slice(0, 5).join(' ');

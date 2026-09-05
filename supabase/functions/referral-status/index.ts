@@ -9,7 +9,11 @@ Deno.serve(
     const [{ data: profile }, { data: referrals }, { data: credits }] = await Promise.all([
       db.from('profiles').select('referral_code').eq('id', user.id).single(),
       db.from('referrals').select('status').eq('referrer_user_id', user.id),
-      db.from('referral_credits').select('days, expires_at').eq('user_id', user.id).order('expires_at', { ascending: false }),
+      db
+        .from('referral_credits')
+        .select('days, expires_at')
+        .eq('user_id', user.id)
+        .order('expires_at', { ascending: false }),
     ]);
     const code = (profile as { referral_code: string } | null)?.referral_code ?? '';
     const list = (referrals ?? []) as { status: string }[];

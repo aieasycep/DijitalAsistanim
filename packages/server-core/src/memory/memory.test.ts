@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CalendarEvent, Capture, Commitment, Contact, EmailAnalysis, EmailThread, MemoryChunk, PostMeetingNote } from '@da/domain';
+import type { CalendarEvent, Capture, Commitment, Contact, EmailAnalysis, EmailThread, PostMeetingNote } from '@da/domain';
 import { zonedTimeToUtc } from '../util';
 import { buildFtsQuery, buildMemoryChunks, buildSourceRefs, canonicalNumber, extractFacts, groundingCheck, rankAndTrimContext, termOverlap, toSearchResults, type ScoredChunk } from './index';
 
@@ -177,7 +177,8 @@ describe('memory · full-text query', () => {
     expect(buildFtsQuery('-spam')).toBe('');
     expect(buildFtsQuery('')).toBe('');
     expect(buildFtsQuery('or teklif or')).toBe('teklif');
-    expect(buildFtsQuery('a & b | (c)')).toBe('b c');
+    expect(buildFtsQuery('teklif & fatura | (sözleşme)')).toBe('teklif fatura sözleşme');
+    expect(buildFtsQuery('a & b | (c)')).toBe('');
   });
 });
 

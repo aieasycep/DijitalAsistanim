@@ -9,7 +9,13 @@
  * executed server-side (EventKit only exists on the phone); those stay `executing` with
  * `executionResult.handler = 'device'` and are finalised by `device-calendar-upsert`.
  */
-import type { ApprovalAction, CommitmentCreatePayload, ReminderCreatePayload, SourceRef, TaskCreatePayload } from '@da/domain';
+import type {
+  ApprovalAction,
+  CommitmentCreatePayload,
+  ReminderCreatePayload,
+  SourceRef,
+  TaskCreatePayload,
+} from '@da/domain';
 import { planExecution, transition, type ExecutionPlan } from '@da/server-core/approvals';
 import { buildIdempotencyKey } from '@da/server-core/crypto';
 import { AppError } from '@da/server-core/errors';
@@ -55,18 +61,30 @@ function failureReasonFor(e: unknown): string {
   return 'unknown';
 }
 
-export async function executeApproval(admin: Db, approval: ApprovalAction, opts: ExecuteOptions): Promise<ExecuteResult> {
+export async function executeApproval(
+  admin: Db,
+  approval: ApprovalAction,
+  opts: ExecuteOptions,
+): Promise<ExecuteResult> {
   if (approval.status === 'executed') return { approval };
   const now = new Date().toISOString();
   const accountId = accountIdOf(approval);
   const account = accountId ? await loadAccount(admin, approval.userId, accountId) : null;
   if (accountId && !account) {
-    const failed = transition(approval, 'failed', { now, locale: opts.ctx.locale, failureReason: 'account_missing' });
+    const failed = transition(approval, 'failed', {
+      now,
+      locale: opts.ctx.locale,
+      failureReason: 'account_missing',
+    });
     await persistApproval(admin, failed);
     return { approval: failed };
   }
 
-  const plan = planExecution(approval, account ? { provider: account.provider, kinds: account.kinds } : null, { now, locale: opts.ctx.locale });
+  const plan = planExecution(
+    approval,
+    account ? { provider: account.provider, kinds: account.kinds } : null,
+    { now, locale: opts.ctx.locale },
+  );
 
   // Progressive OAuth: never start executing when the grant is missing the write scope.
   if (plan.requiredScope && account) {
@@ -79,13 +97,27 @@ export async function executeApproval(admin: Db, approval: ApprovalAction, opts:
   await persistApproval(admin, executing);
 
   try {
-    const result = await runPlan(admin, executing, plan, opts, account ? { provider: account.provider, id: account.id } : null);
+    const result = await runPlan(
+      admin,
+      executing,
+      plan,
+      opts,
+      account ? { provider: account.provider, id: account.id } : null,
+    );
     if (result.pendingOnDevice) {
-      executing = { ...executing, executionResult: { handler: 'device', kind: plan.kind }, updatedAt: new Date().toISOString() };
+      executing = {
+        ...executing,
+        executionResult: { handler: 'device', kind: plan.kind },
+        updatedAt: new Date().toISOString(),
+      };
       await persistApproval(admin, executing);
       return { approval: executing };
     }
-    const executed = transition(executing, 'executed', { now: new Date().toISOString(), locale: opts.ctx.locale, executionResult: result.executionResult });
+    const executed = transition(executing, 'executed', {
+      now: new Date().toISOString(),
+      locale: opts.ctx.locale,
+      executionResult: result.executionResult,
+    });
     await persistApproval(admin, executed);
     await audit(admin, {
       userId: approval.userId,
@@ -96,12 +128,20 @@ export async function executeApproval(admin: Db, approval: ApprovalAction, opts:
       metadata: { type: approval.type, kind: plan.kind, attempt: executed.attemptCount },
     });
     if (approval.insightId) {
-      await admin.from('insights').update({ status: 'completed', completed_at: executed.executedAt }).eq('id', approval.insightId).eq('user_id', approval.userId);
+      await admin
+        .from('insights')
+        .update({ status: 'completed', completed_at: executed.executedAt })
+        .eq('id', approval.insightId)
+        .eq('user_id', approval.userId);
     }
     return { approval: executed };
   } catch (e) {
     const reason = failureReasonFor(e);
-    const failed = transition(executing, 'failed', { now: new Date().toISOString(), locale: opts.ctx.locale, failureReason: reason });
+    const failed = transition(executing, 'failed', {
+      now: new Date().toISOString(),
+      locale: opts.ctx.locale,
+      failureReason: reason,
+    });
     await persistApproval(admin, failed);
     await audit(admin, {
       userId: approval.userId,
@@ -112,7 +152,10 @@ export async function executeApproval(admin: Db, approval: ApprovalAction, opts:
       metadata: { type: approval.type, kind: plan.kind, reason, attempt: failed.attemptCount },
     });
     log.warn('approval execution failed', { approvalId: approval.id, kind: plan.kind, reason });
-    const requiredScope = e instanceof AppError && e.code === 'scope_required' ? (e.requiredScope ?? plan.requiredScope ?? null) : null;
+    const requiredScope =
+      e instanceof AppError && e.code === 'scope_required'
+        ? (e.requiredScope ?? plan.requiredScope ?? null)
+        : null;
     return requiredScope ? { approval: failed, requiredScope } : { approval: failed };
   }
 }
@@ -135,7 +178,9 @@ async function runPlan(
     case 'internal_commitment':
       return { executionResult: await createCommitment(admin, approval, plan.payload) };
     case 'internal_task':
-      return { executionResult: await createInternalTask(admin, approval, plan.payload, null, null) };
+      return {
+        executionResult: await createInternalTask(admin, approval, plan.payload, null, null),
+      };
     case 'device_event_create':
     case 'device_event_update':
       return { pendingOnDevice: true };
@@ -146,8 +191,14 @@ async function runPlan(
       const p = plan.payload;
       let externalThreadId: string | null = null;
       if (p.threadId) {
-        const { data: thread } = await admin.from('email_threads').select('external_thread_id').eq('id', p.threadId).eq('user_id', approval.userId).maybeSingle();
-        externalThreadId = (thread as { external_thread_id: string } | null)?.external_thread_id ?? null;
+        const { data: thread } = await admin
+          .from('email_threads')
+          .select('external_thread_id')
+          .eq('id', p.threadId)
+          .eq('user_id', approval.userId)
+          .maybeSingle();
+        externalThreadId =
+          (thread as { external_thread_id: string } | null)?.external_thread_id ?? null;
       }
       // Threading headers (In-Reply-To / References) are resolved by the provider adapter from the referenced message.
       const sent = await clients.mail.send({
@@ -158,9 +209,28 @@ async function runPlan(
         inReplyToExternalMessageId: p.inReplyToExternalId ?? null,
         externalThreadId,
       });
-      await audit(admin, { userId: approval.userId, action: 'email.send', actor: opts.actor, targetType: 'email_thread', targetId: p.threadId ?? undefined, metadata: { provider: creds.provider, recipients: p.to.length } });
-      await afterEmailSent(admin, approval, p.threadId ?? null, p.to[0]?.name ?? p.to[0]?.email ?? '', p.subject, creds.provider);
-      return { executionResult: { externalMessageId: sent.externalMessageId, externalThreadId: sent.externalThreadId } };
+      await audit(admin, {
+        userId: approval.userId,
+        action: 'email.send',
+        actor: opts.actor,
+        targetType: 'email_thread',
+        targetId: p.threadId ?? undefined,
+        metadata: { provider: creds.provider, recipients: p.to.length },
+      });
+      await afterEmailSent(
+        admin,
+        approval,
+        p.threadId ?? null,
+        p.to[0]?.name ?? p.to[0]?.email ?? '',
+        p.subject,
+        creds.provider,
+      );
+      return {
+        executionResult: {
+          externalMessageId: sent.externalMessageId,
+          externalThreadId: sent.externalThreadId,
+        },
+      };
     }
     case 'gcal_create':
     case 'graph_event_create': {
@@ -190,7 +260,12 @@ async function runPlan(
             start_at: p.startAt,
             end_at: p.endAt,
             all_day: p.allDay ?? false,
-            attendees: (p.attendees ?? []).map((a) => ({ name: a.name ?? null, email: a.email, isOrganizer: false, responseStatus: 'needsAction' })),
+            attendees: (p.attendees ?? []).map((a) => ({
+              name: a.name ?? null,
+              email: a.email,
+              isOrganizer: false,
+              responseStatus: 'needsAction',
+            })),
             organizer_is_user: true,
             status: 'confirmed',
             source: creds.provider === 'google' ? 'google_calendar' : 'outlook_calendar',
@@ -201,8 +276,21 @@ async function runPlan(
         )
         .select('id')
         .maybeSingle();
-      await audit(admin, { userId: approval.userId, action: 'calendar.write', actor: opts.actor, targetType: 'calendar_event', targetId: (row as { id: string } | null)?.id, metadata: { provider: creds.provider, op: 'create' } });
-      return { executionResult: { externalEventId: created.externalEventId, eventId: (row as { id: string } | null)?.id ?? null, htmlLink: created.htmlLink } };
+      await audit(admin, {
+        userId: approval.userId,
+        action: 'calendar.write',
+        actor: opts.actor,
+        targetType: 'calendar_event',
+        targetId: (row as { id: string } | null)?.id,
+        metadata: { provider: creds.provider, op: 'create' },
+      });
+      return {
+        executionResult: {
+          externalEventId: created.externalEventId,
+          eventId: (row as { id: string } | null)?.id ?? null,
+          htmlLink: created.htmlLink,
+        },
+      };
     }
     case 'gcal_update':
     case 'graph_event_update': {
@@ -223,8 +311,20 @@ async function runPlan(
       if (p.changes.endAt !== undefined) patch.end_at = p.changes.endAt;
       if (p.changes.location !== undefined) patch.location = p.changes.location;
       if (p.changes.description !== undefined) patch.description = p.changes.description;
-      if (Object.keys(patch).length) await admin.from('calendar_events').update(patch).eq('id', p.eventId).eq('user_id', approval.userId);
-      await audit(admin, { userId: approval.userId, action: 'calendar.write', actor: opts.actor, targetType: 'calendar_event', targetId: p.eventId, metadata: { provider: creds.provider, op: 'update' } });
+      if (Object.keys(patch).length)
+        await admin
+          .from('calendar_events')
+          .update(patch)
+          .eq('id', p.eventId)
+          .eq('user_id', approval.userId);
+      await audit(admin, {
+        userId: approval.userId,
+        action: 'calendar.write',
+        actor: opts.actor,
+        targetType: 'calendar_event',
+        targetId: p.eventId,
+        metadata: { provider: creds.provider, op: 'update' },
+      });
       return { executionResult: { externalEventId: p.externalEventId, eventId: p.eventId } };
     }
     case 'gtasks_create':
@@ -232,20 +332,43 @@ async function runPlan(
       const creds = await requireCreds(admin, account, plan.requiredScope, opts);
       const clients = providerClients(creds.provider, fetch, creds.accessToken);
       const p = plan.payload;
-      const created = await clients.tasks.createTask({ title: p.title, notes: p.notes ?? null, dueAt: p.dueAt ?? null });
-      return { executionResult: await createInternalTask(admin, approval, p, created.externalTaskId, creds.provider) };
+      const created = await clients.tasks.createTask({
+        title: p.title,
+        notes: p.notes ?? null,
+        dueAt: p.dueAt ?? null,
+      });
+      return {
+        executionResult: await createInternalTask(
+          admin,
+          approval,
+          p,
+          created.externalTaskId,
+          creds.provider,
+        ),
+      };
     }
   }
 }
 
-async function requireCreds(admin: Db, account: { provider: string; id: string } | null, requiredScope: string | null, opts: ExecuteOptions) {
+async function requireCreds(
+  admin: Db,
+  account: { provider: string; id: string } | null,
+  requiredScope: string | null,
+  opts: ExecuteOptions,
+) {
   if (!account) throw new AppError('validation', 'Bu işlem için bağlı bir hesap gerekli.');
-  const creds = await loadCredentials(admin, account.id, { actor: opts.actor === 'cron' ? 'cron' : opts.actor });
+  const creds = await loadCredentials(admin, account.id, {
+    actor: opts.actor === 'cron' ? 'cron' : opts.actor,
+  });
   ensureScope(creds, requiredScope);
   return creds;
 }
 
-async function createReminder(admin: Db, approval: ApprovalAction, p: ReminderCreatePayload): Promise<Record<string, unknown>> {
+async function createReminder(
+  admin: Db,
+  approval: ApprovalAction,
+  p: ReminderCreatePayload,
+): Promise<Record<string, unknown>> {
   const { data, error } = await admin
     .from('reminders')
     .insert({
@@ -262,20 +385,37 @@ async function createReminder(admin: Db, approval: ApprovalAction, p: ReminderCr
     })
     .select('id')
     .single();
-  if (error || !data) throw new AppError('internal', `Hatırlatıcı oluşturulamadı: ${error?.message ?? ''}`);
+  if (error || !data)
+    throw new AppError('internal', `Hatırlatıcı oluşturulamadı: ${error?.message ?? ''}`);
   const id = (data as { id: string }).id;
-  await audit(admin, { userId: approval.userId, action: 'reminder.write', actor: 'system', targetType: 'reminder', targetId: id, metadata: { option: p.option } });
+  await audit(admin, {
+    userId: approval.userId,
+    action: 'reminder.write',
+    actor: 'system',
+    targetType: 'reminder',
+    targetId: id,
+    metadata: { option: p.option },
+  });
   return { reminderId: id };
 }
 
-async function createCommitment(admin: Db, approval: ApprovalAction, p: CommitmentCreatePayload): Promise<Record<string, unknown>> {
+async function createCommitment(
+  admin: Db,
+  approval: ApprovalAction,
+  p: CommitmentCreatePayload,
+): Promise<Record<string, unknown>> {
   const dedupeKey = await buildIdempotencyKey('commitment', {
     text: p.text.trim().toLocaleLowerCase('tr-TR'),
     direction: p.direction,
     counterpart: p.counterpartName?.trim().toLocaleLowerCase('tr-TR') ?? null,
     dueAt: p.dueAt ?? null,
   });
-  const source: SourceRef = approval.source ?? { type: 'meeting_note', id: approval.id, label: 'Toplantı notu', timestamp: approval.createdAt };
+  const source: SourceRef = approval.source ?? {
+    type: 'meeting_note',
+    id: approval.id,
+    label: 'Toplantı notu',
+    timestamp: approval.createdAt,
+  };
   const { data, error } = await admin
     .from('commitments')
     .upsert(
@@ -326,14 +466,29 @@ async function createInternalTask(
     })
     .select('id')
     .single();
-  if (error || !data) throw new AppError('internal', `Görev oluşturulamadı: ${error?.message ?? ''}`);
+  if (error || !data)
+    throw new AppError('internal', `Görev oluşturulamadı: ${error?.message ?? ''}`);
   const id = (data as { id: string }).id;
-  await audit(admin, { userId: approval.userId, action: 'task.write', actor: 'system', targetType: 'task', targetId: id, metadata: { provider: provider ?? 'internal' } });
+  await audit(admin, {
+    userId: approval.userId,
+    action: 'task.write',
+    actor: 'system',
+    targetType: 'task',
+    targetId: id,
+    metadata: { provider: provider ?? 'internal' },
+  });
   return { taskId: id, externalTaskId };
 }
 
 /** After a reply goes out: the thread is "handled" and a follow-up watch starts. */
-async function afterEmailSent(admin: Db, approval: ApprovalAction, threadId: string | null, counterpartName: string, subject: string, provider: string): Promise<void> {
+async function afterEmailSent(
+  admin: Db,
+  approval: ApprovalAction,
+  threadId: string | null,
+  counterpartName: string,
+  subject: string,
+  provider: string,
+): Promise<void> {
   if (!threadId) return;
   const now = new Date().toISOString();
   await admin

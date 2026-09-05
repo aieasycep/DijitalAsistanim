@@ -35,7 +35,14 @@ export interface SourceLineProps {
 }
 
 /** "Gmail · Ahmet Yılmaz · 08:42" — tapping opens the source detail. */
-export function SourceLine({ source, timeLabel, icon, onPress, tone = 'default', style }: SourceLineProps) {
+export function SourceLine({
+  source,
+  timeLabel,
+  icon,
+  onPress,
+  tone = 'default',
+  style,
+}: SourceLineProps) {
   const theme = useTheme();
   const color = tone === 'onGradient' ? theme.colors.onGradientMuted : theme.colors.inkTertiary;
   const parts = [source.label, source.person, timeLabel].filter((p): p is string => Boolean(p));

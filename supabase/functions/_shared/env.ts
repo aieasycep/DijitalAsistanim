@@ -12,8 +12,21 @@ export interface FunctionEnv {
   tokenEncryptionKeyPrevious?: string;
   webUrl: string;
   appScheme: string;
-  google: { clientId?: string; clientSecret?: string; redirectUri?: string; pubsubTopic?: string; pubsubVerificationToken?: string };
-  microsoft: { clientId?: string; clientSecret?: string; tenant: string; redirectUri?: string; webhookUrl?: string; webhookClientState?: string };
+  google: {
+    clientId?: string;
+    clientSecret?: string;
+    redirectUri?: string;
+    pubsubTopic?: string;
+    pubsubVerificationToken?: string;
+  };
+  microsoft: {
+    clientId?: string;
+    clientSecret?: string;
+    tenant: string;
+    redirectUri?: string;
+    webhookUrl?: string;
+    webhookClientState?: string;
+  };
   ai: {
     provider: 'anthropic' | 'openai';
     fallbackProvider?: 'anthropic' | 'openai';
@@ -27,8 +40,18 @@ export interface FunctionEnv {
     dailyTokenBudgetFree: number;
     dailyTokenBudgetPro: number;
   };
-  embeddings: { provider: 'openai' | 'voyage' | 'none'; model: string; dimensions: number; voyageApiKey?: string };
-  tts: { provider: 'none' | 'openai' | 'elevenlabs'; voice: string; elevenLabsApiKey?: string; elevenLabsVoiceId?: string };
+  embeddings: {
+    provider: 'openai' | 'voyage' | 'none';
+    model: string;
+    dimensions: number;
+    voyageApiKey?: string;
+  };
+  tts: {
+    provider: 'none' | 'openai' | 'elevenlabs';
+    voice: string;
+    elevenLabsApiKey?: string;
+    elevenLabsVoiceId?: string;
+  };
   stt: { provider: 'none' | 'openai' | 'deepgram'; deepgramApiKey?: string };
   revenuecat: { webhookSecret?: string; secretApiKey?: string; entitlementId: string };
   expoAccessToken?: string;
@@ -75,7 +98,8 @@ export function getEnv(): FunctionEnv {
     google: {
       clientId: read('GOOGLE_OAUTH_CLIENT_ID'),
       clientSecret: read('GOOGLE_OAUTH_CLIENT_SECRET'),
-      redirectUri: read('GOOGLE_OAUTH_REDIRECT_URI') ?? `${supabaseUrl}/functions/v1/oauth-google-callback`,
+      redirectUri:
+        read('GOOGLE_OAUTH_REDIRECT_URI') ?? `${supabaseUrl}/functions/v1/oauth-google-callback`,
       pubsubTopic: read('GOOGLE_PUBSUB_TOPIC'),
       pubsubVerificationToken: read('GOOGLE_PUBSUB_VERIFICATION_TOKEN'),
     },
@@ -83,8 +107,11 @@ export function getEnv(): FunctionEnv {
       clientId: read('MICROSOFT_OAUTH_CLIENT_ID'),
       clientSecret: read('MICROSOFT_OAUTH_CLIENT_SECRET'),
       tenant: read('MICROSOFT_OAUTH_TENANT') ?? 'common',
-      redirectUri: read('MICROSOFT_OAUTH_REDIRECT_URI') ?? `${supabaseUrl}/functions/v1/oauth-microsoft-callback`,
-      webhookUrl: read('MICROSOFT_GRAPH_WEBHOOK_URL') ?? `${supabaseUrl}/functions/v1/webhook-microsoft`,
+      redirectUri:
+        read('MICROSOFT_OAUTH_REDIRECT_URI') ??
+        `${supabaseUrl}/functions/v1/oauth-microsoft-callback`,
+      webhookUrl:
+        read('MICROSOFT_GRAPH_WEBHOOK_URL') ?? `${supabaseUrl}/functions/v1/webhook-microsoft`,
       webhookClientState: read('MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE'),
     },
     ai: {
@@ -112,7 +139,10 @@ export function getEnv(): FunctionEnv {
       elevenLabsApiKey: read('ELEVENLABS_API_KEY'),
       elevenLabsVoiceId: read('ELEVENLABS_VOICE_ID'),
     },
-    stt: { provider: oneOf('STT_PROVIDER', ['none', 'openai', 'deepgram'] as const, 'none'), deepgramApiKey: read('DEEPGRAM_API_KEY') },
+    stt: {
+      provider: oneOf('STT_PROVIDER', ['none', 'openai', 'deepgram'] as const, 'none'),
+      deepgramApiKey: read('DEEPGRAM_API_KEY'),
+    },
     revenuecat: {
       webhookSecret: read('REVENUECAT_WEBHOOK_SECRET'),
       secretApiKey: read('REVENUECAT_SECRET_API_KEY'),
@@ -120,8 +150,14 @@ export function getEnv(): FunctionEnv {
     },
     expoAccessToken: read('EXPO_ACCESS_TOKEN'),
     sentryDsn: read('SENTRY_DSN'),
-    posthog: { key: read('POSTHOG_KEY') ?? read('EXPO_PUBLIC_POSTHOG_KEY'), host: read('POSTHOG_HOST') ?? 'https://eu.i.posthog.com' },
-    routes: { provider: oneOf('ROUTES_PROVIDER', ['none', 'google'] as const, 'none'), googleApiKey: read('GOOGLE_ROUTES_API_KEY') },
+    posthog: {
+      key: read('POSTHOG_KEY') ?? read('EXPO_PUBLIC_POSTHOG_KEY'),
+      host: read('POSTHOG_HOST') ?? 'https://eu.i.posthog.com',
+    },
+    routes: {
+      provider: oneOf('ROUTES_PROVIDER', ['none', 'google'] as const, 'none'),
+      googleApiKey: read('GOOGLE_ROUTES_API_KEY'),
+    },
     cronSecret: read('CRON_SECRET'),
     supportEmail: read('SUPPORT_EMAIL') ?? 'destek@dijitalasistan.app',
   };

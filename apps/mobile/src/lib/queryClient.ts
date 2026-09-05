@@ -11,7 +11,14 @@ export const queryClient = new QueryClient({
       gcTime: 24 * 60 * 60_000,
       retry: (count, error) => {
         const e = ClientApiError.from(error);
-        if (e.code === 'unauthorized' || e.code === 'forbidden' || e.code === 'validation' || e.code === 'quota_exceeded' || e.code === 'not_found') return false;
+        if (
+          e.code === 'unauthorized' ||
+          e.code === 'forbidden' ||
+          e.code === 'validation' ||
+          e.code === 'quota_exceeded' ||
+          e.code === 'not_found'
+        )
+          return false;
         return count < 2;
       },
       refetchOnWindowFocus: true,

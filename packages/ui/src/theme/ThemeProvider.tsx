@@ -28,7 +28,10 @@ export interface ThemeProviderProps {
   forceScheme?: ColorScheme;
 }
 
-export function resolveScheme(preference: ThemePreference, system: string | null | undefined): ColorScheme {
+export function resolveScheme(
+  preference: ThemePreference,
+  system: string | null | undefined,
+): ColorScheme {
   if (preference === 'light' || preference === 'dark') return preference;
   return system === 'dark' ? 'dark' : 'light';
 }
@@ -43,7 +46,13 @@ export function ThemeProvider({
   const system = useColorScheme();
   const scheme = forceScheme ?? resolveScheme(preference, system);
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme: scheme === 'dark' ? darkTheme : lightTheme, scheme, preference, reducedMotion, hapticsEnabled }),
+    () => ({
+      theme: scheme === 'dark' ? darkTheme : lightTheme,
+      scheme,
+      preference,
+      reducedMotion,
+      hapticsEnabled,
+    }),
     [scheme, preference, reducedMotion, hapticsEnabled],
   );
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

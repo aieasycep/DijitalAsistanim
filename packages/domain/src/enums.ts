@@ -9,7 +9,14 @@ export type Provider = (typeof PROVIDERS)[number];
 export const ACCOUNT_KINDS = ['email', 'calendar', 'tasks', 'reminders', 'notifications'] as const;
 export type AccountKind = (typeof ACCOUNT_KINDS)[number];
 
-export const CONNECTION_STATUSES = ['active', 'syncing', 'expired', 'revoked', 'error', 'disconnected'] as const;
+export const CONNECTION_STATUSES = [
+  'active',
+  'syncing',
+  'expired',
+  'revoked',
+  'error',
+  'disconnected',
+] as const;
 export type ConnectionStatus = (typeof CONNECTION_STATUSES)[number];
 
 export const SOURCE_TYPES = [
@@ -70,10 +77,25 @@ export type InsightKind = (typeof INSIGHT_KINDS)[number];
 export const INSIGHT_STATUSES = ['active', 'completed', 'dismissed', 'snoozed', 'expired'] as const;
 export type InsightStatus = (typeof INSIGHT_STATUSES)[number];
 
-export const LIFE_EVENT_TYPES = ['shipment', 'flight', 'reservation', 'payment', 'subscription', 'security'] as const;
+export const LIFE_EVENT_TYPES = [
+  'shipment',
+  'flight',
+  'reservation',
+  'payment',
+  'subscription',
+  'security',
+] as const;
 export type LifeEventType = (typeof LIFE_EVENT_TYPES)[number];
 
-export const APPROVAL_STATUSES = ['pending', 'approved', 'rejected', 'executing', 'executed', 'failed', 'expired'] as const;
+export const APPROVAL_STATUSES = [
+  'pending',
+  'approved',
+  'rejected',
+  'executing',
+  'executed',
+  'failed',
+  'expired',
+] as const;
 export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];
 
 export const APPROVAL_ACTION_TYPES = [
@@ -105,7 +127,14 @@ export const BRIEFING_SECTIONS = [
 ] as const;
 export type BriefingSection = (typeof BRIEFING_SECTIONS)[number];
 
-export const REMINDER_OPTIONS = ['before_30m', 'before_1h', 'this_evening', 'tomorrow_morning', 'smart', 'custom'] as const;
+export const REMINDER_OPTIONS = [
+  'before_30m',
+  'before_1h',
+  'this_evening',
+  'tomorrow_morning',
+  'smart',
+  'custom',
+] as const;
 export type ReminderOption = (typeof REMINDER_OPTIONS)[number];
 
 export const REMINDER_STATUSES = ['scheduled', 'fired', 'completed', 'cancelled'] as const;
@@ -117,10 +146,22 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 export const COMMITMENT_DIRECTIONS = ['user_owes', 'other_owes'] as const;
 export type CommitmentDirection = (typeof COMMITMENT_DIRECTIONS)[number];
 
-export const COMMITMENT_STATUSES = ['proposed', 'open', 'completed', 'postponed', 'cancelled'] as const;
+export const COMMITMENT_STATUSES = [
+  'proposed',
+  'open',
+  'completed',
+  'postponed',
+  'cancelled',
+] as const;
 export type CommitmentStatus = (typeof COMMITMENT_STATUSES)[number];
 
-export const FOLLOW_UP_STATUSES = ['watching', 'nudge_due', 'replied', 'closed', 'snoozed'] as const;
+export const FOLLOW_UP_STATUSES = [
+  'watching',
+  'nudge_due',
+  'replied',
+  'closed',
+  'snoozed',
+] as const;
 export type FollowUpStatus = (typeof FOLLOW_UP_STATUSES)[number];
 
 export const PRIORITY_RULE_TYPES = [
@@ -206,7 +247,16 @@ export type ReplyTone = (typeof REPLY_TONES)[number];
 export const PLANS = ['free', 'pro'] as const;
 export type Plan = (typeof PLANS)[number];
 
-export const SUBSCRIPTION_STATUSES = ['none', 'trial', 'active', 'grace', 'billing_issue', 'expired', 'cancelled', 'referral_bonus'] as const;
+export const SUBSCRIPTION_STATUSES = [
+  'none',
+  'trial',
+  'active',
+  'grace',
+  'billing_issue',
+  'expired',
+  'cancelled',
+  'referral_bonus',
+] as const;
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
 export const SUBSCRIPTION_SOURCES = ['revenuecat', 'referral', 'promo', 'demo'] as const;
@@ -221,10 +271,24 @@ export type ExportStatus = (typeof EXPORT_STATUSES)[number];
 export const REFERRAL_STATUSES = ['pending', 'redeemed', 'rejected', 'expired'] as const;
 export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
 
-export const PUSH_DELIVERY_STATUSES = ['queued', 'sent', 'delivered', 'failed', 'deduped', 'suppressed'] as const;
+export const PUSH_DELIVERY_STATUSES = [
+  'queued',
+  'sent',
+  'delivered',
+  'failed',
+  'deduped',
+  'suppressed',
+] as const;
 export type PushDeliveryStatus = (typeof PUSH_DELIVERY_STATUSES)[number];
 
-export const FLOW_FILTERS = ['all', 'important', 'mail', 'calendar', 'follow_up', 'personal'] as const;
+export const FLOW_FILTERS = [
+  'all',
+  'important',
+  'mail',
+  'calendar',
+  'follow_up',
+  'personal',
+] as const;
 export type FlowFilter = (typeof FLOW_FILTERS)[number];
 
 export const MAIL_INTELLIGENCE_CATEGORIES = [
@@ -237,7 +301,16 @@ export const MAIL_INTELLIGENCE_CATEGORIES = [
 ] as const;
 export type MailIntelligenceCategory = (typeof MAIL_INTELLIGENCE_CATEGORIES)[number];
 
-export const PERSONALIZATION_INTERESTS = ['work', 'family', 'finance', 'travel', 'shopping', 'appointments', 'deadlines', 'all'] as const;
+export const PERSONALIZATION_INTERESTS = [
+  'work',
+  'family',
+  'finance',
+  'travel',
+  'shopping',
+  'appointments',
+  'deadlines',
+  'all',
+] as const;
 export type PersonalizationInterest = (typeof PERSONALIZATION_INTERESTS)[number];
 
 export const AUDIT_ACTIONS = [

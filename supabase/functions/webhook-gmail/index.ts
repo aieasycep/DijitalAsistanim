@@ -14,12 +14,18 @@ interface PubSubPush {
   subscription?: string;
 }
 
-function decodeData(data: string | undefined): { emailAddress?: string; historyId?: string | number } {
+function decodeData(data: string | undefined): {
+  emailAddress?: string;
+  historyId?: string | number;
+} {
   if (!data) return {};
   try {
     const normalized = data.replace(/-/g, '+').replace(/_/g, '/');
     const bytes = Uint8Array.from(atob(normalized), (c) => c.charCodeAt(0));
-    return JSON.parse(new TextDecoder().decode(bytes)) as { emailAddress?: string; historyId?: string | number };
+    return JSON.parse(new TextDecoder().decode(bytes)) as {
+      emailAddress?: string;
+      historyId?: string | number;
+    };
   } catch {
     return {};
   }
@@ -30,9 +36,11 @@ Deno.serve(
     assertMethod(req, 'POST');
     const env = getEnv();
     const expected = env.google.pubsubVerificationToken;
-    if (!expected) throw new AppError('provider_unavailable', 'Gmail push yapılandırılmamış.', { status: 503 });
+    if (!expected)
+      throw new AppError('provider_unavailable', 'Gmail push yapılandırılmamış.', { status: 503 });
     const token = new URL(req.url).searchParams.get('token') ?? '';
-    if (!token || !timingSafeEqual(token, expected)) throw new AppError('unauthorized', 'Webhook doğrulanamadı.');
+    if (!token || !timingSafeEqual(token, expected))
+      throw new AppError('unauthorized', 'Webhook doğrulanamadı.');
 
     let body: PubSubPush = {};
     try {
@@ -47,18 +55,33 @@ Deno.serve(
     const admin = adminClient();
     const messageId = body.message?.messageId;
     if (messageId) {
-      const { error } = await admin.from('webhook_events').insert({ id: `gmail:${messageId}`, source: 'gmail', processed_at: new Date().toISOString() });
+      const { error } = await admin
+        .from('webhook_events')
+        .insert({
+          id: `gmail:${messageId}`,
+          source: 'gmail',
+          processed_at: new Date().toISOString(),
+        });
       if (error?.code === '23505') return json({ ok: true as const, duplicate: true });
     }
 
-    const { data: accounts } = await admin.from('connected_accounts').select('id, user_id').eq('provider', 'google').eq('email', email).is('deleted_at', null);
+    const { data: accounts } = await admin
+      .from('connected_accounts')
+      .select('id, user_id')
+      .eq('provider', 'google')
+      .eq('email', email)
+      .is('deleted_at', null);
     const list = (accounts ?? []) as { id: string; user_id: string }[];
     let due = 0;
     for (const a of list) {
       due += await markSyncDue(admin, { accountId: a.id, resource: 'mail' });
       kickJob('sync-poll', { userId: a.user_id, accountId: a.id, resource: 'mail' });
     }
-    log.info('gmail push received', { accounts: list.length, due, historyId: String(payload.historyId ?? '') });
+    log.info('gmail push received', {
+      accounts: list.length,
+      due,
+      historyId: String(payload.historyId ?? ''),
+    });
     return json({ ok: true as const });
   }),
 );

@@ -4,7 +4,11 @@ import Constants from 'expo-constants';
  * Public runtime configuration (EXPO_PUBLIC_* only — never secrets).
  * Demo mode is only honoured in non-production builds (see @da/api-client resolveMode).
  */
-const extra = (Constants.expoConfig?.extra ?? {}) as { isProduction?: boolean; appGroup?: string; universalHosts?: string[] };
+const extra = (Constants.expoConfig?.extra ?? {}) as {
+  isProduction?: boolean;
+  appGroup?: string;
+  universalHosts?: string[];
+};
 
 const pub = (key: string): string | undefined => {
   const v = process.env[key];
@@ -14,7 +18,9 @@ const pub = (key: string): string | undefined => {
 export const IS_PRODUCTION = Boolean(extra.isProduction) || process.env.NODE_ENV === 'production';
 
 export const env = {
-  dataMode: (pub('EXPO_PUBLIC_DATA_MODE') as 'demo' | 'supabase' | undefined) ?? (IS_PRODUCTION ? 'supabase' : 'demo'),
+  dataMode:
+    (pub('EXPO_PUBLIC_DATA_MODE') as 'demo' | 'supabase' | undefined) ??
+    (IS_PRODUCTION ? 'supabase' : 'demo'),
   supabaseUrl: pub('EXPO_PUBLIC_SUPABASE_URL'),
   supabaseAnonKey: pub('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
   webUrl: pub('EXPO_PUBLIC_WEB_URL') ?? 'https://dijitalasistan.app',

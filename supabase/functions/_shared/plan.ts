@@ -18,18 +18,45 @@ export interface ResolvedPlan {
 export async function resolvePlan(admin: Db, userId: string): Promise<ResolvedPlan> {
   const now = new Date().toISOString();
   const [{ data: profile }, { data: subs }, { data: credit }] = await Promise.all([
-    admin.from('profiles').select('timezone, locale, first_name, display_name').eq('id', userId).maybeSingle(),
+    admin
+      .from('profiles')
+      .select('timezone, locale, first_name, display_name')
+      .eq('id', userId)
+      .maybeSingle(),
     admin
       .from('subscriptions')
       .select('source, status, expires_at')
       .eq('user_id', userId)
       .in('source', ['revenuecat', 'promo', 'demo'])
       .in('status', ['trial', 'active', 'grace']),
-    admin.from('referral_credits').select('expires_at').eq('user_id', userId).gt('expires_at', now).order('expires_at', { ascending: false }).limit(1).maybeSingle(),
+    admin
+      .from('referral_credits')
+      .select('expires_at')
+      .eq('user_id', userId)
+      .gt('expires_at', now)
+      .order('expires_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
-  const p = profile as { timezone: string; locale: 'tr' | 'en'; first_name: string; display_name: string } | null;
-  const base = { timezone: p?.timezone ?? 'Europe/Istanbul', locale: p?.locale ?? 'tr', firstName: p?.first_name ?? '', displayName: p?.display_name ?? '' } as const;
-  const live = ((subs ?? []) as { source: 'revenuecat' | 'promo' | 'demo'; status: string; expires_at: string | null }[])
+  const p = profile as {
+    timezone: string;
+    locale: 'tr' | 'en';
+    first_name: string;
+    display_name: string;
+  } | null;
+  const base = {
+    timezone: p?.timezone ?? 'Europe/Istanbul',
+    locale: p?.locale ?? 'tr',
+    firstName: p?.first_name ?? '',
+    displayName: p?.display_name ?? '',
+  } as const;
+  const live = (
+    (subs ?? []) as {
+      source: 'revenuecat' | 'promo' | 'demo';
+      status: string;
+      expires_at: string | null;
+    }[]
+  )
     .filter((s) => !s.expires_at || Date.parse(s.expires_at) > Date.now())
     .sort((a, b) => order(a.source) - order(b.source));
   const first = live[0];

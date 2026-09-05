@@ -25,11 +25,17 @@ Deno.serve(
     const url = new URL(req.url);
     const validationToken = url.searchParams.get('validationToken');
     if (validationToken) {
-      return new Response(validationToken, { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8', ...CORS_HEADERS } });
+      return new Response(validationToken, {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', ...CORS_HEADERS },
+      });
     }
     const env = getEnv();
     const expected = env.microsoft.webhookClientState;
-    if (!expected) throw new AppError('provider_unavailable', 'Microsoft webhook yapılandırılmamış.', { status: 503 });
+    if (!expected)
+      throw new AppError('provider_unavailable', 'Microsoft webhook yapılandırılmamış.', {
+        status: 503,
+      });
 
     let items: GraphNotification[] = [];
     try {
@@ -43,13 +49,34 @@ Deno.serve(
     let due = 0;
     const touchedUsers = new Set<string>();
     for (const n of items) {
-      if (!n.subscriptionId || !n.clientState || !timingSafeEqual(n.clientState, expected)) continue;
-      const { data: state } = await admin.from('sync_states').select('id, user_id, account_id, resource').eq('subscription_id', n.subscriptionId).maybeSingle();
-      const s = state as { id: string; user_id: string; account_id: string; resource: string } | null;
+      if (!n.subscriptionId || !n.clientState || !timingSafeEqual(n.clientState, expected))
+        continue;
+      const { data: state } = await admin
+        .from('sync_states')
+        .select('id, user_id, account_id, resource')
+        .eq('subscription_id', n.subscriptionId)
+        .maybeSingle();
+      const s = state as {
+        id: string;
+        user_id: string;
+        account_id: string;
+        resource: string;
+      } | null;
       if (!s) continue;
-      if (n.lifecycleEvent === 'subscriptionRemoved' || n.lifecycleEvent === 'reauthorizationRequired') {
+      if (
+        n.lifecycleEvent === 'subscriptionRemoved' ||
+        n.lifecycleEvent === 'reauthorizationRequired'
+      ) {
         // Fall back to polling; renew-subscriptions re-creates the subscription on its next pass.
-        await admin.from('sync_states').update({ mode: 'polling', subscription_id: null, subscription_expires_at: null, last_run_at: null }).eq('id', s.id);
+        await admin
+          .from('sync_states')
+          .update({
+            mode: 'polling',
+            subscription_id: null,
+            subscription_expires_at: null,
+            last_run_at: null,
+          })
+          .eq('id', s.id);
         due += 1;
       } else {
         due += await markSyncDue(admin, { subscriptionId: n.subscriptionId });
@@ -57,7 +84,11 @@ Deno.serve(
       touchedUsers.add(s.user_id);
     }
     for (const userId of touchedUsers) kickJob('sync-poll', { userId });
-    log.info('graph notifications received', { items: items.length, due, users: touchedUsers.size });
+    log.info('graph notifications received', {
+      items: items.length,
+      due,
+      users: touchedUsers.size,
+    });
     return json({ ok: true as const }, { status: 202 });
   }),
 );

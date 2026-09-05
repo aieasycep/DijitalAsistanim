@@ -83,7 +83,10 @@ export interface OAuthStartResponse {
 export interface InitialAnalysisStartRequest {
   windowHours?: number;
 }
-export type InitialAnalysisStatusResponse = FirstAnalysisProgress & { insights: Insight[]; briefingId?: UUID | null };
+export type InitialAnalysisStatusResponse = FirstAnalysisProgress & {
+  insights: Insight[];
+  briefingId?: UUID | null;
+};
 
 export interface SyncNowRequest {
   accountId?: UUID;
@@ -114,7 +117,14 @@ export interface MailIntelligenceResponse {
 
 export interface EmailDetailResponse {
   thread: EmailThread;
-  messages: { id: UUID; from: string; sentAt: ISODateTime; bodyText: string; isFromUser: boolean; webUrl?: string | null }[];
+  messages: {
+    id: UUID;
+    from: string;
+    sentAt: ISODateTime;
+    bodyText: string;
+    isFromUser: boolean;
+    webUrl?: string | null;
+  }[];
   relatedInsight?: Insight | null;
   followUp?: FollowUp | null;
   commitments: Commitment[];
@@ -187,7 +197,10 @@ export interface PostMeetingRequest {
   inputMode: 'text' | 'voice';
 }
 export interface PostMeetingResponse {
-  proposals: { commitment: Omit<Commitment, 'id' | 'userId' | 'createdAt' | 'updatedAt'>; approvalId: UUID }[];
+  proposals: {
+    commitment: Omit<Commitment, 'id' | 'userId' | 'createdAt' | 'updatedAt'>;
+    approvalId: UUID;
+  }[];
 }
 
 // --- Assistant ------------------------------------------------------------

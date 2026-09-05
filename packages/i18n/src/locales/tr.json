@@ -383,11 +383,7 @@
       "processing": "Anlıyorum…",
       "tapToSpeak": "Konuşmak için dokun",
       "release": "Bitirmek için bırak",
-      "examples": [
-        "Bugün ne var?",
-        "Mehmet'e cevap vermem gerekiyor mu?",
-        "Brifingimi oku."
-      ],
+      "examples": ["Bugün ne var?", "Mehmet'e cevap vermem gerekiyor mu?", "Brifingimi oku."],
       "permissionTitle": "Mikrofon izni gerekiyor",
       "permissionBody": "Sesli soru sormak için mikrofona erişim gerekiyor.",
       "openSettings": "Ayarları Aç",

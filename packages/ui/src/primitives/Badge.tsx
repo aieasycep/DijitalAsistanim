@@ -15,7 +15,11 @@ export function Badge({ label, tone = 'neutral', style }: BadgeProps) {
   const theme = useTheme();
   const { bg, fg } = badgeColors(theme.colors, tone);
   return (
-    <View style={[styles.badge, { backgroundColor: bg }, style]} accessibilityRole="text" accessibilityLabel={label}>
+    <View
+      style={[styles.badge, { backgroundColor: bg }, style]}
+      accessibilityRole="text"
+      accessibilityLabel={label}
+    >
       <Text variant="badge" color={fg}>
         {label}
       </Text>
