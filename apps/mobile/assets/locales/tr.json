@@ -1,0 +1,8 @@
+{
+  "CFBundleDisplayName": "Dijital Asistan",
+  "NSCalendarsFullAccessUsageDescription": "Takvimini okuyarak gününü ve çakışmaları anlayabiliriz.",
+  "NSContactsUsageDescription": "Önemli kişileri rehberinden seçebilmen için. İsteğe bağlıdır.",
+  "NSMicrophoneUsageDescription": "Sesli soru sorabilmen için.",
+  "NSCameraUsageDescription": "Belge veya afişleri yakalayıp analiz edebilmek için.",
+  "NSPhotoLibraryUsageDescription": "Ekran görüntülerini analiz edebilmek için."
+}

@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      The NotificationListenerService itself and the MAIN/LAUNCHER <queries> intent are declared in the
+      app manifest by ../../app.plugin.js so the component name matches the application package and
+      prebuild stays the single source of truth. No permissions are required by this library.
+    -->
+</manifest>

@@ -1,0 +1,52 @@
+# Flow F — Meeting Prep → Person → Related Email → Note → Post Meeting → Commitment
+appId: ${APP_ID}
+tags: [critical, flow-f]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- tapOn:
+    text: 'Hazırlan'
+- extendedWaitUntil:
+    visible:
+      id: 'prep-screen'
+    timeout: 20000
+- assertVisible:
+    text: 'Toplantıya Hazırlan'
+- assertVisible:
+    text: 'Toplantıda konuşman gereken 3 şey'
+- tapOn:
+    id: 'prep-person'
+- assertVisible:
+    id: 'person-screen'
+- assertVisible:
+    text: 'Mehmet Yılmaz'
+- back
+- tapOn:
+    id: 'prep-email-0'
+- assertVisible:
+    id: 'email-screen'
+- back
+- tapOn:
+    id: 'prep-note'
+- assertVisible:
+    text: 'Takip etmen gereken bir şey var mı?'
+- tapOn:
+    id: 'post-input'
+- inputText: "Mehmet'e yarın teklif göndereceğim."
+- tapOn:
+    id: 'post-submit'
+- extendedWaitUntil:
+    visible:
+      id: 'post-proposal-0'
+    timeout: 20000
+- assertVisible:
+    text: "Mehmet'e teklif gönder"
+- tapOn:
+    id: 'post-save'
+- assertVisible:
+    text: 'Taahhüt kaydet'
+- tapOn:
+    id: 'approval-approve'
+- extendedWaitUntil:
+    visible:
+      text: 'Tamamlandı'
+    timeout: 20000
