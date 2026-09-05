@@ -190,6 +190,7 @@ async function runPlan(
       const clients = providerClients(creds.provider, fetch, creds.accessToken);
       const p = plan.payload;
       let externalThreadId: string | null = null;
+      let inReplyToExternalMessageId = p.inReplyToExternalId ?? null;
       if (p.threadId) {
         const { data: thread } = await admin
           .from('email_threads')
@@ -199,6 +200,21 @@ async function runPlan(
           .maybeSingle();
         externalThreadId =
           (thread as { external_thread_id: string } | null)?.external_thread_id ?? null;
+        // A reply drafted from the thread view carries no message id; answer the latest inbound message.
+        if (!inReplyToExternalMessageId) {
+          const { data: latest } = await admin
+            .from('email_messages')
+            .select('external_message_id')
+            .eq('thread_id', p.threadId)
+            .eq('user_id', approval.userId)
+            .eq('is_from_user', false)
+            .is('deleted_at', null)
+            .order('sent_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          inReplyToExternalMessageId =
+            (latest as { external_message_id: string } | null)?.external_message_id ?? null;
+        }
       }
       // Threading headers (In-Reply-To / References) are resolved by the provider adapter from the referenced message.
       const sent = await clients.mail.send({
@@ -206,7 +222,7 @@ async function runPlan(
         cc: p.cc ?? [],
         subject: p.subject,
         bodyText: p.bodyText,
-        inReplyToExternalMessageId: p.inReplyToExternalId ?? null,
+        inReplyToExternalMessageId,
         externalThreadId,
       });
       await audit(admin, {
