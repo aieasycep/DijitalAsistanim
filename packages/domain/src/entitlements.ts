@@ -57,6 +57,7 @@ export const PRODUCT_IDS = {
   monthly: 'da_pro_monthly',
   annual: 'da_pro_annual',
 } as const;
+export type ProductId = (typeof PRODUCT_IDS)[keyof typeof PRODUCT_IDS];
 
 export const ENTITLEMENT_ID = 'pro';
 

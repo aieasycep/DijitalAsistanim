@@ -1,6 +1,7 @@
 import type {
   AuditLog,
   NotificationPreferences,
+  ProductId,
   Profile,
   PushToken,
   Subscription,
@@ -20,11 +21,11 @@ export function buildProfile(f: FixtureContext): Profile {
     avatarUrl: null,
     timezone: f.timeZone,
     locale: 'tr',
-    onboardingCompletedAt: f.lt(-3, '09:02'),
+    onboardingCompletedAt: null,
     firstAnalysisCompletedAt: f.lt(-3, '09:06'),
     referralCode: REFERRAL_CODE,
     referredByCode: null,
-    plan: 'pro',
+    plan: 'free',
     createdAt: f.lt(-3, '08:55'),
     updatedAt: f.lt(-3, '09:06'),
   };
@@ -109,27 +110,38 @@ export function buildPushTokens(f: FixtureContext): PushToken[] {
   ];
 }
 
-export function buildSubscriptions(f: FixtureContext): Subscription[] {
-  return [
-    {
-      id: SUBSCRIPTION_ID,
-      userId: f.userId,
-      source: 'demo',
-      status: 'active',
-      plan: 'pro',
-      productId: 'da_pro_annual',
-      entitlementId: 'pro',
-      startsAt: f.plusDays(-10),
-      expiresAt: f.plusDays(355),
-      isTrial: false,
-      willRenew: true,
-      store: 'demo',
-      revenuecatAppUserId: null,
-      lastEventId: null,
-      createdAt: f.plusDays(-10),
-      updatedAt: f.plusDays(-10),
-    },
-  ];
+/**
+ * The demo user starts on the free plan so the paywall flow can be exercised end to end;
+ * `billing.recordDemoPurchase` adds the subscription (see `buildDemoSubscription`).
+ */
+export function buildSubscriptions(_f: FixtureContext): Subscription[] {
+  return [];
+}
+
+export function buildDemoSubscription(input: {
+  userId: string;
+  productId: ProductId;
+  now: string;
+  expiresAt: string;
+}): Subscription {
+  return {
+    id: SUBSCRIPTION_ID,
+    userId: input.userId,
+    source: 'demo',
+    status: 'active',
+    plan: 'pro',
+    productId: input.productId,
+    entitlementId: 'pro',
+    startsAt: input.now,
+    expiresAt: input.expiresAt,
+    isTrial: false,
+    willRenew: true,
+    store: 'demo',
+    revenuecatAppUserId: null,
+    lastEventId: null,
+    createdAt: input.now,
+    updatedAt: input.now,
+  };
 }
 
 export function buildAuditLogs(f: FixtureContext): AuditLog[] {

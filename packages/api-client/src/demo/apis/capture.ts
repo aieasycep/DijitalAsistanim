@@ -215,6 +215,9 @@ function linkAnalysis(ctx: DemoContext, url: string): CaptureAnalysis {
   };
 }
 
+/** Folded (accent-free, lower-case) words that mark a clause with a date as a calendar event rather than a task. */
+const EVENT_WORDS =
+  /(kahve|toplanti|randevu|gorusme|yemek|bulusma|etkinlik|konser|bilet|sinema|tiyatro|mac\b|konferans|seminer|dugun|webinar)/;
 const TASK_VERB = /\b(bitir|hazirla|gonder|ara|yaz|oku|kontrol et|iste|tamamla|yap|sor|ilet)$/;
 
 function turkishCount(n: number): string {
@@ -278,10 +281,7 @@ function textAnalysis(ctx: DemoContext, s: DemoState, text: string): CaptureAnal
         ? { name: contact.displayName, email: contact.emails[0] ?? null }
         : { name: capitalizeTr(rawName) };
     }
-    if (
-      sched.iso &&
-      (withMatch || /(kahve|toplanti|randevu|gorusme|yemek|bulusma|etkinlik)/.test(folded))
-    ) {
+    if (sched.iso && (withMatch || EVENT_WORDS.test(folded))) {
       const title = capitalizeTr(stripPhrases(clause, sched.phrases).trim() || 'Etkinlik');
       event = {
         title,

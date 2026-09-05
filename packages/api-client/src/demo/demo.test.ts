@@ -315,8 +315,24 @@ describe('demo data source · billing & referral', () => {
     expect(status.inviteUrl).toBe('https://dijitalasistan.app/app/referral?code=YUNUS7K2');
     const entitlement = await ds.billing.getEntitlement();
     expect(entitlement.isPro).toBe(true);
-    expect(entitlement.source).toBe('demo');
+    expect(entitlement.source).toBe('referral');
     expect(entitlement.quotas.assistantQueriesPerDay).toBe(300);
+  });
+
+  it('starts on the free plan and activates Pro through the demo purchase path', async () => {
+    const ds = makeSource();
+    const before = await ds.billing.getEntitlement();
+    expect(before.isPro).toBe(false);
+    expect(before.source).toBe('none');
+    expect((await ds.profile.getProfile()).onboardingCompletedAt).toBeNull();
+    const after = await ds.billing.recordDemoPurchase?.({ productId: 'da_pro_annual' });
+    expect(after?.isPro).toBe(true);
+    expect(after?.source).toBe('demo');
+    const subs = await ds.billing.listSubscriptions();
+    expect(subs.map((sub) => sub.productId)).toContain('da_pro_annual');
+    await expect(
+      ds.billing.recordDemoPurchase?.({ productId: 'da_pro_weekly' as 'da_pro_monthly' }),
+    ).rejects.toThrow();
   });
 });
 
@@ -374,6 +390,17 @@ describe('demo data source · search & capture', () => {
     ]);
     await ds.capture.deleteCapture(text.id);
     expect((await ds.capture.listCaptures()).map((c) => c.id)).not.toContain(text.id);
+    const ticket = await ds.capture.createCapture({
+      kind: 'text',
+      text: '12 Eylül 20:00 Zorlu PSM konser bileti',
+      origin: 'in_app',
+    });
+    const ticketAnalyzed = await ds.capture.analyzeCapture(ticket.id);
+    expect(ticketAnalyzed.analysis?.detectedType).toBe('event');
+    expect(ticketAnalyzed.analysis?.event?.startAt).toBe('2026-09-12T17:00:00.000Z');
+    expect(
+      ticketAnalyzed.analysis?.suggestedActions.some((a) => a.kind === 'add_to_calendar'),
+    ).toBe(true);
   });
 });
 

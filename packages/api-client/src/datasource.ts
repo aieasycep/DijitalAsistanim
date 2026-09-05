@@ -34,6 +34,7 @@ import type {
   DraftReplyResponse,
   EmailDetailResponse,
   EntitlementState,
+  ProductId,
   FirstAnalysisProgress,
   FlowFilter,
   FlowResponse,
@@ -347,6 +348,11 @@ export interface BillingApi {
     code: string;
     deviceFingerprintHash?: string;
   }): Promise<{ ok: boolean; reason?: string; bonusDays?: number }>;
+  /**
+   * Demo builds only: activates Pro without a store purchase so the paywall flow can be walked through.
+   * Absent on the Supabase adapter — real entitlements come from RevenueCat webhooks.
+   */
+  recordDemoPurchase?(input: { productId: ProductId }): Promise<EntitlementState>;
 }
 
 export interface PrivacyApi {
