@@ -692,7 +692,8 @@
       "reconnectCta": "Reconnect",
       "granted": "Permission granted · retrying",
       "noAccount": "The account for this action wasn't found.",
-      "cancelled": "Permission not granted. You can try again whenever you like."
+      "cancelled": "Permission not granted. You can try again whenever you like.",
+      "accountFallback": "Connected account"
     }
   },
   "person": {

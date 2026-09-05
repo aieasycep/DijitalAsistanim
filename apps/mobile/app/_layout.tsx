@@ -1,5 +1,6 @@
 import 'react-native-gesture-handler';
 import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -95,6 +96,11 @@ function RootNavigator() {
         <Stack.Screen name="search" options={{ animation: 'fade' }} />
       </Stack>
       <AudioMiniPlayer />
+      <View
+        pointerEvents="none"
+        testID={isDark ? 'theme-dark' : 'theme-light'}
+        style={[styles.themeMarker, { backgroundColor: theme.colors.background }]}
+      />
     </>
   );
 }
@@ -127,5 +133,10 @@ function RootLayout() {
     </AppProviders>
   );
 }
+
+/** 1×1 marker so E2E flows can assert the resolved colour scheme on any screen. */
+const styles = StyleSheet.create({
+  themeMarker: { position: 'absolute', top: 0, left: 0, width: 1, height: 1 },
+});
 
 export default wrapWithMonitoring(RootLayout);

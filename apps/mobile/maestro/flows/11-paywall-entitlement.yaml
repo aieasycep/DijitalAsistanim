@@ -29,7 +29,7 @@ tags: [critical, flow-l]
 - assertVisible:
     text: 'Pro aktif'
 - tapOn:
-    id: 'paywall-restore'
+    id: 'subscription-restore'
 - extendedWaitUntil:
     visible:
       text: '.*geri yükle.*'

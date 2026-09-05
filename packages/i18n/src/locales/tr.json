@@ -692,7 +692,8 @@
       "reconnectCta": "Yeniden bağla",
       "granted": "İzin verildi · yeniden deneniyor",
       "noAccount": "Bu işlemin hesabı bulunamadı.",
-      "cancelled": "İzin verilmedi. İstediğinde tekrar deneyebilirsin."
+      "cancelled": "İzin verilmedi. İstediğinde tekrar deneyebilirsin.",
+      "accountFallback": "Bağlı hesap"
     }
   },
   "person": {

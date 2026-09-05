@@ -20,6 +20,9 @@ export interface ConfirmModalProps {
   onCancel: () => void;
   loading?: boolean;
   testID?: string;
+  /** testIDs for the confirm / cancel buttons (Maestro taps them by id). */
+  confirmTestID?: string;
+  cancelTestID?: string;
 }
 
 /** Centred modal (24 radius, 22 padding): icon tile · title 18/600 · body 13 · stacked confirm 44 + ghost 40. */
@@ -35,6 +38,8 @@ export function ConfirmModal({
   onCancel,
   loading = false,
   testID,
+  confirmTestID,
+  cancelTestID,
 }: ConfirmModalProps) {
   const theme = useTheme();
   const { reducedMotion } = useThemeContext();
@@ -95,6 +100,7 @@ export function ConfirmModal({
               loading={loading}
               onPress={onConfirm}
               style={styles.confirm}
+              testID={confirmTestID}
             />
             <Button
               label={cancelLabel}
@@ -103,6 +109,7 @@ export function ConfirmModal({
               fullWidth
               disabled={loading}
               onPress={onCancel}
+              testID={cancelTestID}
             />
           </View>
         </View>
