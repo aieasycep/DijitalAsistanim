@@ -152,9 +152,20 @@ export interface NotificationContext {
 }
 
 /** Categories that may use `time-sensitive` when the entitlement exists. */
-export const TIME_SENSITIVE_CATEGORIES: readonly NotificationCategory[] = ['critical_email', 'meeting', 'deadline', 'reminder'];
+export const TIME_SENSITIVE_CATEGORIES: readonly NotificationCategory[] = [
+  'critical_email',
+  'meeting',
+  'deadline',
+  'reminder',
+];
 
-const HIGH_PRIORITY_CATEGORIES: readonly NotificationCategory[] = ['critical_email', 'meeting', 'deadline', 'reminder', 'approval'];
+const HIGH_PRIORITY_CATEGORIES: readonly NotificationCategory[] = [
+  'critical_email',
+  'meeting',
+  'deadline',
+  'reminder',
+  'approval',
+];
 
 const RELEVANCE: Record<NotificationCategory, number> = {
   critical_email: 1,
@@ -170,7 +181,11 @@ const RELEVANCE: Record<NotificationCategory, number> = {
   weekly: 0.3,
 };
 
-export function pushDedupeKey(category: NotificationCategory, entityId: string, dateKey: string): string {
+export function pushDedupeKey(
+  category: NotificationCategory,
+  entityId: string,
+  dateKey: string,
+): string {
   return `${category}:${entityId}:${dateKey}`;
 }
 
@@ -178,8 +193,13 @@ export function androidChannelId(category: NotificationCategory): string {
   return `da_${category}`;
 }
 
-export function iosInterruptionLevel(category: NotificationCategory, timeSensitiveEntitlement: boolean | undefined): IosInterruptionLevel {
-  return timeSensitiveEntitlement === true && TIME_SENSITIVE_CATEGORIES.includes(category) ? 'time-sensitive' : 'active';
+export function iosInterruptionLevel(
+  category: NotificationCategory,
+  timeSensitiveEntitlement: boolean | undefined,
+): IosInterruptionLevel {
+  return timeSensitiveEntitlement === true && TIME_SENSITIVE_CATEGORIES.includes(category)
+    ? 'time-sensitive'
+    : 'active';
 }
 
 interface PayloadParts {
@@ -192,7 +212,11 @@ interface PayloadParts {
 
 function makePayload(parts: PayloadParts, ctx: NotificationContext): NotificationPayload {
   const locale = ctx.locale ?? 'tr';
-  const dedupeKey = pushDedupeKey(parts.category, parts.entityId, localDateKey(ctx.now, ctx.timezone));
+  const dedupeKey = pushDedupeKey(
+    parts.category,
+    parts.entityId,
+    localDateKey(ctx.now, ctx.timezone),
+  );
   return {
     category: parts.category,
     locale,
@@ -220,7 +244,10 @@ function copy(ctx: NotificationContext) {
 
 // --- Builders ---------------------------------------------------------------------------------------
 
-export function buildMorningNotification(input: { count: number; briefingId?: string | null }, ctx: NotificationContext): NotificationPayload {
+export function buildMorningNotification(
+  input: { count: number; briefingId?: string | null },
+  ctx: NotificationContext,
+): NotificationPayload {
   const c = copy(ctx);
   const count = Math.max(0, Math.round(input.count));
   return makePayload(
@@ -235,7 +262,10 @@ export function buildMorningNotification(input: { count: number; briefingId?: st
   );
 }
 
-export function buildMiddayNotification(input: { count: number; briefingId?: string | null }, ctx: NotificationContext): NotificationPayload {
+export function buildMiddayNotification(
+  input: { count: number; briefingId?: string | null },
+  ctx: NotificationContext,
+): NotificationPayload {
   const c = copy(ctx);
   const count = Math.max(0, Math.round(input.count));
   return makePayload(
@@ -250,7 +280,10 @@ export function buildMiddayNotification(input: { count: number; briefingId?: str
   );
 }
 
-export function buildEveningNotification(input: { count: number; briefingId?: string | null }, ctx: NotificationContext): NotificationPayload {
+export function buildEveningNotification(
+  input: { count: number; briefingId?: string | null },
+  ctx: NotificationContext,
+): NotificationPayload {
   const c = copy(ctx);
   return makePayload(
     {
@@ -274,7 +307,10 @@ export function buildWeeklyNotification(
       category: 'weekly',
       entityId: input.briefingId ?? 'weekly',
       title: c.titles.weekly,
-      body: fill(c.weekly, { important: Math.max(0, Math.round(input.important)), saved: formatTimeSaved(input.timeSavedMinutes, ctx.locale ?? 'tr') }),
+      body: fill(c.weekly, {
+        important: Math.max(0, Math.round(input.important)),
+        saved: formatTimeSaved(input.timeSavedMinutes, ctx.locale ?? 'tr'),
+      }),
       deepLink: DeepLinks.briefing('weekly', input.briefingId ?? undefined),
     },
     ctx,
@@ -282,7 +318,12 @@ export function buildWeeklyNotification(
 }
 
 export function buildCriticalEmailNotification(
-  input: { threadId: string; person: string; deadlineAt?: string | null; deadlineHasTime?: boolean },
+  input: {
+    threadId: string;
+    person: string;
+    deadlineAt?: string | null;
+    deadlineHasTime?: boolean;
+  },
   ctx: NotificationContext,
 ): NotificationPayload {
   const c = copy(ctx);
@@ -290,11 +331,22 @@ export function buildCriticalEmailNotification(
   const body = input.deadlineAt
     ? fill(c.critical, {
         person: input.person,
-        deadline: formatDeadlinePhrase(input.deadlineAt, { now: ctx.now, timezone: ctx.timezone, locale, hasTime: input.deadlineHasTime ?? true }),
+        deadline: formatDeadlinePhrase(input.deadlineAt, {
+          now: ctx.now,
+          timezone: ctx.timezone,
+          locale,
+          hasTime: input.deadlineHasTime ?? true,
+        }),
       })
     : fill(c.criticalNoDeadline, { person: input.person });
   return makePayload(
-    { category: 'critical_email', entityId: input.threadId, title: c.titles.critical_email, body, deepLink: DeepLinks.email(input.threadId) },
+    {
+      category: 'critical_email',
+      entityId: input.threadId,
+      title: c.titles.critical_email,
+      body,
+      deepLink: DeepLinks.email(input.threadId),
+    },
     ctx,
   );
 }
@@ -304,7 +356,11 @@ export function buildMeetingNotification(
   ctx: NotificationContext,
 ): NotificationPayload {
   const c = copy(ctx);
-  const vars = { time: localHHmm(input.startAt, ctx.timezone), minutes: Math.max(0, Math.round(input.minutesBefore)), count: Math.max(0, Math.round(input.prepCount)) };
+  const vars = {
+    time: localHHmm(input.startAt, ctx.timezone),
+    minutes: Math.max(0, Math.round(input.minutesBefore)),
+    count: Math.max(0, Math.round(input.prepCount)),
+  };
   return makePayload(
     {
       category: 'meeting',
@@ -376,7 +432,12 @@ export function buildLifeEventNotification(
       body = input.at ? fill(c.flight, { time: localHHmm(input.at, ctx.timezone) }) : input.title;
       break;
     case 'payment':
-      body = input.at ? fill(c.payment, { title: input.title, date: formatDateLabel(input.at, { now: ctx.now, timezone: ctx.timezone, locale }) }) : input.title;
+      body = input.at
+        ? fill(c.payment, {
+            title: input.title,
+            date: formatDateLabel(input.at, { now: ctx.now, timezone: ctx.timezone, locale }),
+          })
+        : input.title;
       break;
     case 'reservation':
     case 'subscription':
@@ -385,15 +446,30 @@ export function buildLifeEventNotification(
       break;
   }
   return makePayload(
-    { category: 'life_event', entityId: input.lifeEventId, title: c.lifeEventTitles[input.type], body, deepLink: DeepLinks.lifeEvent(input.lifeEventId) },
+    {
+      category: 'life_event',
+      entityId: input.lifeEventId,
+      title: c.lifeEventTitles[input.type],
+      body,
+      deepLink: DeepLinks.lifeEvent(input.lifeEventId),
+    },
     ctx,
   );
 }
 
-export function buildApprovalNotification(input: { approvalId: string }, ctx: NotificationContext): NotificationPayload {
+export function buildApprovalNotification(
+  input: { approvalId: string },
+  ctx: NotificationContext,
+): NotificationPayload {
   const c = copy(ctx);
   return makePayload(
-    { category: 'approval', entityId: input.approvalId, title: c.titles.approval, body: c.approval, deepLink: DeepLinks.approval(input.approvalId) },
+    {
+      category: 'approval',
+      entityId: input.approvalId,
+      title: c.titles.approval,
+      body: c.approval,
+      deepLink: DeepLinks.approval(input.approvalId),
+    },
     ctx,
   );
 }
@@ -404,14 +480,27 @@ export function buildReminderNotification(
 ): NotificationPayload {
   const c = copy(ctx);
   return makePayload(
-    { category: 'reminder', entityId: input.reminderId, title: c.titles.reminder, body: input.title, deepLink: input.deepLink ?? DeepLinks.today() },
+    {
+      category: 'reminder',
+      entityId: input.reminderId,
+      title: c.titles.reminder,
+      body: input.title,
+      deepLink: input.deepLink ?? DeepLinks.today(),
+    },
     ctx,
   );
 }
 
-export function buildGenericNotification(category: NotificationCategory, entityId: string, ctx: NotificationContext): NotificationPayload {
+export function buildGenericNotification(
+  category: NotificationCategory,
+  entityId: string,
+  ctx: NotificationContext,
+): NotificationPayload {
   const c = copy(ctx);
-  return makePayload({ category, entityId, title: c.titles[category], body: c.generic, deepLink: DeepLinks.today() }, ctx);
+  return makePayload(
+    { category, entityId, title: c.titles[category], body: c.generic, deepLink: DeepLinks.today() },
+    ctx,
+  );
 }
 
 // --- Lock-screen privacy ------------------------------------------------------------------------------
@@ -420,7 +509,10 @@ export function buildGenericNotification(category: NotificationCategory, entityI
  * full → unchanged · title_only → category title with a neutral body · generic → app name and a
  * neutral line. Deep links and ids are kept (they carry no content).
  */
-export function applyLockScreenPrivacy(payload: NotificationPayload, mode: LockScreenPrivacy): NotificationPayload {
+export function applyLockScreenPrivacy(
+  payload: NotificationPayload,
+  mode: LockScreenPrivacy,
+): NotificationPayload {
   const c = COPY[payload.locale];
   switch (mode) {
     case 'full':
@@ -463,14 +555,21 @@ export function isQuietHours(nowIso: string, quiet: QuietHoursConfig, timezone: 
 }
 
 /** When `nowIso` is inside quiet hours, the instant they end; otherwise `nowIso` itself. */
-export function nextQuietHoursEnd(nowIso: string, quiet: QuietHoursConfig, timezone: string): string {
+export function nextQuietHoursEnd(
+  nowIso: string,
+  quiet: QuietHoursConfig,
+  timezone: string,
+): string {
   if (!isQuietHours(nowIso, quiet, timezone)) return nowIso;
   const t = localMinutes(nowIso, timezone) ?? 0;
   const end = hhmmToMinutes(quiet.end) ?? 0;
   const today = localDateKey(nowIso, timezone);
   const endToday = zonedTimeToUtc(today, quiet.end, timezone);
   if (t < end) return endToday;
-  const tomorrow = localDateKey(new Date(Date.parse(nowIso) + 24 * 60 * MINUTE).toISOString(), timezone);
+  const tomorrow = localDateKey(
+    new Date(Date.parse(nowIso) + 24 * 60 * MINUTE).toISOString(),
+    timezone,
+  );
   return zonedTimeToUtc(tomorrow, quiet.end, timezone);
 }
 
@@ -493,14 +592,22 @@ export interface ShouldSendInput {
   isCritical?: boolean;
 }
 
-export type SuppressReason = 'system_permission' | 'category_off' | 'pro_required' | 'only_important' | 'quiet_hours';
+export type SuppressReason =
+  'system_permission' | 'category_off' | 'pro_required' | 'only_important' | 'quiet_hours';
 
-export type SendDecision = { send: true } | { send: false; reason: SuppressReason; deferUntil?: string };
+export type SendDecision =
+  { send: true } | { send: false; reason: SuppressReason; deferUntil?: string };
 
 export const PRO_ONLY_CATEGORIES: readonly NotificationCategory[] = ['midday', 'evening', 'weekly'];
 
 /** Event-driven categories that "only when important" applies to (scheduled briefings, approvals and the user's own reminders are exempt). */
-export const IMPORTANCE_GATED_CATEGORIES: readonly NotificationCategory[] = ['critical_email', 'meeting', 'deadline', 'follow_up', 'life_event'];
+export const IMPORTANCE_GATED_CATEGORIES: readonly NotificationCategory[] = [
+  'critical_email',
+  'meeting',
+  'deadline',
+  'follow_up',
+  'life_event',
+];
 
 /**
  * Decide whether a push may go out now. Order: system permission → category toggle → Pro gating →
@@ -512,14 +619,23 @@ export function shouldSend(input: ShouldSendInput): SendDecision {
   const critical = input.isCritical === true || input.importance === 'critical';
   if (prefs.systemPermissionGranted === false) return { send: false, reason: 'system_permission' };
   if (prefs.categories[category] === false) return { send: false, reason: 'category_off' };
-  if (PRO_ONLY_CATEGORIES.includes(category) && !input.entitlement.isPro) return { send: false, reason: 'pro_required' };
+  if (PRO_ONLY_CATEGORIES.includes(category) && !input.entitlement.isPro)
+    return { send: false, reason: 'pro_required' };
   if (prefs.onlyWhenImportant && IMPORTANCE_GATED_CATEGORIES.includes(category)) {
     const important = critical || input.importance === 'high';
     if (!important) return { send: false, reason: 'only_important' };
   }
-  const quiet: QuietHoursConfig = { enabled: prefs.quietHoursEnabled, start: prefs.quietHoursStart, end: prefs.quietHoursEnd };
+  const quiet: QuietHoursConfig = {
+    enabled: prefs.quietHoursEnabled,
+    start: prefs.quietHoursStart,
+    end: prefs.quietHoursEnd,
+  };
   if (!critical && isQuietHours(input.now, quiet, input.timezone)) {
-    return { send: false, reason: 'quiet_hours', deferUntil: nextQuietHoursEnd(input.now, quiet, input.timezone) };
+    return {
+      send: false,
+      reason: 'quiet_hours',
+      deferUntil: nextQuietHoursEnd(input.now, quiet, input.timezone),
+    };
   }
   return { send: true };
 }
@@ -583,10 +699,18 @@ export function dueBriefings(input: DueBriefingsInput): BriefingKind[] {
   const dailyAllowed = weekday < 6 || schedule.weekendEnabled;
   if (dailyAllowed) {
     if (dueAt(schedule.morningTime) && notSentToday('morning')) out.push('morning');
-    if (schedule.middayEnabled && dueAt(schedule.middayTime) && notSentToday('midday')) out.push('midday');
-    if (schedule.eveningEnabled && dueAt(schedule.eveningTime) && notSentToday('evening')) out.push('evening');
+    if (schedule.middayEnabled && dueAt(schedule.middayTime) && notSentToday('midday'))
+      out.push('midday');
+    if (schedule.eveningEnabled && dueAt(schedule.eveningTime) && notSentToday('evening'))
+      out.push('evening');
   }
   const weeklyIsoDay = schedule.weeklyDay === 0 ? 7 : schedule.weeklyDay;
-  if (schedule.weeklyEnabled && weekday === weeklyIsoDay && dueAt(schedule.weeklyTime) && notSentToday('weekly')) out.push('weekly');
+  if (
+    schedule.weeklyEnabled &&
+    weekday === weeklyIsoDay &&
+    dueAt(schedule.weeklyTime) &&
+    notSentToday('weekly')
+  )
+    out.push('weekly');
   return out;
 }

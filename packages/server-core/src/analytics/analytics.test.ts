@@ -1,14 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { ANALYTICS_FORBIDDEN_KEYS } from '@da/domain';
 import { sha256Hex } from '../crypto';
-import { ANALYTICS_EVENT_NAMES, MemorySink, NoopSink, PostHogSink, hashDistinctId, sanitizeAnalyticsEvent } from './index';
+import {
+  ANALYTICS_EVENT_NAMES,
+  MemorySink,
+  NoopSink,
+  PostHogSink,
+  hashDistinctId,
+  sanitizeAnalyticsEvent,
+} from './index';
 
 describe('analytics · sanitizeAnalyticsEvent', () => {
   it('accepts only catalogued event names', () => {
     expect(ANALYTICS_EVENT_NAMES).toContain('assistant_query');
-    expect(sanitizeAnalyticsEvent('email_opened', {})).toEqual({ ok: false, reason: 'unknown_event' });
+    expect(sanitizeAnalyticsEvent('email_opened', {})).toEqual({
+      ok: false,
+      reason: 'unknown_event',
+    });
     expect(sanitizeAnalyticsEvent('toString', {})).toEqual({ ok: false, reason: 'unknown_event' });
-    expect(sanitizeAnalyticsEvent('paywall_viewed', { context: 'meeting_prep' })).toMatchObject({ ok: true, name: 'paywall_viewed', props: { context: 'meeting_prep' } });
+    expect(sanitizeAnalyticsEvent('paywall_viewed', { context: 'meeting_prep' })).toMatchObject({
+      ok: true,
+      name: 'paywall_viewed',
+      props: { context: 'meeting_prep' },
+    });
   });
 
   it('drops forbidden keys, e-mail addresses, long strings and non-primitive values', () => {
@@ -29,9 +43,17 @@ describe('analytics · sanitizeAnalyticsEvent', () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.props).toEqual({ kind: 'deadline', badge: 'urgent', count: 3, edited: false, emailsFound: 12 });
+    expect(r.props).toEqual({
+      kind: 'deadline',
+      badge: 'urgent',
+      count: 3,
+      edited: false,
+      emailsFound: 12,
+    });
     const droppedKeys = r.dropped.map((d) => d.key).sort();
-    expect(droppedKeys).toEqual(['Subject', 'body', 'list', 'nested', 'note', 'ratio', 'sender', 'snippet'].sort());
+    expect(droppedKeys).toEqual(
+      ['Subject', 'body', 'list', 'nested', 'note', 'ratio', 'sender', 'snippet'].sort(),
+    );
     expect(r.dropped.find((d) => d.key === 'sender')?.reason).toBe('email');
     expect(r.dropped.find((d) => d.key === 'note')?.reason).toBe('too_long');
     for (const key of ANALYTICS_FORBIDDEN_KEYS) {
@@ -41,9 +63,18 @@ describe('analytics · sanitizeAnalyticsEvent', () => {
   });
 
   it('treats null props as empty and rejects arrays', () => {
-    expect(sanitizeAnalyticsEvent('onboarding_started', null)).toMatchObject({ ok: true, props: {} });
-    expect(sanitizeAnalyticsEvent('onboarding_started', [1])).toEqual({ ok: false, reason: 'invalid_props' });
-    expect(sanitizeAnalyticsEvent('onboarding_started', 'ios')).toEqual({ ok: false, reason: 'invalid_props' });
+    expect(sanitizeAnalyticsEvent('onboarding_started', null)).toMatchObject({
+      ok: true,
+      props: {},
+    });
+    expect(sanitizeAnalyticsEvent('onboarding_started', [1])).toEqual({
+      ok: false,
+      reason: 'invalid_props',
+    });
+    expect(sanitizeAnalyticsEvent('onboarding_started', 'ios')).toEqual({
+      ok: false,
+      reason: 'invalid_props',
+    });
   });
 });
 
@@ -61,7 +92,11 @@ describe('analytics · sinks', () => {
     await mem.capture({ name: 'referral_shared', props: { channel: 'whatsapp' }, userId: 'u1' });
     await mem.capture({ name: 'not_an_event' as 'referral_shared', props: { channel: 'copy' } });
     expect(mem.events).toHaveLength(1);
-    expect(mem.events[0]).toMatchObject({ name: 'referral_shared', props: { channel: 'whatsapp' }, distinctId: await sha256Hex('u1') });
+    expect(mem.events[0]).toMatchObject({
+      name: 'referral_shared',
+      props: { channel: 'whatsapp' },
+      distinctId: await sha256Hex('u1'),
+    });
     expect(mem.rejected).toEqual([{ name: 'not_an_event', reason: 'unknown_event' }]);
   });
 
@@ -71,8 +106,16 @@ describe('analytics · sinks', () => {
       calls.push({ url, body: JSON.parse(String(init?.body)) as Record<string, unknown> });
       return new Response('{}', { status: 200 });
     };
-    const sink = new PostHogSink(fetchOk, { host: 'https://eu.i.posthog.com/', apiKey: 'phc_test', now: () => '2026-09-05T08:00:00.000Z' });
-    await sink.capture({ name: 'action_approved', props: { actionType: 'email_send', edited: true }, userId: 'u1' });
+    const sink = new PostHogSink(fetchOk, {
+      host: 'https://eu.i.posthog.com/',
+      apiKey: 'phc_test',
+      now: () => '2026-09-05T08:00:00.000Z',
+    });
+    await sink.capture({
+      name: 'action_approved',
+      props: { actionType: 'email_send', edited: true },
+      userId: 'u1',
+    });
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe('https://eu.i.posthog.com/capture/');
     expect(calls[0]?.body).toEqual({
@@ -80,11 +123,19 @@ describe('analytics · sinks', () => {
       event: 'action_approved',
       distinct_id: await sha256Hex('u1'),
       timestamp: '2026-09-05T08:00:00.000Z',
-      properties: { actionType: 'email_send', edited: true, $lib: 'da-server-core', $process_person_profile: false },
+      properties: {
+        actionType: 'email_send',
+        edited: true,
+        $lib: 'da-server-core',
+        $process_person_profile: false,
+      },
     });
     expect(sink.sent).toBe(1);
 
-    await sink.capture({ name: 'unknown' as 'action_approved', props: { actionType: 'x', edited: false } });
+    await sink.capture({
+      name: 'unknown' as 'action_approved',
+      props: { actionType: 'x', edited: false },
+    });
     expect(calls).toHaveLength(1);
 
     const failing = new PostHogSink(
@@ -93,10 +144,19 @@ describe('analytics · sinks', () => {
       },
       { host: 'https://eu.i.posthog.com', apiKey: 'phc_test' },
     );
-    await expect(failing.capture({ name: 'trial_started', props: { productId: 'da_pro_monthly' }, userId: 'u1' })).resolves.toBeUndefined();
+    await expect(
+      failing.capture({
+        name: 'trial_started',
+        props: { productId: 'da_pro_monthly' },
+        userId: 'u1',
+      }),
+    ).resolves.toBeUndefined();
     expect(failing.failures).toBe(1);
 
-    const rejected = new PostHogSink(async () => new Response('nope', { status: 401 }), { host: 'https://eu.i.posthog.com', apiKey: 'phc_test' });
+    const rejected = new PostHogSink(async () => new Response('nope', { status: 401 }), {
+      host: 'https://eu.i.posthog.com',
+      apiKey: 'phc_test',
+    });
     await rejected.capture({ name: 'trial_started', props: { productId: 'da_pro_monthly' } });
     expect(rejected.failures).toBe(1);
     expect(rejected.lastStatus).toBe(401);

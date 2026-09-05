@@ -1,4 +1,12 @@
-import type { EmailCategory, EmailParticipant, Importance, Locale, PriorityRule, TriageBucket, VipPerson } from '@da/domain';
+import type {
+  EmailCategory,
+  EmailParticipant,
+  Importance,
+  Locale,
+  PriorityRule,
+  TriageBucket,
+  VipPerson,
+} from '@da/domain';
 
 /** Provider-normalized email as seen by the ingestion pipeline (no HTML, bodies optional). */
 export interface TriageEmailInput {

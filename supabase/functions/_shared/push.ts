@@ -77,21 +77,19 @@ export async function sendPush(
     isCritical: opts.isCritical ?? false,
   });
   if (!decision.send) {
-    await admin
-      .from('push_deliveries')
-      .upsert(
-        {
-          user_id: target.userId,
-          category: payload.category,
-          dedupe_key: payload.dedupeKey,
-          title: payload.title,
-          body: payload.body,
-          deep_link: payload.deepLink,
-          status: 'suppressed',
-          error: decision.reason,
-        },
-        { onConflict: 'user_id,dedupe_key', ignoreDuplicates: true },
-      );
+    await admin.from('push_deliveries').upsert(
+      {
+        user_id: target.userId,
+        category: payload.category,
+        dedupe_key: payload.dedupeKey,
+        title: payload.title,
+        body: payload.body,
+        deep_link: payload.deepLink,
+        status: 'suppressed',
+        error: decision.reason,
+      },
+      { onConflict: 'user_id,dedupe_key', ignoreDuplicates: true },
+    );
     return {
       status: 'suppressed',
       reason: decision.reason,
@@ -129,21 +127,19 @@ export async function sendPush(
   });
   if (plan.messages.length === 0) return { status: 'no_devices' };
 
-  await admin
-    .from('push_deliveries')
-    .upsert(
-      {
-        user_id: target.userId,
-        category: payload.category,
-        dedupe_key: payload.dedupeKey,
-        title: privatePayload.title,
-        body: privatePayload.body,
-        deep_link: payload.deepLink,
-        status: 'queued',
-        attempt_count: 1,
-      },
-      { onConflict: 'user_id,dedupe_key' },
-    );
+  await admin.from('push_deliveries').upsert(
+    {
+      user_id: target.userId,
+      category: payload.category,
+      dedupe_key: payload.dedupeKey,
+      title: privatePayload.title,
+      body: privatePayload.body,
+      deep_link: payload.deepLink,
+      status: 'queued',
+      attempt_count: 1,
+    },
+    { onConflict: 'user_id,dedupe_key' },
+  );
   try {
     const env = getEnv();
     const tickets = await sendExpoPush((input, init) => fetch(input, init), {

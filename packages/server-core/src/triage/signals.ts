@@ -5,7 +5,9 @@ const B = '(?<![\\p{L}\\p{N}])';
 const E = '(?![\\p{L}\\p{N}])';
 
 /** Bounded Turkish inflection allowed after a keyword ("cihazdan", "şifresi", "kodunuz") — never "girişim". */
-const INFLECTION = flexI("(?:'?(?:ndan|nden|dan|den|tan|ten|nda|nde|da|de|ta|te|ını|ini|unu|ünü|ınız|iniz|unuz|ünüz|nız|niz|nuz|nüz|ları|leri|lar|ler|ya|ye|sı|si|su|sü|na|ne|nı|ni|ı|i|u|ü|a|e|n))?");
+const INFLECTION = flexI(
+  "(?:'?(?:ndan|nden|dan|den|tan|ten|nda|nde|da|de|ta|te|ını|ini|unu|ünü|ınız|iniz|unuz|ünüz|nız|niz|nuz|nüz|ları|leri|lar|ler|ya|ye|sı|si|su|sü|na|ne|nı|ni|ı|i|u|ü|a|e|n))?",
+);
 
 function alternationOf(list: string[]): string {
   return [...list]
@@ -157,7 +159,15 @@ export const RE_SECURITY_STRONG = wordsInflected([
   'hesap güvenliği',
   'account security',
 ]);
-export const RE_SECURITY_WEAK = wordsInflected(['şifre', 'şifreniz', 'parola', 'password', 'giriş yapıldı', 'oturum açıldı', 'signed in']);
+export const RE_SECURITY_WEAK = wordsInflected([
+  'şifre',
+  'şifreniz',
+  'parola',
+  'password',
+  'giriş yapıldı',
+  'oturum açıldı',
+  'signed in',
+]);
 export const RE_OTP = wordsInflected([
   'doğrulama kodu',
   'doğrulama kodunuz',
@@ -236,7 +246,8 @@ export const RE_FINANCE = words([
   'aidat',
   'kira',
 ]);
-export const RE_AMOUNT = /(?:\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?\s?(?:tl|₺|try)(?![\p{L}])|₺\s?\d|\$\s?\d|\d(?:[.,]\d+)?\s?(?:usd|eur|€|gbp|£)(?![\p{L}])|€\s?\d|£\s?\d)/u;
+export const RE_AMOUNT =
+  /(?:\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?\s?(?:tl|₺|try)(?![\p{L}])|₺\s?\d|\$\s?\d|\d(?:[.,]\d+)?\s?(?:usd|eur|€|gbp|£)(?![\p{L}])|€\s?\d|£\s?\d)/u;
 
 export const RE_TRAVEL = words([
   'uçuş',
@@ -365,7 +376,8 @@ export const RE_SUBSCRIPTION = words([
   'will be charged',
 ]);
 
-export const RE_ASKS_USER = /\?|(?<![\p{L}])(?:misin|mısın|musun|müsün|misiniz|mısınız|musunuz|müsünüz|rica ederim|rica ediyorum|rica ederiz|lütfen|please|could you|can you|would you|bekliyorum|bekliyoruz|geri dönüş|onayınızı|onaylar mısınız|görüşünüzü|ne dersin|ne dersiniz)(?![\p{L}])/u;
+export const RE_ASKS_USER =
+  /\?|(?<![\p{L}])(?:misin|mısın|musun|müsün|misiniz|mısınız|musunuz|müsünüz|rica ederim|rica ediyorum|rica ederiz|lütfen|please|could you|can you|would you|bekliyorum|bekliyoruz|geri dönüş|onayınızı|onaylar mısınız|görüşünüzü|ne dersin|ne dersiniz)(?![\p{L}])/u;
 
 export const RE_AUTO_REPLY_SUBJECT = words([
   'out of office',

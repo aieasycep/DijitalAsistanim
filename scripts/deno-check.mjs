@@ -27,7 +27,10 @@ if (!deno) {
 }
 
 const entries = readdirSync(FUNCTIONS)
-  .filter((d) => !d.startsWith('_') && !d.startsWith('.') && statSync(path.join(FUNCTIONS, d)).isDirectory())
+  .filter(
+    (d) =>
+      !d.startsWith('_') && !d.startsWith('.') && statSync(path.join(FUNCTIONS, d)).isDirectory(),
+  )
   .map((d) => path.join(FUNCTIONS, d, 'index.ts'))
   .filter((f) => existsSync(f));
 

@@ -31,9 +31,9 @@ import {
 } from '@da/domain';
 
 export const uuidSchema = z.string().uuid();
-export const isoDateTimeSchema = z
-  .string()
-  .refine((v) => !Number.isNaN(Date.parse(v)), { message: 'Geçerli bir ISO tarih-saat değeri değil' });
+export const isoDateTimeSchema = z.string().refine((v) => !Number.isNaN(Date.parse(v)), {
+  message: 'Geçerli bir ISO tarih-saat değeri değil',
+});
 export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD bekleniyor');
 export const hhmmSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'HH:mm bekleniyor');
 export const emailSchema = z.string().trim().toLowerCase().email();

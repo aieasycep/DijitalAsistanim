@@ -47,26 +47,26 @@ meeting prep, assistant, capture analysis, reply drafts — all through the same
 
 ## Prompt catalogue (`src/ai/prompts`)
 
-| Purpose | Tier | Schema |
-| --- | --- | --- |
-| emailBatchClassify | small | `emailBatchClassificationSchema` |
-| emailDeepAnalysis | large | `emailAnalysisAiSchema` |
-| briefing (morning/midday/evening/weekly) | large | `briefingAiSchema` |
-| meetingPrep | large | `meetingPrepAiSchema` |
-| commitmentExtraction | small | `commitmentExtractionAiSchema` |
-| captureAnalysis | large | `captureAnalysisAiSchema` |
-| assistantAnswer (RAG) | large | `assistantAnswerAiSchema` |
-| replyDraft (4 tones) | large | `replyDraftAiSchema` |
-| voiceIntent | small | `voiceIntentAiSchema` |
-| scheduleSuggestion | small | `scheduleSuggestionAiSchema` |
-| suggestedQuestions | small | `suggestedQuestionsAiSchema` |
+| Purpose                                  | Tier  | Schema                           |
+| ---------------------------------------- | ----- | -------------------------------- |
+| emailBatchClassify                       | small | `emailBatchClassificationSchema` |
+| emailDeepAnalysis                        | large | `emailAnalysisAiSchema`          |
+| briefing (morning/midday/evening/weekly) | large | `briefingAiSchema`               |
+| meetingPrep                              | large | `meetingPrepAiSchema`            |
+| commitmentExtraction                     | small | `commitmentExtractionAiSchema`   |
+| captureAnalysis                          | large | `captureAnalysisAiSchema`        |
+| assistantAnswer (RAG)                    | large | `assistantAnswerAiSchema`        |
+| replyDraft (4 tones)                     | large | `replyDraftAiSchema`             |
+| voiceIntent                              | small | `voiceIntentAiSchema`            |
+| scheduleSuggestion                       | small | `scheduleSuggestionAiSchema`     |
+| suggestedQuestions                       | small | `suggestedQuestionsAiSchema`     |
 
 ## Priority engine order
 
 1. explicit user rules (mute → score 0) · 2. security · 3. hard deadline · 4. VIP person · 5. waiting for the user's
-reply · 6. the user's own commitment · 7. upcoming meeting relevance · 8. learned preference · 9. AI importance ·
-10. promotion/newsletter penalty. Feedback ("Önemli değil", "Bunu daha sık göster", "Bu kişiyi VIP yap", "Bunu takip
-etme") writes explicit rules/VIPs or learned preferences (only when "Etkileşimlerimden öğren" is on).
+   reply · 6. the user's own commitment · 7. upcoming meeting relevance · 8. learned preference · 9. AI importance ·
+2. promotion/newsletter penalty. Feedback ("Önemli değil", "Bunu daha sık göster", "Bu kişiyi VIP yap", "Bunu takip
+   etme") writes explicit rules/VIPs or learned preferences (only when "Etkileşimlerimden öğren" is on).
 
 ## Memory & RAG
 

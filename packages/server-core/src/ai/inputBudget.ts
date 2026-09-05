@@ -33,7 +33,9 @@ export interface FitPromptResult {
 }
 
 export function truncationMarker(locale: Locale = 'tr'): string {
-  return locale === 'en' ? '[… source text shortened to fit the limit]' : '[… kaynak metni sınır nedeniyle kısaltıldı]';
+  return locale === 'en'
+    ? '[… source text shortened to fit the limit]'
+    : '[… kaynak metni sınır nedeniyle kısaltıldı]';
 }
 
 export function composeUserMessage(user: string, context?: string): string {
@@ -58,15 +60,31 @@ export function truncateContext(text: string, maxChars: number, locale: Locale =
 export function fitPromptToBudget(input: FitPromptInput, opts: FitPromptOptions): FitPromptResult {
   const locale = opts.locale ?? 'tr';
   const fixedTokens =
-    estimateTokens(input.system) + estimateTokens(input.user) + (opts.schemaTokens ?? 0) + FRAMING_TOKENS;
+    estimateTokens(input.system) +
+    estimateTokens(input.user) +
+    (opts.schemaTokens ?? 0) +
+    FRAMING_TOKENS;
   if (fixedTokens > opts.maxInputTokens) {
-    throw new AppError('validation', locale === 'en' ? 'The request is too long.' : 'İstek çok uzun.', {
-      details: { estimatedInputTokens: fixedTokens, maxInputTokens: opts.maxInputTokens, reason: 'instructions_exceed_budget' },
-    });
+    throw new AppError(
+      'validation',
+      locale === 'en' ? 'The request is too long.' : 'İstek çok uzun.',
+      {
+        details: {
+          estimatedInputTokens: fixedTokens,
+          maxInputTokens: opts.maxInputTokens,
+          reason: 'instructions_exceed_budget',
+        },
+      },
+    );
   }
   const context = input.context?.trim() ?? '';
   if (!context) {
-    return { userMessage: composeUserMessage(input.user), estimatedInputTokens: fixedTokens, truncated: false, contextChars: 0 };
+    return {
+      userMessage: composeUserMessage(input.user),
+      estimatedInputTokens: fixedTokens,
+      truncated: false,
+      contextChars: 0,
+    };
   }
   const tagTokens = estimateTokens(CONTEXT_OPEN_TAG) + estimateTokens(CONTEXT_CLOSE_TAG) + 2;
   const available = opts.maxInputTokens - fixedTokens - tagTokens;

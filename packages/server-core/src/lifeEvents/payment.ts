@@ -4,14 +4,21 @@ import { RE_FINANCE, RE_PERCENT, RE_PROMO } from '../triage/signals';
 import { findAmounts, labelledValue, pickAmount, type Ctx } from './common';
 import type { BillKind, ExtractedLifeEvent } from './types';
 
-const RE_STRONG_FINANCE = /(?<![\p{L}])(?:fatura|faturanız|faturası|e-fatura|e-arşiv|invoice|son ödeme|vade|ödeme tarihi|payment due|amount due|ekstre|borcunuz|borç|ödenmemiş|ödeme bekleyen|ödemeniz gereken|hesap özeti|statement|aidat|kira|taksit|tahakkuk)(?![\p{L}])/u;
-const RE_RECEIPT = /(?<![\p{L}])(?:ödeme(?:niz)? alındı|ödemeniz alınmıştır|ödeme başarılı|ödendi|ödenmiştir|başarıyla ödendi|tahsil edildi|payment (?:received|successful|confirmed|complete|completed)|thank you for your payment|receipt|makbuz|dekont|paid in full|has been paid|was paid)(?![\p{L}])/u;
-const RE_AMOUNT_LABEL = /(?:toplam|tutar|ödenecek|borç|borcunuz|amount|total|due|fatura tutarı|ödeme tutarı|bedel|ücret|ekstre borcu|dönem borcu|asgari)/u;
-const RE_PAY_LINK = /(?:öde|ödeme|pay|fatura(?:yı|nızı|mı)? (?:görüntüle|öde|gör)|view (?:bill|invoice)|hemen öde)/iu;
+const RE_STRONG_FINANCE =
+  /(?<![\p{L}])(?:fatura|faturanız|faturası|e-fatura|e-arşiv|invoice|son ödeme|vade|ödeme tarihi|payment due|amount due|ekstre|borcunuz|borç|ödenmemiş|ödeme bekleyen|ödemeniz gereken|hesap özeti|statement|aidat|kira|taksit|tahakkuk)(?![\p{L}])/u;
+const RE_RECEIPT =
+  /(?<![\p{L}])(?:ödeme(?:niz)? alındı|ödemeniz alınmıştır|ödeme başarılı|ödendi|ödenmiştir|başarıyla ödendi|tahsil edildi|payment (?:received|successful|confirmed|complete|completed)|thank you for your payment|receipt|makbuz|dekont|paid in full|has been paid|was paid)(?![\p{L}])/u;
+const RE_AMOUNT_LABEL =
+  /(?:toplam|tutar|ödenecek|borç|borcunuz|amount|total|due|fatura tutarı|ödeme tutarı|bedel|ücret|ekstre borcu|dönem borcu|asgari)/u;
+const RE_PAY_LINK =
+  /(?:öde|ödeme|pay|fatura(?:yı|nızı|mı)? (?:görüntüle|öde|gör)|view (?:bill|invoice)|hemen öde)/iu;
 const RE_PAY_PATH = /(?:\/pay|odeme|\/ode\b|fatura|invoice|bill|checkout)/iu;
 const BILL_KINDS: [RegExp, BillKind][] = [
   [/(?<![\p{L}])elektrik(?![\p{L}])/u, 'electricity'],
-  [/(?<![\p{L}])(?:su faturası|su faturanız|su tüketim|su bedeli|iski|aski|izsu)(?![\p{L}])/u, 'water'],
+  [
+    /(?<![\p{L}])(?:su faturası|su faturanız|su tüketim|su bedeli|iski|aski|izsu)(?![\p{L}])/u,
+    'water',
+  ],
   [/(?<![\p{L}])(?:doğal ?gaz|doğalgaz|gaz faturası|igdaş|başkentgaz|izgaz)(?![\p{L}])/u, 'gas'],
   [/(?<![\p{L}])(?:internet|fiber|adsl)(?![\p{L}])/u, 'internet'],
   [/(?<![\p{L}])(?:telefon|mobil|gsm|hat faturası|cep)(?![\p{L}])/u, 'phone'],
@@ -45,7 +52,8 @@ export function detectPayment(ctx: Ctx): ExtractedLifeEvent | null {
   const promo = RE_PROMO.test(ctx.head) || RE_PERCENT.test(ctx.head);
   if (amounts.length === 0 && !due) return null;
   if (!strong) return null;
-  if (promo && !due && !/(?<![\p{L}])(?:fatura|invoice)(?![\p{L}])/u.test(ctx.subjectLower)) return null;
+  if (promo && !due && !/(?<![\p{L}])(?:fatura|invoice)(?![\p{L}])/u.test(ctx.subjectLower))
+    return null;
   if (RE_RECEIPT.test(ctx.head) && !due) return null;
 
   const details: ExtractedLifeEvent['details'] = {};
@@ -55,7 +63,11 @@ export function detectPayment(ctx: Ctx): ExtractedLifeEvent | null {
     details.amount = amount.amount;
     details.currency = amount.currency;
     ctx.evidence.add(amount.start, amount.end);
-    confidence += RE_AMOUNT_LABEL.test(ctx.lower.slice(Math.max(0, amount.start - 48), amount.start)) ? 0.15 : 0.1;
+    confidence += RE_AMOUNT_LABEL.test(
+      ctx.lower.slice(Math.max(0, amount.start - 48), amount.start),
+    )
+      ? 0.15
+      : 0.1;
   }
   if (due) {
     details.dueAt = due.iso;

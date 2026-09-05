@@ -1,15 +1,8 @@
 {
-  "unstable": [
-    "sloppy-imports"
-  ],
+  "unstable": ["sloppy-imports"],
   "compilerOptions": {
     "strict": true,
-    "lib": [
-      "deno.window",
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["deno.window", "dom", "dom.iterable", "esnext"],
     "noImplicitOverride": true,
     "noUncheckedIndexedAccess": true
   },
@@ -24,13 +17,8 @@
   },
   "lint": {
     "rules": {
-      "tags": [
-        "recommended"
-      ],
-      "exclude": [
-        "no-explicit-any",
-        "no-sloppy-imports"
-      ]
+      "tags": ["recommended"],
+      "exclude": ["no-explicit-any", "no-sloppy-imports"]
     }
   },
   "fmt": {

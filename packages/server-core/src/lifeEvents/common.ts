@@ -164,8 +164,10 @@ const BRANDS: Record<string, string> = {
   papara: 'Papara',
 };
 
-const GENERIC_SENDER_NAMES = /^(?:no-?reply|noreply|do-?not-?reply|donotreply|info|bilgi|bildirim|bildirimler|notification|notifications|mailer|support|destek|hesap|account|accounts|hello|merhaba|newsletter|bülten|team|ekip|service|servis|admin|system|sistem|alert|alerts|uyarı|security|güvenlik|billing|fatura|faturalama|payments?|ödeme|orders?|sipariş|shipping|kargo|reservations?|rezervasyon|customer ?service|müşteri hizmetleri)$/iu;
-const RE_SENDER_SUFFIX = /\s*(?:\|.*|-\s.*|·.*|–.*|\(.*\)|<.*>|ekibi|team|bildirim(?:leri)?|notifications?|müşteri hizmetleri|customer (?:service|care)|support|destek|hesaplar|accounts?|security|güvenlik|no-?reply|noreply)\s*$/iu;
+const GENERIC_SENDER_NAMES =
+  /^(?:no-?reply|noreply|do-?not-?reply|donotreply|info|bilgi|bildirim|bildirimler|notification|notifications|mailer|support|destek|hesap|account|accounts|hello|merhaba|newsletter|bülten|team|ekip|service|servis|admin|system|sistem|alert|alerts|uyarı|security|güvenlik|billing|fatura|faturalama|payments?|ödeme|orders?|sipariş|shipping|kargo|reservations?|rezervasyon|customer ?service|müşteri hizmetleri)$/iu;
+const RE_SENDER_SUFFIX =
+  /\s*(?:\|.*|-\s.*|·.*|–.*|\(.*\)|<.*>|ekibi|team|bildirim(?:leri)?|notifications?|müşteri hizmetleri|customer (?:service|care)|support|destek|hesaplar|accounts?|security|güvenlik|no-?reply|noreply)\s*$/iu;
 
 /** Human label for the sending organisation: display name ("CK Enerji", "Google") or a known brand from the domain. */
 export function senderOrgName(from: { name?: string | null; email: string }): string | null {
@@ -175,7 +177,46 @@ export function senderOrgName(from: { name?: string | null; email: string }): st
     if (cleaned && !GENERIC_SENDER_NAMES.test(cleaned)) return cleaned.slice(0, 80);
   }
   const domain = emailDomain(from.email);
-  const labels = domain.split('.').filter((l) => l && !['com', 'net', 'org', 'tr', 'co', 'io', 'gov', 'edu', 'info', 'mail', 'email', 'e', 'em', 'news', 'mailer', 'send', 'notify', 'accounts', 'account', 'noreply', 'no-reply', 'info', 'alerts', 'alert', 'notifications', 'notification', 'go', 'my', 'app', 'apps', 'online', 'www'].includes(l));
+  const labels = domain
+    .split('.')
+    .filter(
+      (l) =>
+        l &&
+        ![
+          'com',
+          'net',
+          'org',
+          'tr',
+          'co',
+          'io',
+          'gov',
+          'edu',
+          'info',
+          'mail',
+          'email',
+          'e',
+          'em',
+          'news',
+          'mailer',
+          'send',
+          'notify',
+          'accounts',
+          'account',
+          'noreply',
+          'no-reply',
+          'info',
+          'alerts',
+          'alert',
+          'notifications',
+          'notification',
+          'go',
+          'my',
+          'app',
+          'apps',
+          'online',
+          'www',
+        ].includes(l),
+    );
   for (const l of [...labels].reverse()) {
     const brand = BRANDS[l.replace(/-/g, '')];
     if (brand) return brand;
@@ -189,14 +230,26 @@ export function senderOrgName(from: { name?: string | null; email: string }): st
 export function brandInText(lower: string, names: readonly string[]): string | null {
   for (const n of names) {
     const key = lowercasePreservingIndices(n);
-    const re = new RegExp(`(?<![\\p{L}\\p{N}])${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[iı]/g, '[iı]')}(?![\\p{L}\\p{N}])`, 'u');
+    const re = new RegExp(
+      `(?<![\\p{L}\\p{N}])${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[iı]/g, '[iı]')}(?![\\p{L}\\p{N}])`,
+      'u',
+    );
     if (re.test(lower)) return n;
   }
   return null;
 }
 
-export function buildContext(input: { subject: string; from: { name?: string | null; email: string }; bodyText?: string | null; now: string; timezone: string; locale?: Locale }): Ctx {
-  const subject = normalizeText(input.subject ?? '').replace(/\n+/g, ' ').trim();
+export function buildContext(input: {
+  subject: string;
+  from: { name?: string | null; email: string };
+  bodyText?: string | null;
+  now: string;
+  timezone: string;
+  locale?: Locale;
+}): Ctx {
+  const subject = normalizeText(input.subject ?? '')
+    .replace(/\n+/g, ' ')
+    .trim();
   const rawBody = input.bodyText ? stripQuotedHistory(normalizeText(input.bodyText)) : '';
   const body = rawBody.length > BODY_LIMIT ? rawBody.slice(0, BODY_LIMIT) : rawBody;
   const text = `${subject}\n${body}`;
@@ -239,7 +292,21 @@ const RE_AMOUNT = new RegExp(
   `(?<cur1>₺|\\$|€|£)\\s?(?<num1>${NUM})(?![\\d])|(?<![\\d.,])(?<num2>${NUM})\\s?(?<cur2>tl|₺|try|usd|eur|gbp|\\$|€|£|dolar|euro|avro|sterlin)(?![\\p{L}])`,
   'gu',
 );
-const CURRENCY: Record<string, string> = { tl: 'TRY', '₺': 'TRY', try: 'TRY', usd: 'USD', $: 'USD', dolar: 'USD', eur: 'EUR', '€': 'EUR', euro: 'EUR', avro: 'EUR', gbp: 'GBP', '£': 'GBP', sterlin: 'GBP' };
+const CURRENCY: Record<string, string> = {
+  tl: 'TRY',
+  '₺': 'TRY',
+  try: 'TRY',
+  usd: 'USD',
+  $: 'USD',
+  dolar: 'USD',
+  eur: 'EUR',
+  '€': 'EUR',
+  euro: 'EUR',
+  avro: 'EUR',
+  gbp: 'GBP',
+  '£': 'GBP',
+  sterlin: 'GBP',
+};
 
 /** "1.842,00" → 1842, "1.842" → 1842, "229,99" → 229.99, "1,842.50" → 1842.5, "49.99" → 49.99, "1,842" → 1842. */
 export function parseAmountNumber(raw: string): number | null {
@@ -254,7 +321,10 @@ export function parseAmountNumber(raw: string): number | null {
     normalized = s.split(thousandsSep).join('').replace(decimalSep, '.');
   } else if (lastComma >= 0) {
     const after = s.length - lastComma - 1;
-    normalized = after === 3 && (s.match(/,/g) ?? []).length >= 1 && !/,\d{1,2}$/.test(s) ? s.replace(/,/g, '') : s.replace(/,/g, '.');
+    normalized =
+      after === 3 && (s.match(/,/g) ?? []).length >= 1 && !/,\d{1,2}$/.test(s)
+        ? s.replace(/,/g, '')
+        : s.replace(/,/g, '.');
     if ((s.match(/,/g) ?? []).length > 1) normalized = s.replace(/,/g, '');
   } else if (lastDot >= 0) {
     const after = s.length - lastDot - 1;
@@ -295,7 +365,10 @@ export function pickAmount(lower: string, amounts: AmountHit[], labels: RegExp):
 
 export function formatAmount(amount: number, currency: string, locale: Locale): string {
   const fractional = Math.abs(amount - Math.round(amount)) > 1e-9;
-  const fmt = new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', { minimumFractionDigits: fractional ? 2 : 0, maximumFractionDigits: 2 });
+  const fmt = new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', {
+    minimumFractionDigits: fractional ? 2 : 0,
+    maximumFractionDigits: 2,
+  });
   const num = fmt.format(amount);
   if (currency === 'TRY') return `${num} TL`;
   return `${num} ${currency}`;
@@ -315,7 +388,11 @@ export function sentenceAround(text: string, pos: number): { start: number; end:
 }
 
 /** First date whose surrounding sentence matches `labels`, else null. */
-export function dateNear(ctx: Ctx, labels: RegExp, filter: (d: ExtractedDate) => boolean = () => true): ExtractedDate | null {
+export function dateNear(
+  ctx: Ctx,
+  labels: RegExp,
+  filter: (d: ExtractedDate) => boolean = () => true,
+): ExtractedDate | null {
   for (const d of ctx.dates) {
     if (!filter(d)) continue;
     const s = sentenceAround(ctx.lower, d.start);
@@ -325,11 +402,17 @@ export function dateNear(ctx: Ctx, labels: RegExp, filter: (d: ExtractedDate) =>
 }
 
 /** Value after a "Label:" pair on the same line ("Adres: Bağdat Cad. 12" → "Bağdat Cad. 12"). */
-export function labelledValue(text: string, label: RegExp): { value: string; start: number; end: number } | null {
+export function labelledValue(
+  text: string,
+  label: RegExp,
+): { value: string; start: number; end: number } | null {
   const re = new RegExp(`(?<![\\p{L}])(?:${label.source})\\s*[:：]\\s*(?<v>[^\\n]{2,120})`, 'iu');
   const m = re.exec(text);
   if (!m?.groups?.v) return null;
-  const value = m.groups.v.replace(/\s+/g, ' ').replace(/[.;,]+$/u, '').trim();
+  const value = m.groups.v
+    .replace(/\s+/g, ' ')
+    .replace(/[.;,]+$/u, '')
+    .trim();
   const start = m.index + m[0].length - m.groups.v.length;
   return { value, start, end: start + m.groups.v.length };
 }
@@ -339,7 +422,17 @@ export function capitalizeFirst(s: string, locale: Locale = 'tr'): string {
 }
 
 export function slug(s: string): string {
-  const fold: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u' };
+  const fold: Record<string, string> = {
+    ç: 'c',
+    ğ: 'g',
+    ı: 'i',
+    ö: 'o',
+    ş: 's',
+    ü: 'u',
+    â: 'a',
+    î: 'i',
+    û: 'u',
+  };
   return s
     .toLocaleLowerCase('tr-TR')
     .replace(/[çğıöşüâîû]/g, (ch) => fold[ch] ?? ch)

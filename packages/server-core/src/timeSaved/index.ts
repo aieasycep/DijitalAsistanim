@@ -54,10 +54,16 @@ export type TimeSavedBreakdown = WeeklyMetrics['timeSavedBreakdown'] & { total: 
  *  - followUpDrafts: follow-up nudges and reply drafts used
  * When the cap applies, buckets are scaled proportionally so they still add up to the total.
  */
-export function computeTimeSavedBreakdown(inputs: Partial<TimeSavedInputs>, opts: TimeSavedOptions = {}): TimeSavedBreakdown {
+export function computeTimeSavedBreakdown(
+  inputs: Partial<TimeSavedInputs>,
+  opts: TimeSavedOptions = {},
+): TimeSavedBreakdown {
   const cap = opts.capMinutes ?? TIME_SAVED_WEEKLY_CAP_MINUTES;
   const raw = {
-    unreadMails: minutesFor(inputs, 'unreadLowPriorityMails') + minutesFor(inputs, 'importantSummariesRead') + minutesFor(inputs, 'deadlinesCaught'),
+    unreadMails:
+      minutesFor(inputs, 'unreadLowPriorityMails') +
+      minutesFor(inputs, 'importantSummariesRead') +
+      minutesFor(inputs, 'deadlinesCaught'),
     prepNotes: minutesFor(inputs, 'prepNotesGenerated'),
     followUpDrafts: minutesFor(inputs, 'followUpDraftsUsed') + minutesFor(inputs, 'repliesDrafted'),
   };
@@ -71,7 +77,9 @@ export function computeTimeSavedBreakdown(inputs: Partial<TimeSavedInputs>, opts
   let total = out.unreadMails + out.prepNotes + out.followUpDrafts;
   if (total > cap) {
     // Rounding pushed the sum over the cap: trim the largest bucket.
-    const largest = (['unreadMails', 'prepNotes', 'followUpDrafts'] as const).reduce((a, b) => (out[b] > out[a] ? b : a));
+    const largest = (['unreadMails', 'prepNotes', 'followUpDrafts'] as const).reduce((a, b) =>
+      out[b] > out[a] ? b : a,
+    );
     out[largest] -= total - cap;
     total = cap;
   }
@@ -79,7 +87,10 @@ export function computeTimeSavedBreakdown(inputs: Partial<TimeSavedInputs>, opts
 }
 
 /** Whole minutes saved, capped. */
-export function computeTimeSavedMinutes(inputs: Partial<TimeSavedInputs>, opts: TimeSavedOptions = {}): number {
+export function computeTimeSavedMinutes(
+  inputs: Partial<TimeSavedInputs>,
+  opts: TimeSavedOptions = {},
+): number {
   return computeTimeSavedBreakdown(inputs, opts).total;
 }
 
@@ -131,7 +142,10 @@ function weekdayName(dateKey: string, locale: Locale): string {
   return (locale === 'en' ? WEEKDAYS_EN_TITLE[wd] : WEEKDAYS_TR_TITLE[wd]) ?? dateKey;
 }
 
-function busiestDay(byDay: Record<string, number> | undefined, locale: Locale): WeeklyMetrics['busiestDay'] {
+function busiestDay(
+  byDay: Record<string, number> | undefined,
+  locale: Locale,
+): WeeklyMetrics['busiestDay'] {
   if (!byDay) return null;
   let best: { date: string; meetings: number } | null = null;
   for (const date of Object.keys(byDay).sort()) {
@@ -153,13 +167,22 @@ function nextWeekLine(input: WeeklyMetricsInput['nextWeek'], locale: Locale): st
     const m = nonNegativeInt(input.meetings);
     const d = nonNegativeInt(input.deadlines);
     if (locale === 'en') {
-      const parts = [m > 0 ? `${m} ${m === 1 ? 'meeting' : 'meetings'}` : '', d > 0 ? `${d} ${d === 1 ? 'deadline' : 'deadlines'}` : ''].filter(Boolean);
-      return parts.length ? `Next week you have ${parts.join(' and ')}.` : 'Next week looks calm so far.';
+      const parts = [
+        m > 0 ? `${m} ${m === 1 ? 'meeting' : 'meetings'}` : '',
+        d > 0 ? `${d} ${d === 1 ? 'deadline' : 'deadlines'}` : '',
+      ].filter(Boolean);
+      return parts.length
+        ? `Next week you have ${parts.join(' and ')}.`
+        : 'Next week looks calm so far.';
     }
     const parts = [m > 0 ? `${m} toplantın` : '', d > 0 ? `${d} son tarihin` : ''].filter(Boolean);
-    return parts.length ? `Gelecek hafta ${parts.join(' ve ')} var.` : 'Gelecek hafta şimdilik sakin görünüyor.';
+    return parts.length
+      ? `Gelecek hafta ${parts.join(' ve ')} var.`
+      : 'Gelecek hafta şimdilik sakin görünüyor.';
   }
-  return locale === 'en' ? 'Next week’s plan will take shape as it gets closer.' : 'Gelecek haftanın planı yaklaştıkça netleşecek.';
+  return locale === 'en'
+    ? 'Next week’s plan will take shape as it gets closer.'
+    : 'Gelecek haftanın planı yaklaştıkça netleşecek.';
 }
 
 /** Assemble the WeeklyMetrics block of the weekly briefing from raw counters. */
@@ -172,7 +195,9 @@ export function buildWeeklyMetrics(raw: WeeklyMetricsInput): WeeklyMetrics {
   const topPeople = (raw.topPeople ?? [])
     .map((p) => ({ name: p.name.trim(), count: nonNegativeInt(p.count) }))
     .filter((p) => p.name && p.count > 0)
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, locale === 'en' ? 'en' : 'tr'))
+    .sort(
+      (a, b) => b.count - a.count || a.name.localeCompare(b.name, locale === 'en' ? 'en' : 'tr'),
+    )
     .slice(0, WEEKLY_TOP_PEOPLE_LIMIT);
 
   return {
@@ -187,7 +212,11 @@ export function buildWeeklyMetrics(raw: WeeklyMetricsInput): WeeklyMetrics {
     deadlines,
     deadlinesMissed: Math.min(deadlines, nonNegativeInt(raw.deadlinesMissed)),
     estimatedTimeSavedMinutes: breakdown.total,
-    timeSavedBreakdown: { unreadMails: breakdown.unreadMails, prepNotes: breakdown.prepNotes, followUpDrafts: breakdown.followUpDrafts },
+    timeSavedBreakdown: {
+      unreadMails: breakdown.unreadMails,
+      prepNotes: breakdown.prepNotes,
+      followUpDrafts: breakdown.followUpDrafts,
+    },
     busiestDay: busiestDay(raw.meetingsByDay, locale),
     topPeople,
     nextWeek: nextWeekLine(raw.nextWeek, locale),

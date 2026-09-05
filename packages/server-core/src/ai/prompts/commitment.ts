@@ -36,7 +36,9 @@ export interface CommitmentExtractionInput extends PromptBase {
   counterpartName?: string | null;
 }
 
-export function commitmentExtraction(input: CommitmentExtractionInput): PromptSpec<CommitmentExtractionAi> {
+export function commitmentExtraction(
+  input: CommitmentExtractionInput,
+): PromptSpec<CommitmentExtractionAi> {
   const locale = input.locale ?? 'tr';
   const tz = input.timezone ?? DEFAULT_PROMPT_TIMEZONE;
   const en = locale === 'en';
@@ -64,30 +66,53 @@ export function commitmentExtraction(input: CommitmentExtractionInput): PromptSp
       en
         ? 'due: only when a time is stated; resolve relative phrases from the message date, keep the phrase in due.text and put the source words in due.evidence. If the date is ambiguous set due.iso to null.'
         : 'due: yalnızca zaman belirtilmişse; göreli ifadeleri ileti tarihinden hesapla, ifadeyi due.text içinde tut, kaynaktaki sözcükleri due.evidence alanına yaz. Tarih belirsizse due.iso null olsun.',
-      en ? "counterpart is the other person's name when known; never guess a name." : 'counterpart, biliniyorsa karşı tarafın adı; asla ad tahmin etme.',
+      en
+        ? "counterpart is the other person's name when known; never guess a name."
+        : 'counterpart, biliniyorsa karşı tarafın adı; asla ad tahmin etme.',
       en
         ? 'confidence per commitment: high only when the promise, its owner and its wording are unambiguous.'
         : 'Her taahhüt için confidence: yalnızca söz, sahibi ve ifadesi netse yüksek olsun.',
-      en ? 'Return at most 6 commitments; an empty list is a valid answer.' : 'En fazla 6 taahhüt döndür; boş liste geçerli bir yanıttır.',
+      en
+        ? 'Return at most 6 commitments; an empty list is a valid answer.'
+        : 'En fazla 6 taahhüt döndür; boş liste geçerli bir yanıttır.',
     ],
-    sections: [{ title: en ? 'Context' : 'Bağlam', body: temporalContext({ now: input.now, locale, timezone: tz }) }],
+    sections: [
+      {
+        title: en ? 'Context' : 'Bağlam',
+        body: temporalContext({ now: input.now, locale, timezone: tz }),
+      },
+    ],
   });
   const context = joinLines([
     `${en ? 'Source' : 'Kaynak'}: ${input.source.kind} · id: ${input.source.id}`,
-    input.source.sentAt ? labelled(en ? 'Date' : 'Tarih', formatPromptDateTime(input.source.sentAt, tz, locale)) : null,
+    input.source.sentAt
+      ? labelled(en ? 'Date' : 'Tarih', formatPromptDateTime(input.source.sentAt, tz, locale))
+      : null,
     input.source.from ? labelled(en ? 'From' : 'Kimden', personLabel(input.source.from)) : null,
-    input.source.to?.length ? labelled(en ? 'To' : 'Kime', input.source.to.map(personLabel).join(', ')) : null,
-    input.source.subject ? labelled(en ? 'Subject' : 'Konu', clipInline(input.source.subject, 200)) : null,
-    input.counterpartName ? labelled(en ? 'Counterpart' : 'Karşı taraf', clipInline(input.counterpartName, 120)) : null,
+    input.source.to?.length
+      ? labelled(en ? 'To' : 'Kime', input.source.to.map(personLabel).join(', '))
+      : null,
+    input.source.subject
+      ? labelled(en ? 'Subject' : 'Konu', clipInline(input.source.subject, 200))
+      : null,
+    input.counterpartName
+      ? labelled(en ? 'Counterpart' : 'Karşı taraf', clipInline(input.counterpartName, 120))
+      : null,
     '',
-    redactForPrompt(input.text, { purpose: 'commitment_extraction', locale, keepSignature: input.source.kind !== 'email' }),
+    redactForPrompt(input.text, {
+      purpose: 'commitment_extraction',
+      locale,
+      keepSignature: input.source.kind !== 'email',
+    }),
   ]);
   return {
     purpose: 'commitment_extraction',
     tier: 'small',
     locale,
     system,
-    user: en ? 'Extract the commitments from the text below.' : 'Aşağıdaki metindeki taahhütleri çıkar.',
+    user: en
+      ? 'Extract the commitments from the text below.'
+      : 'Aşağıdaki metindeki taahhütleri çıkar.',
     context,
     schema: commitmentExtractionAiSchema,
     maxOutputTokens: 900,

@@ -294,18 +294,16 @@ export async function runPipeline(
             const c = batch.find((b) => b.thread.id === r.id);
             if (!c) continue;
             cache.set(`classify:${c.thread.fingerprint}`, r);
-            await admin
-              .from('ai_analysis_cache')
-              .upsert(
-                {
-                  user_id: userId,
-                  fingerprint: c.thread.fingerprint,
-                  purpose: 'classify',
-                  result: r,
-                  model: result.model,
-                },
-                { onConflict: 'user_id,fingerprint,purpose' },
-              );
+            await admin.from('ai_analysis_cache').upsert(
+              {
+                user_id: userId,
+                fingerprint: c.thread.fingerprint,
+                purpose: 'classify',
+                result: r,
+                model: result.model,
+              },
+              { onConflict: 'user_id,fingerprint,purpose' },
+            );
           }
           outcome.aiClassified += batch.length;
         } catch (e) {
@@ -380,18 +378,16 @@ export async function runPipeline(
               locale: ctx.locale,
             });
             data = result.data;
-            await admin
-              .from('ai_analysis_cache')
-              .upsert(
-                {
-                  user_id: userId,
-                  fingerprint: c.thread.fingerprint,
-                  purpose: 'deep',
-                  result: data,
-                  model: result.model,
-                },
-                { onConflict: 'user_id,fingerprint,purpose' },
-              );
+            await admin.from('ai_analysis_cache').upsert(
+              {
+                user_id: userId,
+                fingerprint: c.thread.fingerprint,
+                purpose: 'deep',
+                result: data,
+                model: result.model,
+              },
+              { onConflict: 'user_id,fingerprint,purpose' },
+            );
             outcome.aiDeep += 1;
           } catch (e) {
             log.warn('deep analysis failed', { error: e instanceof Error ? e.message : 'unknown' });
@@ -481,14 +477,12 @@ export async function runPipeline(
     for (const p of it.thread.participants) {
       const email = p.email?.toLowerCase();
       if (!email || userEmails.has(email) || contactIdByEmail.has(email)) continue;
-      const { data: cid } = await admin
-        .schema('internal')
-        .rpc('upsert_contact', {
-          p_user: userId,
-          p_name: p.name ?? email,
-          p_email: email,
-          p_at: it.thread.lastMessageAt,
-        });
+      const { data: cid } = await admin.schema('internal').rpc('upsert_contact', {
+        p_user: userId,
+        p_name: p.name ?? email,
+        p_email: email,
+        p_at: it.thread.lastMessageAt,
+      });
       if (typeof cid === 'string') contactIdByEmail.set(email, cid);
     }
     const counterpartEmail = it.last.isFromUser ? it.last.to[0]?.email?.toLowerCase() : senderEmail;

@@ -171,7 +171,11 @@ export function hasFeature(state: EntitlementState, feature: Feature): boolean {
 }
 
 /** Throws `quota_exceeded` (HTTP 402) with `details.feature` when the feature is not available. */
-export function assertFeature(state: EntitlementState, feature: Feature, locale: Locale = 'tr'): void {
+export function assertFeature(
+  state: EntitlementState,
+  feature: Feature,
+  locale: Locale = 'tr',
+): void {
   if (hasFeature(state, feature)) return;
   throw new AppError('quota_exceeded', MESSAGES[locale].feature, {
     details: { feature, plan: state.plan, requiredPlan: FEATURE_PLAN[feature] },
@@ -185,7 +189,11 @@ export function assertFeature(state: EntitlementState, feature: Feature, locale:
  *  - reminders: device-local, always allowed.
  *  - notifications: Android notification intelligence is a Pro feature.
  */
-export function canConnectAccount(state: EntitlementState, kind: AccountKind, currentCount: number): boolean {
+export function canConnectAccount(
+  state: EntitlementState,
+  kind: AccountKind,
+  currentCount: number,
+): boolean {
   const count = Math.max(0, currentCount);
   switch (kind) {
     case 'email':
@@ -258,13 +266,12 @@ export const REVENUECAT_EVENT_TYPES = [
 export type RevenueCatEventType = (typeof REVENUECAT_EVENT_TYPES)[number];
 
 /** Subscription row to insert/update; `id` is present when an existing row is being updated. */
-export type SubscriptionDraft = Omit<Subscription, 'id' | 'createdAt' | 'updatedAt'> & { id?: string };
+export type SubscriptionDraft = Omit<Subscription, 'id' | 'createdAt' | 'updatedAt'> & {
+  id?: string;
+};
 
 export type RevenueCatIgnoreReason =
-  | 'duplicate_event'
-  | 'test_event'
-  | 'unsupported_event_type'
-  | 'foreign_entitlement';
+  'duplicate_event' | 'test_event' | 'unsupported_event_type' | 'foreign_entitlement';
 
 export type RevenueCatApplyResult =
   | { changed: false; reason: RevenueCatIgnoreReason; eventId: string; sandbox: boolean }
@@ -292,7 +299,10 @@ function msToIso(ms: number | null | undefined): string | null {
   return typeof ms === 'number' && Number.isFinite(ms) ? new Date(ms).toISOString() : null;
 }
 
-function mapStore(store: string | undefined, existing: Subscription['store'] | undefined): Subscription['store'] {
+function mapStore(
+  store: string | undefined,
+  existing: Subscription['store'] | undefined,
+): Subscription['store'] {
   switch ((store ?? '').toUpperCase()) {
     case 'APP_STORE':
     case 'MAC_APP_STORE':
@@ -324,7 +334,8 @@ export function applyRevenueCatEvent(
   const type = event.type.toUpperCase();
   const base = { eventId: event.id, sandbox } as const;
 
-  if (existing?.lastEventId === event.id) return { changed: false, reason: 'duplicate_event', ...base };
+  if (existing?.lastEventId === event.id)
+    return { changed: false, reason: 'duplicate_event', ...base };
   if (!isKnownEventType(type)) return { changed: false, reason: 'unsupported_event_type', ...base };
   if (type === 'TEST') return { changed: false, reason: 'test_event', ...base };
   const entitlements = event.entitlement_ids ?? [];
@@ -354,7 +365,8 @@ export function applyRevenueCatEvent(
     case 'TRANSFER':
       status = stillValid ? liveStatus : 'expired';
       willRenew = stillValid;
-      if (type === 'UNCANCELLATION' || type === 'SUBSCRIPTION_EXTENDED') startsAt = existing?.startsAt ?? startsAt;
+      if (type === 'UNCANCELLATION' || type === 'SUBSCRIPTION_EXTENDED')
+        startsAt = existing?.startsAt ?? startsAt;
       break;
     case 'NON_RENEWING_PURCHASE':
       status = stillValid ? liveStatus : 'expired';
@@ -362,7 +374,11 @@ export function applyRevenueCatEvent(
       break;
     case 'CANCELLATION':
       // Auto-renew turned off; the paid period stays usable. Refunds carry an expiry in the past.
-      status = stillValid ? (existing?.status === 'trial' || isTrial ? 'trial' : 'active') : 'cancelled';
+      status = stillValid
+        ? existing?.status === 'trial' || isTrial
+          ? 'trial'
+          : 'active'
+        : 'cancelled';
       willRenew = false;
       startsAt = existing?.startsAt ?? startsAt;
       break;
@@ -393,21 +409,31 @@ export function applyRevenueCatEvent(
     entitlementId: ENTITLEMENT_ID,
     startsAt,
     expiresAt: type === 'EXPIRATION' ? (expiresAt ?? opts.now) : expiresAt,
-    isTrial: type === 'EXPIRATION' || type === 'CANCELLATION' ? (existing?.isTrial ?? isTrial) : isTrial,
+    isTrial:
+      type === 'EXPIRATION' || type === 'CANCELLATION' ? (existing?.isTrial ?? isTrial) : isTrial,
     willRenew,
     store,
     revenuecatAppUserId: event.app_user_id,
     lastEventId: event.id,
   };
 
-  return { changed: true, subscription, eventType: type, transferred: type === 'TRANSFER', ...base };
+  return {
+    changed: true,
+    subscription,
+    eventType: type,
+    transferred: type === 'TRANSFER',
+    ...base,
+  };
 }
 
 /**
  * RevenueCat sends the configured secret verbatim in the `Authorization` header; some setups
  * configure it as `Bearer <secret>`. Both forms are accepted, compared in constant time.
  */
-export function verifyRevenueCatAuth(headerValue: string | null | undefined, secret: string): boolean {
+export function verifyRevenueCatAuth(
+  headerValue: string | null | undefined,
+  secret: string,
+): boolean {
   if (!secret || !headerValue) return false;
   const raw = headerValue.trim();
   const direct = timingSafeEqual(raw, secret);

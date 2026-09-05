@@ -7,7 +7,15 @@ import { z } from 'zod';
 import { httpError, postJson } from './http';
 import { AiProviderError } from './providerError';
 import { extractJson, stripSchemaMeta } from './schema';
-import type { AiFetch, AiLogger, AiProvider, AiRequest, AiResponse, AiStopReason, AiTier } from './types';
+import type {
+  AiFetch,
+  AiLogger,
+  AiProvider,
+  AiRequest,
+  AiResponse,
+  AiStopReason,
+  AiTier,
+} from './types';
 
 export const ANTHROPIC_MESSAGES_URL = 'https://api.anthropic.com/v1/messages';
 export const ANTHROPIC_API_VERSION = '2023-06-01';
@@ -85,7 +93,8 @@ export class AnthropicProvider implements AiProvider {
       body.tools = [
         {
           name: STRUCTURED_OUTPUT_TOOL,
-          description: 'Emit the final structured result. Call exactly once with the complete result.',
+          description:
+            'Emit the final structured result. Call exactly once with the complete result.',
           input_schema: stripSchemaMeta(req.jsonSchema),
         },
       ];
@@ -108,33 +117,45 @@ export class AnthropicProvider implements AiProvider {
     const latencyMs = Math.max(0, now() - started);
     if (result.status < 200 || result.status >= 300) {
       const error = httpError(this.name, result, now());
-      this.config.logger?.warn('anthropic request failed', { status: result.status, purpose: req.metadata.purpose });
+      this.config.logger?.warn('anthropic request failed', {
+        status: result.status,
+        purpose: req.metadata.purpose,
+      });
       throw error;
     }
     const parsed = responseSchema.safeParse(result.json);
     if (!parsed.success) {
-      throw new AiProviderError(this.name, 'parse', 'Anthropic yanıtı çözümlenemedi.', { status: result.status });
+      throw new AiProviderError(this.name, 'parse', 'Anthropic yanıtı çözümlenemedi.', {
+        status: result.status,
+      });
     }
     const message = parsed.data;
     const stopReason = mapStopReason(message.stop_reason);
     if (stopReason === 'refusal') {
-      throw new AiProviderError(this.name, 'refusal', 'Model bu isteği reddetti.', { status: result.status });
+      throw new AiProviderError(this.name, 'refusal', 'Model bu isteği reddetti.', {
+        status: result.status,
+      });
     }
     const textParts: string[] = [];
     let json: unknown;
     for (const block of message.content) {
       if (block.type === 'text' && typeof block.text === 'string') textParts.push(block.text);
-      if (block.type === 'tool_use' && block.name === STRUCTURED_OUTPUT_TOOL && json === undefined) json = block.input;
+      if (block.type === 'tool_use' && block.name === STRUCTURED_OUTPUT_TOOL && json === undefined)
+        json = block.input;
     }
     let text = textParts.join('\n').trim();
     if (req.jsonSchema) {
       if (json === undefined) json = extractJson(text);
       if (json === undefined && text.length === 0) {
-        throw new AiProviderError(this.name, 'empty', 'Model boş yanıt döndürdü.', { status: result.status });
+        throw new AiProviderError(this.name, 'empty', 'Model boş yanıt döndürdü.', {
+          status: result.status,
+        });
       }
       if (text.length === 0 && json !== undefined) text = JSON.stringify(json);
     } else if (text.length === 0) {
-      throw new AiProviderError(this.name, 'empty', 'Model boş yanıt döndürdü.', { status: result.status });
+      throw new AiProviderError(this.name, 'empty', 'Model boş yanıt döndürdü.', {
+        status: result.status,
+      });
     }
     return {
       text,

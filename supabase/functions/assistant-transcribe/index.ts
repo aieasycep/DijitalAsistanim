@@ -62,17 +62,15 @@ Deno.serve(
         .eq('day', day)
         .maybeSingle();
       const current = (data as { voice_seconds: number } | null)?.voice_seconds ?? 0;
-      await admin
-        .from('usage_counters')
-        .upsert(
-          {
-            user_id: user.id,
-            day,
-            voice_seconds: current + seconds,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id,day' },
-        );
+      await admin.from('usage_counters').upsert(
+        {
+          user_id: user.id,
+          day,
+          voice_seconds: current + seconds,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,day' },
+      );
     }
     const response: TranscribeResponse = { text: result.text.trim(), provider: 'server_stt' };
     return json(response);

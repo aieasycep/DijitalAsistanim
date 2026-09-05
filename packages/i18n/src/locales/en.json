@@ -71,7 +71,10 @@
     "queuedOffline": "Will be sent when you're back online.",
     "genericError": "Something went wrong.",
     "sourceLine": "{{label}} · {{person}} · {{time}}",
-    "sourceLineNoPerson": "{{label}} · {{time}}"
+    "sourceLineNoPerson": "{{label}} · {{time}}",
+    "skipIntro": "Skip",
+    "or": "or",
+    "refresh": "Refresh"
   },
   "greeting": {
     "morning": "Good morning, {{name}}",
@@ -135,7 +138,19 @@
     "syncing": "Analyzing…",
     "completedToast": "Marked as done",
     "dismissedToast": "Got it · I'll show this less",
-    "vipToast": "Got it · {{name}} is now VIP."
+    "vipToast": "Got it · {{name}} is now VIP.",
+    "closeDay": "Close the day",
+    "preparingHeadline": "Your briefing is being prepared.",
+    "preparingBody": "Your first briefing will be here in a few minutes.",
+    "capture": "Add",
+    "connectBody": "Connect Gmail or Outlook; important topics appear here within minutes.",
+    "menu": {
+      "title": "For this card",
+      "noReason": "No reason was recorded for this card.",
+      "showMoreToast": "Got it · I'll show this more often",
+      "stopFollowingToast": "Got it · I'll stop following this",
+      "noPerson": "No person found on this card."
+    }
   },
   "briefing": {
     "morningKicker": "MORNING BRIEFING · {{date}}",
@@ -188,10 +203,35 @@
       "speed": "{{speed}}x",
       "chapters": "Chapters",
       "usingDeviceVoice": "Using device voice",
-      "miniTitle": "Morning Briefing · {{chapter}}"
+      "miniTitle": "Morning Briefing · {{chapter}}",
+      "middayTitle": "Midday Pulse",
+      "eveningTitle": "Evening Close",
+      "weeklyTitle": "Weekly Review",
+      "unavailable": "The audio briefing couldn't be prepared right now.",
+      "chapter": "Chapter {{index}}",
+      "nothingPlaying": "No briefing is playing right now."
     },
     "generateFailed": "The briefing couldn't be prepared right now.",
-    "regenerate": "Regenerate"
+    "regenerate": "Regenerate",
+    "notReadyTitle": "Not ready yet.",
+    "notReadyBody": "The briefing will be prepared at {{time}}.",
+    "notReadyBodyGeneric": "The briefing will appear here once it's ready.",
+    "carryOverSelect": "Choose what carries over to tomorrow",
+    "closeWithout": "Close without carrying over",
+    "closed": "Day closed",
+    "readTime": "{{minutes}} min read",
+    "nextWeek": "NEXT WEEK",
+    "busiestDay": "BUSIEST DAY",
+    "topPeople": "MOST CONTACT",
+    "weeklyShareTitle": "My Digital Week",
+    "interactions": "{{count}} interactions",
+    "upgrade": "Go Pro",
+    "proBody": {
+      "midday": "The midday pulse is Pro. Your morning briefing is always free.",
+      "evening": "The evening close is Pro. Your morning briefing is always free.",
+      "weekly": "The weekly review is Pro. Your morning briefing is always free.",
+      "audio": "Audio briefings are Pro. Reading is always free."
+    }
   },
   "flow": {
     "title": "Flow",
@@ -505,19 +545,39 @@
     "welcome": {
       "title": "Your digital life, in one place.",
       "cta": "Let's start",
-      "signIn": "I already have an account"
+      "signIn": "I already have an account",
+      "skip": "Skip",
+      "sampleName": "Yunus"
     },
     "value1": {
       "title": "Cut the noise.",
       "from": "{{count}} emails",
-      "to": "{{count}} important topics"
+      "to": "{{count}} important topics",
+      "body": "It reads everything that comes in and shows only what matters.",
+      "eyebrow": "{{from}} → {{to}}",
+      "rows": [
+        "Ahmet is waiting for the revised offer",
+        "Application due today 17:00",
+        "No reply to the offer for 3 days"
+      ]
     },
     "value2": {
-      "title": "We prepare your day before you ask."
+      "title": "We prepare your day before you ask.",
+      "eyebrow": "Every morning at {{time}}",
+      "body": "If you'd rather not read, listen in 2 minutes.",
+      "sampleMood": "You have a fairly calm day today.",
+      "sampleNarrative": "No meetings until noon. At 14:30 you have a client meeting with Mehmet…"
     },
     "value3": {
       "title": "You're always in control.",
-      "body": "Read-only by default; nothing is sent or changed without your approval."
+      "body": "Read-only by default; nothing is sent or changed without your approval.",
+      "eyebrow": "Approval Center",
+      "sampleAction": "SEND EMAIL",
+      "sampleTitle": "Send a follow-up to Mehmet Yılmaz",
+      "sampleWhy": "No reply to the offer for 3 days.",
+      "sampleChangeLabel": "Change",
+      "sampleChange": "1 email · Short, professional tone",
+      "cta": "Create account"
     },
     "auth": {
       "title": "Create your account",
@@ -531,7 +591,20 @@
       "otpTitle": "Enter the code",
       "otpBody": "Enter the 6-digit code we sent to {{email}}.",
       "legal": "By continuing you accept the Terms of Use and Privacy Policy.",
-      "failed": "Couldn't sign in. Try again."
+      "failed": "Couldn't sign in. Try again.",
+      "subtitle": "How you sign in is separate from the accounts you connect.",
+      "signInTitle": "Sign in",
+      "terms": "Terms of Use",
+      "privacy": "Privacy Policy",
+      "sendCode": "Send code",
+      "verify": "Verify",
+      "otpPlaceholder": "6-digit code",
+      "otpInvalid": "The code must be 6 digits.",
+      "codeSent": "Code sent. Check your email.",
+      "resend": "Resend code",
+      "changeEmail": "Change email",
+      "appleUnavailable": "Sign in with Apple is not available on this device.",
+      "demoNotice": "Demo mode · no real account needed"
     },
     "connect": {
       "title": "Connect your digital life.",
@@ -539,7 +612,20 @@
       "connect": "Connect",
       "connected": "Connected",
       "continue": "Continue",
-      "demoHint": "Continue with sample data"
+      "demoHint": "Continue with sample data",
+      "step": "STEP {{current}} / {{total}}",
+      "continueCount": "Continue · {{count}} connected",
+      "connecting": "Connecting…",
+      "requirement": "Connect email and calendar",
+      "connectedToast": "{{name}} connected",
+      "providerMeta": {
+        "gmail": "Your Google account",
+        "outlook": "Work email · Microsoft 365",
+        "google_calendar": "Google Calendar",
+        "microsoft_calendar": "Outlook calendar",
+        "apple_calendar": "iCloud · read on device",
+        "device_calendar": "Read on device"
+      }
     },
     "explainer": {
       "gmailTitle": "Why do we need Gmail access?",
@@ -555,21 +641,46 @@
       "assure2": "Your data is never used for ads.",
       "assure3": "You can disconnect at any time.",
       "cta": "Connect securely",
-      "readOnly": "Read-only permission is requested."
+      "readOnly": "Read-only permission is requested.",
+      "kicker": {
+        "gmail": "GMAIL",
+        "outlook": "OUTLOOK · MICROSOFT 365",
+        "calendar": "CALENDAR"
+      },
+      "ctaGoogle": "Connect with Google",
+      "ctaMicrosoft": "Connect with Microsoft",
+      "ctaCalendar": "Connect {{provider}}",
+      "footnote": {
+        "google": "Google's own consent screen opens next.",
+        "microsoft": "Microsoft's own consent screen opens next.",
+        "device": "{{provider}} is read on device; no separate sign-in needed."
+      }
     },
     "calendarPermission": {
       "title": "Reading your calendar lets us understand your day and conflicts.",
       "cta": "Allow calendar access",
       "denied": "Calendar permission not granted.",
       "deniedBody": "You can enable calendar access in Settings.",
-      "openSettings": "Open settings"
+      "openSettings": "Open settings",
+      "body": "We'll ask for your approval before changing anything in your calendar.",
+      "deniedTitle": "Calendar access is off",
+      "skip": "Skip for now",
+      "syncing": "Reading your calendar…",
+      "synced": "{{count}} events added"
     },
     "briefingPrefs": {
       "title": "When does your day start?",
       "morning": "Morning briefing",
       "midday": "Midday pulse",
       "evening": "Evening close",
-      "weekend": "Send briefings on weekends"
+      "weekend": "Send briefings on weekends",
+      "subtitle": "When should I prepare your briefings? You can change this later.",
+      "morningMeta": "The whole day · audio version",
+      "middayMeta": "Only what changed",
+      "eveningMeta": "What carries over to tomorrow",
+      "weekendMeta": "Mornings only · personal first",
+      "pickTime": "{{label}} time",
+      "saved": "Briefing times saved"
     },
     "personalization": {
       "title": "What matters most to you?",
@@ -582,14 +693,28 @@
         "appointments": "Appointments",
         "deadlines": "Deadlines",
         "all": "Everything"
-      }
+      },
+      "subtitle": "You can pick more than one. I'll learn over time too.",
+      "continueCount": "Continue · {{count}} selected"
     },
     "vip": {
       "title": "Whose messages should you never miss?",
       "search": "Search people…",
       "addManual": "Add by email",
       "skip": "Skip for now",
-      "contactsPermission": "Contacts access is optional."
+      "contactsPermission": "Contacts access is optional.",
+      "subtitle": "Messages from VIPs always come first.",
+      "suggested": "SUGGESTED",
+      "selected": "SELECTED · {{count}}",
+      "results": "RESULTS",
+      "continueCount": "Continue ({{count}})",
+      "namePlaceholder": "Full name",
+      "add": "Add",
+      "added": "{{name}} added as VIP",
+      "removed": "{{name}} removed from the list",
+      "fromContacts": "Pick from contacts",
+      "noResults": "No people found.",
+      "remove": "Remove"
     },
     "analysis": {
       "title": "Analyzing your digital life…",
@@ -606,13 +731,20 @@
         "followUps": "{{count}} possible follow-ups"
       },
       "failed": "The analysis couldn't finish.",
-      "retry": "Try again"
+      "retry": "Try again",
+      "subtitle": "Last 72 hours · {{providers}}",
+      "prioritizing": "Ranking priorities",
+      "footer": "Usually takes 20–40 seconds. Email content is summarized on your device; nothing is sent.",
+      "slow": "Taking a bit longer…",
+      "failedBody": "Check your connection and try again."
     },
     "aha": {
       "title": "Ready.",
       "body": "We found {{count}} things you need to know from the last 72 hours.",
       "bodyZero": "Nothing urgent in the last 72 hours. That's good news.",
-      "cta": "See my briefing"
+      "cta": "See my briefing",
+      "kicker": "READY.",
+      "more": "+ {{count}} more"
     },
     "notifications": {
       "title": "We'll only notify you when it matters.",
@@ -622,7 +754,11 @@
         "Your package arrives today."
       ],
       "cta": "Enable notifications",
-      "later": "Not now"
+      "later": "Not now",
+      "subtitle": "About 3 notifications a day. No marketing, no “look at me” pings.",
+      "exampleTimes": ["14:10", "08:00", "11:30"],
+      "deniedToast": "You can enable notifications from Settings at any time.",
+      "enabledToast": "Notifications on"
     }
   },
   "settings": {
@@ -983,7 +1119,8 @@
     "notFound": "This item wasn't found.",
     "cardFailed": "This card couldn't load.",
     "invalidUrl": "This link can't be opened.",
-    "handoffFailed": "The app couldn't be opened."
+    "handoffFailed": "The app couldn't be opened.",
+    "oauthCancelled": "Connection cancelled."
   },
   "empty": {
     "important": "Everything is under control.",
@@ -1045,6 +1182,14 @@
     "loading": "Loading",
     "priority": "Priority card: {{title}}",
     "swipeDone": "Swipe right to complete",
-    "swipeSnooze": "Swipe left to snooze"
+    "swipeSnooze": "Swipe left to snooze",
+    "search": "Search",
+    "capture": "Add",
+    "share": "Share",
+    "menu": "Card menu",
+    "selectChapter": "Go to chapter {{title}}",
+    "timePicker": "Choose the {{label}} time",
+    "remove": "Remove",
+    "page": "Page {{current}} of {{total}}"
   }
 }

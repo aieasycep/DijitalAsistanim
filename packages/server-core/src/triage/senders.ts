@@ -91,8 +91,10 @@ export const SECURITY_SENDERS: readonly string[] = [
   'noreply@github.com',
 ];
 
-const NOREPLY_LOCAL = /^(?:no-?reply|noreply|do-?not-?reply|donotreply|no_reply|nore-?ply|bildirim(?:ler)?|notification(?:s)?|mailer-daemon|postmaster|bounce(?:s)?|auto(?:mated|mailer)?|robot|system|daemon|alert(?:s)?|noreply-[a-z0-9]+)(?:[-+._][a-z0-9.+_-]*)?$/i;
-const BULK_LOCAL = /^(?:newsletter(?:s)?|news|bulten|bülten|e-?bulten|e-?bülten|kampanya(?:lar)?|promo(?:tions?)?|marketing|updates?|digest|duyuru(?:lar)?|haber(?:ler)?|firsat(?:lar)?|fırsat(?:lar)?)(?:[-+._][a-z0-9.+_-]*)?$/i;
+const NOREPLY_LOCAL =
+  /^(?:no-?reply|noreply|do-?not-?reply|donotreply|no_reply|nore-?ply|bildirim(?:ler)?|notification(?:s)?|mailer-daemon|postmaster|bounce(?:s)?|auto(?:mated|mailer)?|robot|system|daemon|alert(?:s)?|noreply-[a-z0-9]+)(?:[-+._][a-z0-9.+_-]*)?$/i;
+const BULK_LOCAL =
+  /^(?:newsletter(?:s)?|news|bulten|bülten|e-?bulten|e-?bülten|kampanya(?:lar)?|promo(?:tions?)?|marketing|updates?|digest|duyuru(?:lar)?|haber(?:ler)?|firsat(?:lar)?|fırsat(?:lar)?)(?:[-+._][a-z0-9.+_-]*)?$/i;
 
 export function localPart(email: string): string {
   const at = email.indexOf('@');
@@ -101,7 +103,12 @@ export function localPart(email: string): string {
 
 export function domainPart(email: string): string {
   const at = email.lastIndexOf('@');
-  return at >= 0 ? email.slice(at + 1).trim().toLowerCase() : '';
+  return at >= 0
+    ? email
+        .slice(at + 1)
+        .trim()
+        .toLowerCase()
+    : '';
 }
 
 export function isNoReplyAddress(email: string): boolean {
@@ -131,5 +138,7 @@ export function isSecuritySender(email: string): boolean {
   const lower = email.trim().toLowerCase();
   if (SECURITY_SENDERS.includes(lower)) return true;
   const local = localPart(lower);
-  return /^(?:security|account-?security|accounts?|guvenlik|güvenlik|hesap-?guvenligi)(?:[-+._][a-z0-9.+_-]*)?$/i.test(local);
+  return /^(?:security|account-?security|accounts?|guvenlik|güvenlik|hesap-?guvenligi)(?:[-+._][a-z0-9.+_-]*)?$/i.test(
+    local,
+  );
 }

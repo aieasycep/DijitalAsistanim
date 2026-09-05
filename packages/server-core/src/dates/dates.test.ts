@@ -77,7 +77,7 @@ describe('dates · Turkish relative expressions', () => {
 });
 
 describe('dates · absolute dates', () => {
-  it('12 Eylül 20:00 and 10 Eylül\'e kadar', () => {
+  it("12 Eylül 20:00 and 10 Eylül'e kadar", () => {
     const a = one('12 Eylül 20:00');
     expect(a.iso).toBe('2026-09-12T17:00:00.000Z');
     expect(a.kind).toBe('date');
@@ -123,7 +123,7 @@ describe('dates · absolute dates', () => {
     expect(one('Cuma, 12 Eylül 2026 14:00').iso).toBe('2026-09-12T11:00:00.000Z');
   });
   it('never invents a date from bare numbers, amounts or a month without a day', () => {
-    expect(ex('Toplam 1.842,50 TL, sipariş no 1234567890, %20\'ye varan indirim')).toHaveLength(0);
+    expect(ex("Toplam 1.842,50 TL, sipariş no 1234567890, %20'ye varan indirim")).toHaveLength(0);
     expect(ex('2026 yılında 12 kişi')).toHaveLength(0);
     expect(ex("Eylül'de görüşelim")).toHaveLength(0);
     expect(ex('')).toHaveLength(0);
@@ -132,7 +132,7 @@ describe('dates · absolute dates', () => {
 });
 
 describe('dates · deadlines', () => {
-  it('17:00\'ye kadar is a deadline today', () => {
+  it("17:00'ye kadar is a deadline today", () => {
     const d = one("17:00'ye kadar");
     expect(d.kind).toBe('deadline');
     expect(d.iso).toBe('2026-09-04T14:00:00.000Z');
@@ -156,27 +156,35 @@ describe('dates · deadlines', () => {
     expect(due.localDate).toBe('2026-09-12');
   });
   it('deadlineFromText prefers cued spans and strong cues over plain mentions', () => {
-    const text = 'Toplantı 12 Eylül 20:00. Revize teklifi bugün saat 17:00\'ye kadar bekliyoruz. Son ödeme tarihi 10 Eylül.';
+    const text =
+      "Toplantı 12 Eylül 20:00. Revize teklifi bugün saat 17:00'ye kadar bekliyoruz. Son ödeme tarihi 10 Eylül.";
     const d = deadlineFromText({ text, now, timezone: tz });
     expect(d?.cue).toBe('son ödeme tarihi');
     expect(d?.iso).toBe('2026-09-10T15:00:00.000Z');
-    const d2 = deadlineFromText({ text: 'Revize teklifi bugün saat 17:00\'ye kadar bekliyoruz. Toplantı yarın.', now, timezone: tz });
+    const d2 = deadlineFromText({
+      text: "Revize teklifi bugün saat 17:00'ye kadar bekliyoruz. Toplantı yarın.",
+      now,
+      timezone: tz,
+    });
     expect(d2?.iso).toBe('2026-09-04T14:00:00.000Z');
     expect(d2?.evidence).toContain('17:00');
   });
   it('deadlineFromText returns null when no deadline cue exists', () => {
-    expect(deadlineFromText({ text: 'Toplantı yarın 10:00\'da ofiste.', now, timezone: tz })).toBeNull();
+    expect(
+      deadlineFromText({ text: "Toplantı yarın 10:00'da ofiste.", now, timezone: tz }),
+    ).toBeNull();
     expect(deadlineFromText({ text: 'Sipariş numaranız 1234567', now, timezone: tz })).toBeNull();
   });
   it('hasDeadlineVocabulary is a cheap signal', () => {
-    expect(hasDeadlineVocabulary('Belgeleri Cuma\'ya kadar iletmen gerekiyor')).toBe(true);
+    expect(hasDeadlineVocabulary("Belgeleri Cuma'ya kadar iletmen gerekiyor")).toBe(true);
     expect(hasDeadlineVocabulary('Merhaba, nasılsın?')).toBe(false);
   });
 });
 
 describe('dates · evidence, ordering and long input', () => {
   it('returns matches in text order with short evidence snippets', () => {
-    const text = 'Ödeme 10 Eylül\'e kadar yapılmalı. Toplantı ise yarın 14:00\'te. Teslimat aralığı 14:00–18:00.';
+    const text =
+      "Ödeme 10 Eylül'e kadar yapılmalı. Toplantı ise yarın 14:00'te. Teslimat aralığı 14:00–18:00.";
     const r = ex(text);
     expect(r.map((d) => d.text)).toEqual(["10 Eylül'e", "yarın 14:00'te", '14:00', '18:00']);
     expect(r[0]!.evidence.length).toBeLessThanOrEqual(160);
@@ -200,25 +208,47 @@ describe('dates · evidence, ordering and long input', () => {
 
 describe('dates · formatting and Turkish helpers', () => {
   it('formatDateLabel: bugün / yarın / weekday / day month', () => {
-    expect(formatDateLabel('2026-09-04T14:00:00.000Z', { now, timezone: tz, withTime: true })).toBe('bugün 17:00');
+    expect(formatDateLabel('2026-09-04T14:00:00.000Z', { now, timezone: tz, withTime: true })).toBe(
+      'bugün 17:00',
+    );
     expect(formatDateLabel('2026-09-05T06:00:00.000Z', { now, timezone: tz })).toBe('yarın');
     expect(formatDateLabel('2026-09-08T06:00:00.000Z', { now, timezone: tz })).toBe('Salı');
     expect(formatDateLabel('2026-09-20T06:00:00.000Z', { now, timezone: tz })).toBe('20 Eylül');
     expect(formatDateLabel('2027-01-03T06:00:00.000Z', { now, timezone: tz })).toBe('3 Ocak 2027');
-    expect(formatDateLabel('2026-09-08T06:00:00.000Z', { now, timezone: tz, locale: 'en' })).toBe('Tuesday');
-    expect(formatDateLabel('2026-09-20T06:00:00.000Z', { now, timezone: tz, locale: 'en' })).toBe('20 September');
+    expect(formatDateLabel('2026-09-08T06:00:00.000Z', { now, timezone: tz, locale: 'en' })).toBe(
+      'Tuesday',
+    );
+    expect(formatDateLabel('2026-09-20T06:00:00.000Z', { now, timezone: tz, locale: 'en' })).toBe(
+      '20 September',
+    );
   });
   it('formatDateLocative and formatDeadlinePhrase produce natural Turkish', () => {
-    expect(formatDateLocative('2026-09-09T06:00:00.000Z', { now, timezone: tz })).toBe("9 Eylül'de");
+    expect(formatDateLocative('2026-09-09T06:00:00.000Z', { now, timezone: tz })).toBe(
+      "9 Eylül'de",
+    );
     expect(formatDateLocative('2026-10-01T06:00:00.000Z', { now, timezone: tz })).toBe("1 Ekim'de");
-    expect(formatDateLocative('2027-01-03T06:00:00.000Z', { now, timezone: tz })).toBe("3 Ocak 2027'de");
+    expect(formatDateLocative('2027-01-03T06:00:00.000Z', { now, timezone: tz })).toBe(
+      "3 Ocak 2027'de",
+    );
     expect(formatDateLocative('2026-09-05T06:00:00.000Z', { now, timezone: tz })).toBe('yarın');
-    expect(formatDateLocative('2026-09-04T14:00:00.000Z', { now, timezone: tz, withTime: true })).toBe('bugün 17:00');
-    expect(formatDateLocative('2026-09-09T06:00:00.000Z', { now, timezone: tz, locale: 'en' })).toBe('on 9 September');
-    expect(formatDeadlinePhrase('2026-09-04T14:00:00.000Z', { now, timezone: tz })).toBe("bugün 17:00'ye kadar");
-    expect(formatDeadlinePhrase('2026-09-04T15:00:00.000Z', { now, timezone: tz })).toBe("bugün 18:00'e kadar");
-    expect(formatDeadlinePhrase('2026-09-05T15:00:00.000Z', { now, timezone: tz, hasTime: false })).toBe('yarın sonuna kadar');
-    expect(formatDeadlinePhrase('2026-09-04T14:00:00.000Z', { now, timezone: tz, locale: 'en' })).toBe('by today 17:00');
+    expect(
+      formatDateLocative('2026-09-04T14:00:00.000Z', { now, timezone: tz, withTime: true }),
+    ).toBe('bugün 17:00');
+    expect(
+      formatDateLocative('2026-09-09T06:00:00.000Z', { now, timezone: tz, locale: 'en' }),
+    ).toBe('on 9 September');
+    expect(formatDeadlinePhrase('2026-09-04T14:00:00.000Z', { now, timezone: tz })).toBe(
+      "bugün 17:00'ye kadar",
+    );
+    expect(formatDeadlinePhrase('2026-09-04T15:00:00.000Z', { now, timezone: tz })).toBe(
+      "bugün 18:00'e kadar",
+    );
+    expect(
+      formatDeadlinePhrase('2026-09-05T15:00:00.000Z', { now, timezone: tz, hasTime: false }),
+    ).toBe('yarın sonuna kadar');
+    expect(
+      formatDeadlinePhrase('2026-09-04T14:00:00.000Z', { now, timezone: tz, locale: 'en' }),
+    ).toBe('by today 17:00');
   });
   it('suffix helpers follow vowel harmony', () => {
     expect(turkishDative('Mehmet')).toBe("Mehmet'e");
@@ -245,7 +275,15 @@ describe('dates · formatting and Turkish helpers', () => {
   it('calendar helpers', () => {
     expect(addBusinessDays({ y: 2026, m: 9, d: 4 }, 1)).toEqual({ y: 2026, m: 9, d: 7 });
     expect(nextWeekday({ y: 2026, m: 9, d: 4 }, 5)).toEqual({ y: 2026, m: 9, d: 4 });
-    expect(nextWeekday({ y: 2026, m: 9, d: 4 }, 5, { skipToday: true })).toEqual({ y: 2026, m: 9, d: 11 });
-    expect(nextWeekday({ y: 2026, m: 9, d: 4 }, 2, { nextWeek: true })).toEqual({ y: 2026, m: 9, d: 8 });
+    expect(nextWeekday({ y: 2026, m: 9, d: 4 }, 5, { skipToday: true })).toEqual({
+      y: 2026,
+      m: 9,
+      d: 11,
+    });
+    expect(nextWeekday({ y: 2026, m: 9, d: 4 }, 2, { nextWeek: true })).toEqual({
+      y: 2026,
+      m: 9,
+      d: 8,
+    });
   });
 });

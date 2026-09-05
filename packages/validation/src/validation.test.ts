@@ -16,7 +16,11 @@ const validAnalysis = {
   category: 'action_required',
   reasonImportant: 'Bugün 17:00’ye kadar cevap istendi.',
   requiresUserAction: true,
-  deadline: { iso: '2026-09-05T14:00:00.000Z', text: 'bugün 17:00', evidence: 'bugün saat 17:00’ye kadar' },
+  deadline: {
+    iso: '2026-09-05T14:00:00.000Z',
+    text: 'bugün 17:00',
+    evidence: 'bugün saat 17:00’ye kadar',
+  },
   keyPoints: ['Revize fiyat', 'Bugün 17:00', 'PDF formatı'],
   people: [{ name: 'Ahmet Yılmaz', email: 'ahmet@example.com', role: 'sender' }],
   commitments: [],
@@ -32,17 +36,27 @@ describe('AI schema validation', () => {
   });
 
   it('rejects a deadline without evidence (anti-hallucination)', () => {
-    const r = emailAnalysisAiSchema.safeParse({ ...validAnalysis, deadline: { iso: '2026-09-05T14:00:00.000Z', text: null } });
+    const r = emailAnalysisAiSchema.safeParse({
+      ...validAnalysis,
+      deadline: { iso: '2026-09-05T14:00:00.000Z', text: null },
+    });
     expect(r.success).toBe(false);
   });
 
   it('rejects unknown importance and out-of-range confidence', () => {
-    expect(emailAnalysisAiSchema.safeParse({ ...validAnalysis, importance: 'urgent' }).success).toBe(false);
-    expect(emailAnalysisAiSchema.safeParse({ ...validAnalysis, confidence: 1.4 }).success).toBe(false);
+    expect(
+      emailAnalysisAiSchema.safeParse({ ...validAnalysis, importance: 'urgent' }).success,
+    ).toBe(false);
+    expect(emailAnalysisAiSchema.safeParse({ ...validAnalysis, confidence: 1.4 }).success).toBe(
+      false,
+    );
   });
 
   it('limits key points and actions', () => {
-    const r = emailAnalysisAiSchema.safeParse({ ...validAnalysis, keyPoints: ['a', 'b', 'c', 'd', 'e', 'f'] });
+    const r = emailAnalysisAiSchema.safeParse({
+      ...validAnalysis,
+      keyPoints: ['a', 'b', 'c', 'd', 'e', 'f'],
+    });
     expect(r.success).toBe(false);
   });
 
@@ -51,14 +65,23 @@ describe('AI schema validation', () => {
       lifeEventExtractionSchema.safeParse({
         type: 'payment',
         title: 'Elektrik faturası',
-        details: { amount: 1842, currency: 'TRY', dueAt: '2026-09-10T00:00:00.000Z', payee: 'CK Enerji' },
+        details: {
+          amount: 1842,
+          currency: 'TRY',
+          dueAt: '2026-09-10T00:00:00.000Z',
+          payee: 'CK Enerji',
+        },
         evidence: ['1.842 TL', 'son ödeme 10 Eylül'],
         confidence: 0.8,
       }).success,
     ).toBe(true);
     expect(
-      lifeEventExtractionSchema.safeParse({ type: 'payment', title: 'x', details: { amount: -1, currency: 'TL' }, confidence: 0.5 })
-        .success,
+      lifeEventExtractionSchema.safeParse({
+        type: 'payment',
+        title: 'x',
+        details: { amount: -1, currency: 'TL' },
+        confidence: 0.5,
+      }).success,
     ).toBe(false);
   });
 
@@ -82,14 +105,22 @@ describe('API schema validation', () => {
     expect(
       createApprovalRequestSchema.safeParse({
         ...base,
-        payload: { title: 'Teklif', remindAt: '2026-09-06T06:10:00.000Z', option: 'tomorrow_morning' },
+        payload: {
+          title: 'Teklif',
+          remindAt: '2026-09-06T06:10:00.000Z',
+          option: 'tomorrow_morning',
+        },
       }).success,
     ).toBe(true);
-    expect(createApprovalRequestSchema.safeParse({ ...base, payload: { title: 'Teklif' } }).success).toBe(false);
+    expect(
+      createApprovalRequestSchema.safeParse({ ...base, payload: { title: 'Teklif' } }).success,
+    ).toBe(false);
   });
 
   it('requires the right field per capture kind', () => {
-    expect(captureCreateRequestSchema.safeParse({ kind: 'link', url: 'https://example.com' }).success).toBe(true);
+    expect(
+      captureCreateRequestSchema.safeParse({ kind: 'link', url: 'https://example.com' }).success,
+    ).toBe(true);
     expect(captureCreateRequestSchema.safeParse({ kind: 'link' }).success).toBe(false);
     expect(captureCreateRequestSchema.safeParse({ kind: 'image' }).success).toBe(false);
   });

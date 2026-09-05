@@ -75,14 +75,21 @@ export interface TransitionContext {
 }
 
 /** Pure rule check; `failed → executing` is only allowed while attempts remain. */
-export function canTransition(from: ApprovalStatus, to: ApprovalStatus, ctx: TransitionContext): boolean {
+export function canTransition(
+  from: ApprovalStatus,
+  to: ApprovalStatus,
+  ctx: TransitionContext,
+): boolean {
   if (!TRANSITIONS[from].includes(to)) return false;
   if (from === 'failed' && to === 'executing') return ctx.attemptCount < MAX_EXECUTION_ATTEMPTS;
   return true;
 }
 
 /** Expiry only matters before execution starts; terminal states never "expire". */
-export function isExpired(approval: Pick<ApprovalAction, 'status' | 'expiresAt'>, now: string): boolean {
+export function isExpired(
+  approval: Pick<ApprovalAction, 'status' | 'expiresAt'>,
+  now: string,
+): boolean {
   if (approval.status !== 'pending' && approval.status !== 'approved') return false;
   return Date.parse(now) >= Date.parse(approval.expiresAt);
 }
@@ -114,7 +121,13 @@ export function transition<T extends ApprovalActionType>(
   }
   if ((to === 'approved' || to === 'executing') && isExpired(approval, opts.now)) {
     throw new AppError('conflict', MESSAGES[locale].expired, {
-      details: { approvalId: approval.id, from, to, reason: 'expired', expiresAt: approval.expiresAt },
+      details: {
+        approvalId: approval.id,
+        from,
+        to,
+        reason: 'expired',
+        expiresAt: approval.expiresAt,
+      },
     });
   }
 
@@ -146,16 +159,24 @@ export function transition<T extends ApprovalActionType>(
 }
 
 /** Cron helper: pending approvals past their TTL become `expired`; everything else is returned as-is. */
-export function expireIfDue<T extends ApprovalActionType>(approval: ApprovalAction<T>, now: string): ApprovalAction<T> {
+export function expireIfDue<T extends ApprovalActionType>(
+  approval: ApprovalAction<T>,
+  now: string,
+): ApprovalAction<T> {
   if (approval.status !== 'pending' || !isExpired(approval, now)) return approval;
   return transition(approval, 'expired', { now });
 }
 
 // --- Payload validation & typing ------------------------------------------------------------------
 
-type TypedPayload = { [K in ApprovalActionType]: { type: K; payload: ApprovalPayloadMap[K] } }[ApprovalActionType];
+type TypedPayload = {
+  [K in ApprovalActionType]: { type: K; payload: ApprovalPayloadMap[K] };
+}[ApprovalActionType];
 
-function typed<T extends ApprovalActionType>(type: T, payload: ApprovalPayloadMap[T]): TypedPayload {
+function typed<T extends ApprovalActionType>(
+  type: T,
+  payload: ApprovalPayloadMap[T],
+): TypedPayload {
   return { type, payload } as TypedPayload;
 }
 
@@ -170,7 +191,10 @@ export function validateApprovalPayload<T extends ApprovalActionType>(
     throw new AppError('validation', MESSAGES[locale].invalidPayload, {
       details: {
         type,
-        issues: result.error.issues.map((i) => ({ path: i.path.map(String).join('.'), message: i.message })),
+        issues: result.error.issues.map((i) => ({
+          path: i.path.map(String).join('.'),
+          message: i.message,
+        })),
       },
     });
   }
@@ -206,7 +230,12 @@ export function idempotencyParts(userId: string, tp: TypedPayload): Record<strin
         endAt: tp.payload.endAt,
       };
     case 'calendar_update':
-      return { userId, accountId: tp.payload.accountId, eventId: tp.payload.eventId, changes: tp.payload.changes };
+      return {
+        userId,
+        accountId: tp.payload.accountId,
+        eventId: tp.payload.eventId,
+        changes: tp.payload.changes,
+      };
     case 'task_create':
       return {
         userId,
@@ -216,8 +245,17 @@ export function idempotencyParts(userId: string, tp: TypedPayload): Record<strin
       };
     case 'reminder_create':
       return tp.payload.targetType && tp.payload.targetId
-        ? { userId, targetType: tp.payload.targetType, targetId: tp.payload.targetId, remindAt: tp.payload.remindAt }
-        : { userId, title: tp.payload.title.trim().toLocaleLowerCase('tr-TR'), remindAt: tp.payload.remindAt };
+        ? {
+            userId,
+            targetType: tp.payload.targetType,
+            targetId: tp.payload.targetId,
+            remindAt: tp.payload.remindAt,
+          }
+        : {
+            userId,
+            title: tp.payload.title.trim().toLocaleLowerCase('tr-TR'),
+            remindAt: tp.payload.remindAt,
+          };
     case 'commitment_create':
       return {
         userId,
@@ -305,7 +343,8 @@ const L = {
 
 function capitalize(s: string, locale: Locale): string {
   if (!s) return s;
-  const first = locale === 'tr' ? s.charAt(0).toLocaleUpperCase('tr-TR') : s.charAt(0).toUpperCase();
+  const first =
+    locale === 'tr' ? s.charAt(0).toLocaleUpperCase('tr-TR') : s.charAt(0).toUpperCase();
   return first + s.slice(1);
 }
 
@@ -352,16 +391,28 @@ interface WhenContext {
 
 /** "Yarın 09:10" / "Tomorrow 09:10"; all-day → "Yarın (tüm gün)". */
 function whenLabel(iso: string, ctx: WhenContext, allDay = false): string {
-  const day = capitalize(formatDateLabel(iso, { now: ctx.now, timezone: ctx.timezone, locale: ctx.locale }), ctx.locale);
+  const day = capitalize(
+    formatDateLabel(iso, { now: ctx.now, timezone: ctx.timezone, locale: ctx.locale }),
+    ctx.locale,
+  );
   return allDay ? `${day} (${L[ctx.locale].allDay})` : `${day} ${formatClock(iso, ctx.timezone)}`;
 }
 
 /** "Yarın 09:10–10:00" when both ends fall on the same local day, otherwise two full labels. */
 function rangeLabel(startIso: string, endIso: string, ctx: WhenContext, allDay = false): string {
   if (allDay) return whenLabel(startIso, ctx, true);
-  const startDay = formatDateLabel(startIso, { now: ctx.now, timezone: ctx.timezone, locale: ctx.locale });
-  const endDay = formatDateLabel(endIso, { now: ctx.now, timezone: ctx.timezone, locale: ctx.locale });
-  if (startDay === endDay) return `${whenLabel(startIso, ctx)}–${formatClock(endIso, ctx.timezone)}`;
+  const startDay = formatDateLabel(startIso, {
+    now: ctx.now,
+    timezone: ctx.timezone,
+    locale: ctx.locale,
+  });
+  const endDay = formatDateLabel(endIso, {
+    now: ctx.now,
+    timezone: ctx.timezone,
+    locale: ctx.locale,
+  });
+  if (startDay === endDay)
+    return `${whenLabel(startIso, ctx)}–${formatClock(endIso, ctx.timezone)}`;
   return `${whenLabel(startIso, ctx)} – ${whenLabel(endIso, ctx)}`;
 }
 
@@ -372,7 +423,11 @@ export function summarizeChange<T extends ApprovalActionType>(
   opts: SummaryOptions,
 ): string[] {
   const locale = opts.locale ?? 'tr';
-  const ctx: WhenContext = { locale, timezone: opts.timezone, now: opts.now ?? new Date().toISOString() };
+  const ctx: WhenContext = {
+    locale,
+    timezone: opts.timezone,
+    now: opts.now ?? new Date().toISOString(),
+  };
   const t = L[locale];
   const lines: string[] = [];
   const tp = typed(type, payload);
@@ -380,7 +435,8 @@ export function summarizeChange<T extends ApprovalActionType>(
   switch (tp.type) {
     case 'email_send': {
       lines.push(`${t.to}: ${tp.payload.to.map(personLabel).join(', ')}`);
-      if (tp.payload.cc && tp.payload.cc.length > 0) lines.push(`${t.cc}: ${tp.payload.cc.map(personLabel).join(', ')}`);
+      if (tp.payload.cc && tp.payload.cc.length > 0)
+        lines.push(`${t.cc}: ${tp.payload.cc.map(personLabel).join(', ')}`);
       lines.push(`${t.subject}: ${tp.payload.subject}`);
       break;
     }
@@ -389,7 +445,8 @@ export function summarizeChange<T extends ApprovalActionType>(
       lines.push(`${t.title}: ${p.title}`);
       lines.push(`${t.when}: ${rangeLabel(p.startAt, p.endAt, ctx, p.allDay ?? false)}`);
       if (p.location) lines.push(`${t.where}: ${p.location}`);
-      if (p.attendees && p.attendees.length > 0) lines.push(`${t.attendees}: ${p.attendees.length} ${t.people}`);
+      if (p.attendees && p.attendees.length > 0)
+        lines.push(`${t.attendees}: ${p.attendees.length} ${t.people}`);
       const cal = calendarLabel(opts.provider, locale);
       if (cal) lines.push(`${t.calendar}: ${cal}`);
       break;
@@ -400,9 +457,12 @@ export function summarizeChange<T extends ApprovalActionType>(
       if (c.startAt !== undefined || c.endAt !== undefined) {
         const start = c.startAt ?? c.endAt ?? '';
         const end = c.endAt ?? c.startAt ?? '';
-        lines.push(`${t.newTime}: ${c.startAt && c.endAt ? rangeLabel(start, end, ctx) : whenLabel(start, ctx)}`);
+        lines.push(
+          `${t.newTime}: ${c.startAt && c.endAt ? rangeLabel(start, end, ctx) : whenLabel(start, ctx)}`,
+        );
       }
-      if (c.location !== undefined && c.location !== null) lines.push(`${t.newLocation}: ${c.location}`);
+      if (c.location !== undefined && c.location !== null)
+        lines.push(`${t.newLocation}: ${c.location}`);
       if (c.description !== undefined) lines.push(t.descriptionUpdated);
       const cal = calendarLabel(opts.provider, locale);
       if (cal) lines.push(`${t.calendar}: ${cal}`);
@@ -412,7 +472,8 @@ export function summarizeChange<T extends ApprovalActionType>(
       const p = tp.payload;
       lines.push(`${t.task}: ${p.title}`);
       if (p.dueAt) lines.push(`${t.due}: ${whenLabel(p.dueAt, ctx)}`);
-      if (p.scheduledStartAt && p.scheduledEndAt) lines.push(`${t.planned}: ${rangeLabel(p.scheduledStartAt, p.scheduledEndAt, ctx)}`);
+      if (p.scheduledStartAt && p.scheduledEndAt)
+        lines.push(`${t.planned}: ${rangeLabel(p.scheduledStartAt, p.scheduledEndAt, ctx)}`);
       lines.push(`${t.list}: ${taskListLabel(p.accountId ? opts.provider : null, locale)}`);
       break;
     }
@@ -473,11 +534,18 @@ export async function createApproval<T extends ApprovalActionType>(
   if (!Number.isFinite(ttlHours) || ttlHours <= 0) throw new RangeError('ttlHours pozitif olmalı');
 
   const payload = validateApprovalPayload(input.type, input.payload, locale);
-  const idempotencyKey = input.idempotencyKey?.trim() || (await approvalIdempotencyKey(opts.userId, input.type, payload));
+  const idempotencyKey =
+    input.idempotencyKey?.trim() ||
+    (await approvalIdempotencyKey(opts.userId, input.type, payload));
   const changeSummary =
     input.changeSummary && input.changeSummary.length > 0
       ? input.changeSummary
-      : summarizeChange(input.type, payload, { locale, timezone, now: opts.now, provider: opts.provider ?? null });
+      : summarizeChange(input.type, payload, {
+          locale,
+          timezone,
+          now: opts.now,
+          provider: opts.provider ?? null,
+        });
 
   return {
     id: opts.id ?? randomUuid(),
@@ -520,7 +588,11 @@ function immutableFields(tp: TypedPayload): Record<string, unknown> {
     case 'calendar_create':
       return { accountId: tp.payload.accountId };
     case 'calendar_update':
-      return { accountId: tp.payload.accountId, eventId: tp.payload.eventId, externalEventId: tp.payload.externalEventId };
+      return {
+        accountId: tp.payload.accountId,
+        eventId: tp.payload.eventId,
+        externalEventId: tp.payload.externalEventId,
+      };
     case 'task_create':
       return { accountId: tp.payload.accountId ?? null };
     case 'reminder_create':
@@ -540,21 +612,30 @@ export function applyEdit<T extends ApprovalActionType>(
 ): ApprovalAction<T> {
   const locale = opts.locale ?? 'tr';
   if (approval.status !== 'pending') {
-    throw new AppError('conflict', MESSAGES[locale].notPending, { details: { approvalId: approval.id, status: approval.status } });
+    throw new AppError('conflict', MESSAGES[locale].notPending, {
+      details: { approvalId: approval.id, status: approval.status },
+    });
   }
   const payload = validateApprovalPayload(approval.type, editedPayload, locale);
   const before = immutableFields(typed(approval.type, approval.payload));
   const after = immutableFields(typed(approval.type, payload));
   for (const key of Object.keys(before)) {
     if (before[key] !== after[key]) {
-      throw new AppError('validation', MESSAGES[locale].immutable, { details: { approvalId: approval.id, field: key } });
+      throw new AppError('validation', MESSAGES[locale].immutable, {
+        details: { approvalId: approval.id, field: key },
+      });
     }
   }
   return {
     ...approval,
     payload,
     editedByUser: true,
-    changeSummary: summarizeChange(approval.type, payload, { locale, timezone: opts.timezone, now: opts.now, provider: opts.provider ?? null }),
+    changeSummary: summarizeChange(approval.type, payload, {
+      locale,
+      timezone: opts.timezone,
+      now: opts.now,
+      provider: opts.provider ?? null,
+    }),
     updatedAt: opts.now,
   };
 }
@@ -565,7 +646,10 @@ export function applyEdit<T extends ApprovalActionType>(
  * Provider scope the action needs on the target account, or null for internal actions and for
  * accounts without OAuth scopes (device / Apple / demo).
  */
-export function approvalRequiredScope(type: ApprovalActionType, provider: Provider | null | undefined): string | null {
+export function approvalRequiredScope(
+  type: ApprovalActionType,
+  provider: Provider | null | undefined,
+): string | null {
   if (provider !== 'google' && provider !== 'microsoft') return null;
   return oauthRequiredScopeFor(type, provider);
 }
@@ -584,9 +668,18 @@ interface PlanBase {
 
 export type ExecutionPlan =
   | (PlanBase & { kind: 'gmail_send' | 'graph_send'; payload: EmailSendPayload })
-  | (PlanBase & { kind: 'gcal_create' | 'graph_event_create' | 'device_event_create'; payload: CalendarCreatePayload })
-  | (PlanBase & { kind: 'gcal_update' | 'graph_event_update' | 'device_event_update'; payload: CalendarUpdatePayload })
-  | (PlanBase & { kind: 'gtasks_create' | 'graph_task_create' | 'internal_task'; payload: TaskCreatePayload })
+  | (PlanBase & {
+      kind: 'gcal_create' | 'graph_event_create' | 'device_event_create';
+      payload: CalendarCreatePayload;
+    })
+  | (PlanBase & {
+      kind: 'gcal_update' | 'graph_event_update' | 'device_event_update';
+      payload: CalendarUpdatePayload;
+    })
+  | (PlanBase & {
+      kind: 'gtasks_create' | 'graph_task_create' | 'internal_task';
+      payload: TaskCreatePayload;
+    })
   | (PlanBase & { kind: 'internal_reminder'; payload: ReminderCreatePayload })
   | (PlanBase & { kind: 'internal_commitment'; payload: CommitmentCreatePayload });
 
@@ -608,10 +701,14 @@ export function planExecution<T extends ApprovalActionType>(
 ): ExecutionPlan {
   const locale = opts.locale ?? 'tr';
   if (approval.status !== 'approved' && approval.status !== 'executing') {
-    throw new AppError('conflict', MESSAGES[locale].notApproved, { details: { approvalId: approval.id, status: approval.status } });
+    throw new AppError('conflict', MESSAGES[locale].notApproved, {
+      details: { approvalId: approval.id, status: approval.status },
+    });
   }
   if (isExpired(approval, opts.now)) {
-    throw new AppError('conflict', MESSAGES[locale].expired, { details: { approvalId: approval.id, reason: 'expired' } });
+    throw new AppError('conflict', MESSAGES[locale].expired, {
+      details: { approvalId: approval.id, reason: 'expired' },
+    });
   }
 
   const base: PlanBase = {
@@ -621,18 +718,29 @@ export function planExecution<T extends ApprovalActionType>(
   };
   const needAccount = (kind: AccountKind): ExecutionAccount => {
     if (!account) {
-      throw new AppError('validation', MESSAGES[locale].accountRequired, { details: { approvalId: approval.id, reason: 'account_required', kind } });
+      throw new AppError('validation', MESSAGES[locale].accountRequired, {
+        details: { approvalId: approval.id, reason: 'account_required', kind },
+      });
     }
     if (!account.kinds.includes(kind)) {
       throw new AppError('validation', MESSAGES[locale].unsupported, {
-        details: { approvalId: approval.id, reason: 'unsupported_provider', provider: account.provider, kind },
+        details: {
+          approvalId: approval.id,
+          reason: 'unsupported_provider',
+          provider: account.provider,
+          kind,
+        },
       });
     }
     return account;
   };
   const unsupported = (): never => {
     throw new AppError('validation', MESSAGES[locale].unsupported, {
-      details: { approvalId: approval.id, reason: 'unsupported_provider', provider: account?.provider ?? null },
+      details: {
+        approvalId: approval.id,
+        reason: 'unsupported_provider',
+        provider: account?.provider ?? null,
+      },
     });
   };
 
@@ -647,21 +755,27 @@ export function planExecution<T extends ApprovalActionType>(
     case 'calendar_create': {
       const acc = needAccount('calendar');
       if (acc.provider === 'google') return { ...base, kind: 'gcal_create', payload: tp.payload };
-      if (acc.provider === 'microsoft') return { ...base, kind: 'graph_event_create', payload: tp.payload };
-      if (acc.provider === 'apple' || acc.provider === 'device') return { ...base, kind: 'device_event_create', payload: tp.payload };
+      if (acc.provider === 'microsoft')
+        return { ...base, kind: 'graph_event_create', payload: tp.payload };
+      if (acc.provider === 'apple' || acc.provider === 'device')
+        return { ...base, kind: 'device_event_create', payload: tp.payload };
       return unsupported();
     }
     case 'calendar_update': {
       const acc = needAccount('calendar');
       if (acc.provider === 'google') return { ...base, kind: 'gcal_update', payload: tp.payload };
-      if (acc.provider === 'microsoft') return { ...base, kind: 'graph_event_update', payload: tp.payload };
-      if (acc.provider === 'apple' || acc.provider === 'device') return { ...base, kind: 'device_event_update', payload: tp.payload };
+      if (acc.provider === 'microsoft')
+        return { ...base, kind: 'graph_event_update', payload: tp.payload };
+      if (acc.provider === 'apple' || acc.provider === 'device')
+        return { ...base, kind: 'device_event_update', payload: tp.payload };
       return unsupported();
     }
     case 'task_create': {
       const external = account && tp.payload.accountId && account.kinds.includes('tasks');
-      if (external && account.provider === 'google') return { ...base, kind: 'gtasks_create', payload: tp.payload };
-      if (external && account.provider === 'microsoft') return { ...base, kind: 'graph_task_create', payload: tp.payload };
+      if (external && account.provider === 'google')
+        return { ...base, kind: 'gtasks_create', payload: tp.payload };
+      if (external && account.provider === 'microsoft')
+        return { ...base, kind: 'graph_task_create', payload: tp.payload };
       return { ...base, requiredScope: null, kind: 'internal_task', payload: tp.payload };
     }
     case 'reminder_create':

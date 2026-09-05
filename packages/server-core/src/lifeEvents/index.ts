@@ -17,9 +17,27 @@ import { detectSubscription, hasRenewalCue } from './subscription';
 import { lifeEventTitle } from './titles';
 import type { ExtractLifeEventInput, ExtractedLifeEvent } from './types';
 
-export type { BillKind, ExtractLifeEventInput, ExtractedLifeEvent, LifeEventStatusValue, LifeEventTitleOptions } from './types';
-export { lifeEventActions, lifeEventDedupeKey, lifeEventEventAt, lifeEventStatus, lifeEventTitle, type LifeEventLike } from './titles';
-export { findAmounts as findLifeEventAmounts, formatAmount as formatLifeEventAmount, parseAmountNumber, senderOrgName } from './common';
+export type {
+  BillKind,
+  ExtractLifeEventInput,
+  ExtractedLifeEvent,
+  LifeEventStatusValue,
+  LifeEventTitleOptions,
+} from './types';
+export {
+  lifeEventActions,
+  lifeEventDedupeKey,
+  lifeEventEventAt,
+  lifeEventStatus,
+  lifeEventTitle,
+  type LifeEventLike,
+} from './titles';
+export {
+  findAmounts as findLifeEventAmounts,
+  formatAmount as formatLifeEventAmount,
+  parseAmountNumber,
+  senderOrgName,
+} from './common';
 
 const MIN_CONFIDENCE = 0.5;
 

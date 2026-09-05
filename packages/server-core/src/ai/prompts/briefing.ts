@@ -1,10 +1,28 @@
 /** Briefing narration. The model may only reference candidate ids we supply (suggested questions live in questions.ts). */
-import { BRIEFING_SECTIONS, type BriefingCounts, type BriefingKind, type BriefingSection, type Importance, type WeeklyMetrics } from '@da/domain';
+import {
+  BRIEFING_SECTIONS,
+  type BriefingCounts,
+  type BriefingKind,
+  type BriefingSection,
+  type Importance,
+  type WeeklyMetrics,
+} from '@da/domain';
 import { briefingAiSchema, type BriefingAi } from '@da/validation';
 import { AppError } from '../../errors';
 import { PROMPT_CHAR_LIMITS } from '../redact';
 import type { PromptSpec } from '../types';
-import { DEFAULT_PROMPT_TIMEZONE, bullets, capList, clipInline, composeSystem, formatPromptDate, formatPromptTime, joinLines, temporalContext, type PromptBase } from './shared';
+import {
+  DEFAULT_PROMPT_TIMEZONE,
+  bullets,
+  capList,
+  clipInline,
+  composeSystem,
+  formatPromptDate,
+  formatPromptTime,
+  joinLines,
+  temporalContext,
+  type PromptBase,
+} from './shared';
 
 export const BRIEFING_CANDIDATE_MAX = 40;
 
@@ -63,7 +81,7 @@ const KIND_GUIDANCE: Record<BriefingKind, { tr: string[]; en: string[] }> = {
       'mood, günü sakin bir cümleyle kapatsın; yarın için tek bir hazırlık önerisi yeter.',
     ],
     en: [
-      'Evening close: acknowledge what got done, list what carries over and tomorrow\'s first event. Order: completed, carried_over, follow_ups, first_event_tomorrow.',
+      "Evening close: acknowledge what got done, list what carries over and tomorrow's first event. Order: completed, carried_over, follow_ups, first_event_tomorrow.",
       'mood closes the day with one calm sentence; one preparation tip for tomorrow is enough.',
     ],
   },
@@ -94,9 +112,15 @@ export function briefing(input: BriefingPromptInput): PromptSpec<BriefingAi> {
   const tz = input.timezone ?? DEFAULT_PROMPT_TIMEZONE;
   const en = locale === 'en';
   if (input.candidates.length > BRIEFING_CANDIDATE_MAX) {
-    throw new AppError('validation', en ? `At most ${BRIEFING_CANDIDATE_MAX} candidates.` : `En fazla ${BRIEFING_CANDIDATE_MAX} aday öğe.`, {
-      details: { count: input.candidates.length, max: BRIEFING_CANDIDATE_MAX },
-    });
+    throw new AppError(
+      'validation',
+      en
+        ? `At most ${BRIEFING_CANDIDATE_MAX} candidates.`
+        : `En fazla ${BRIEFING_CANDIDATE_MAX} aday öğe.`,
+      {
+        details: { count: input.candidates.length, max: BRIEFING_CANDIDATE_MAX },
+      },
+    );
   }
   const guidance = en ? KIND_GUIDANCE[input.kind].en : KIND_GUIDANCE[input.kind].tr;
   const system = composeSystem({
@@ -108,7 +132,7 @@ export function briefing(input: BriefingPromptInput): PromptSpec<BriefingAi> {
       ...guidance,
       en
         ? 'You may only reference the candidate ids you are given. sections[].itemIds must be candidate ids, each used at most once; never invent an item, a number or a time.'
-        : 'Yalnızca sana verilen aday id\'lerine atıf yapabilirsin. sections[].itemIds aday id\'lerinden oluşmalı, her id en fazla bir kez; öğe, sayı ya da saat uydurma.',
+        : "Yalnızca sana verilen aday id'lerine atıf yapabilirsin. sections[].itemIds aday id'lerinden oluşmalı, her id en fazla bir kez; öğe, sayı ya da saat uydurma.",
       en
         ? `sections[].section must be one of: ${BRIEFING_SECTIONS.join(', ')}. Skip empty sections.`
         : `sections[].section şu değerlerden biri olmalı: ${BRIEFING_SECTIONS.join(', ')}. Boş bölümleri atla.`,
@@ -131,7 +155,9 @@ export function briefing(input: BriefingPromptInput): PromptSpec<BriefingAi> {
         body: joinLines([
           temporalContext({ now: input.now, locale, timezone: tz }),
           `${en ? 'Briefing date' : 'Brifing tarihi'}: ${formatPromptDate(`${input.date}T12:00:00Z`, 'UTC', locale)} (${input.date})`,
-          input.focus?.length ? `${en ? 'Learned focus' : 'Öğrenilen odak'}:\n${bullets(input.focus.slice(0, 6))}` : null,
+          input.focus?.length
+            ? `${en ? 'Learned focus' : 'Öğrenilen odak'}:\n${bullets(input.focus.slice(0, 6))}`
+            : null,
         ]),
       },
     ],
@@ -140,8 +166,12 @@ export function briefing(input: BriefingPromptInput): PromptSpec<BriefingAi> {
   const context = joinLines([
     `counts: ${JSON.stringify(input.counts)}`,
     input.weekly ? `weekly: ${JSON.stringify(input.weekly)}` : null,
-    input.changesSinceMorning?.length ? `${en ? 'Changes since morning' : 'Sabahtan beri değişenler'}:\n${bullets(input.changesSinceMorning.slice(0, 12).map((s) => clipInline(s, 160)))}` : null,
-    input.completedToday?.length ? `${en ? 'Completed today' : 'Bugün tamamlananlar'}:\n${bullets(input.completedToday.slice(0, 12).map((s) => clipInline(s, 160)))}` : null,
+    input.changesSinceMorning?.length
+      ? `${en ? 'Changes since morning' : 'Sabahtan beri değişenler'}:\n${bullets(input.changesSinceMorning.slice(0, 12).map((s) => clipInline(s, 160)))}`
+      : null,
+    input.completedToday?.length
+      ? `${en ? 'Completed today' : 'Bugün tamamlananlar'}:\n${bullets(input.completedToday.slice(0, 12).map((s) => clipInline(s, 160)))}`
+      : null,
     '',
     en ? 'Candidates:' : 'Adaylar:',
     ...candidates.items.map((c) => candidateLine(c, tz)),

@@ -59,12 +59,42 @@ export type ShadowToken = {
 
 /** Shadows: 1 (row), 2 (card), 3 (page/sheet). Dark mode uses a 6% white hairline instead of shadow. */
 export const shadows: Record<'s1' | 's2' | 's3' | 'brand' | 'none', ShadowToken> = {
-  none: { shadowColor: '#000', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
-  s1: { shadowColor: '#1B1917', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2, elevation: 1 },
-  s2: { shadowColor: '#1B1917', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 3 },
-  s3: { shadowColor: '#1B1917', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.14, shadowRadius: 32, elevation: 8 },
+  none: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  s1: {
+    shadowColor: '#1B1917',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  s2: {
+    shadowColor: '#1B1917',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 3,
+  },
+  s3: {
+    shadowColor: '#1B1917',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.14,
+    shadowRadius: 32,
+    elevation: 8,
+  },
   /** hero briefing card — indigo tinted */
-  brand: { shadowColor: '#5B5CE2', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.1, shadowRadius: 32, elevation: 4 },
+  brand: {
+    shadowColor: '#5B5CE2',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.1,
+    shadowRadius: 32,
+    elevation: 4,
+  },
 };
 
 export const shadowCss = {

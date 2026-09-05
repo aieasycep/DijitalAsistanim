@@ -126,17 +126,30 @@ export function emailDomain(email: string): string {
 
 /** Local date key (YYYY-MM-DD) in an IANA timezone. */
 export function localDateKey(iso: string | Date, timezone: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(iso));
 }
 
 /** Local hour (0-23) in an IANA timezone. */
 export function localHour(iso: string | Date, timezone: string): number {
-  return Number(new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: 'numeric', hourCycle: 'h23' }).format(new Date(iso)));
+  return Number(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: timezone,
+      hour: 'numeric',
+      hourCycle: 'h23',
+    }).format(new Date(iso)),
+  );
 }
 
 /** Local weekday 1 (Mon) … 7 (Sun) in an IANA timezone. */
 export function localIsoWeekday(iso: string | Date, timezone: string): number {
-  const w = new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'short' }).format(new Date(iso));
+  const w = new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'short' }).format(
+    new Date(iso),
+  );
   return { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 }[w] ?? 1;
 }
 
@@ -154,7 +167,14 @@ export function tzOffsetMinutes(iso: string | Date, timezone: string): number {
     second: '2-digit',
   }).formatToParts(d);
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? '0');
-  const asUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'));
+  const asUtc = Date.UTC(
+    get('year'),
+    get('month') - 1,
+    get('day'),
+    get('hour'),
+    get('minute'),
+    get('second'),
+  );
   return Math.round((asUtc - d.getTime()) / MINUTE);
 }
 
@@ -172,5 +192,10 @@ export function zonedTimeToUtc(dateKey: string, hhmm: string, timezone: string):
 
 /** Local HH:mm in a timezone. */
 export function localHHmm(iso: string | Date, timezone: string): string {
-  return new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(new Date(iso));
 }

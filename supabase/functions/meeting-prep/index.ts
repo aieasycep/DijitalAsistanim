@@ -252,13 +252,11 @@ Deno.serve(
               },
             ]
           : []),
-        ...commitments
-          .slice(0, 2)
-          .map((c) => ({
-            title: c.text,
-            detail: c.quote ?? c.dueText ?? (ctx.locale === 'en' ? 'Open item' : 'Açık madde'),
-            source: c.source,
-          })),
+        ...commitments.slice(0, 2).map((c) => ({
+          title: c.text,
+          detail: c.quote ?? c.dueText ?? (ctx.locale === 'en' ? 'Open item' : 'Açık madde'),
+          source: c.source,
+        })),
       ].slice(0, 3),
       twoMinuteSummary: [
         event.title,

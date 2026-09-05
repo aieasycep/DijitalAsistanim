@@ -7,7 +7,17 @@ import type { Importance } from '@da/domain';
 import { scheduleSuggestionAiSchema, type ScheduleSuggestionAi } from '@da/validation';
 import { PROMPT_CHAR_LIMITS } from '../redact';
 import type { PromptSpec } from '../types';
-import { DEFAULT_PROMPT_TIMEZONE, bullets, capList, clipInline, composeSystem, formatPromptTime, joinLines, temporalContext, type PromptBase } from './shared';
+import {
+  DEFAULT_PROMPT_TIMEZONE,
+  bullets,
+  capList,
+  clipInline,
+  composeSystem,
+  formatPromptTime,
+  joinLines,
+  temporalContext,
+  type PromptBase,
+} from './shared';
 
 export interface ScheduleFreeBlock {
   startAt: string;
@@ -19,8 +29,21 @@ export interface ScheduleSuggestionInput extends PromptBase {
   /** Local date the plan is for (YYYY-MM-DD). */
   date: string;
   workHours?: { start: string; end: string };
-  events: { id: string; title: string; startAt: string; endAt: string; location?: string | null; attendeeCount?: number }[];
-  tasks: { id: string; title: string; dueAt?: string | null; estimatedMinutes?: number | null; priority?: Importance }[];
+  events: {
+    id: string;
+    title: string;
+    startAt: string;
+    endAt: string;
+    location?: string | null;
+    attendeeCount?: number;
+  }[];
+  tasks: {
+    id: string;
+    title: string;
+    dueAt?: string | null;
+    estimatedMinutes?: number | null;
+    priority?: Importance;
+  }[];
   /** Open commitments with a due date that may deserve a time block. */
   commitments?: { id: string; text: string; dueAt?: string | null; counterpart?: string | null }[];
   freeBlocks: ScheduleFreeBlock[];
@@ -31,7 +54,9 @@ export interface ScheduleSuggestionInput extends PromptBase {
 /** Assumed task length when `estimatedMinutes` is missing (module-private; the calendar module owns the shared default). */
 const DEFAULT_TASK_MINUTES = 45;
 
-export function scheduleSuggestion(input: ScheduleSuggestionInput): PromptSpec<ScheduleSuggestionAi> {
+export function scheduleSuggestion(
+  input: ScheduleSuggestionInput,
+): PromptSpec<ScheduleSuggestionAi> {
   const locale = input.locale ?? 'tr';
   const tz = input.timezone ?? DEFAULT_PROMPT_TIMEZONE;
   const en = locale === 'en';
@@ -45,7 +70,9 @@ export function scheduleSuggestion(input: ScheduleSuggestionInput): PromptSpec<S
       en
         ? 'proposedStartAt/proposedEndAt must lie entirely inside one of the given free blocks. Never propose a time outside the free blocks, even for move_event; if no free block fits, do not make the suggestion.'
         : 'proposedStartAt/proposedEndAt tümüyle verilen boş blokların birinin içinde olmalı. move_event dahil hiçbir öneride boş blokların dışına çıkma; uygun boş blok yoksa öneriyi yapma.',
-      en ? 'targetEventId / targetTaskId must be ids from the lists; never invent an item.' : "targetEventId / targetTaskId listelerdeki id'lerden olmalı; öğe uydurma.",
+      en
+        ? 'targetEventId / targetTaskId must be ids from the lists; never invent an item.'
+        : "targetEventId / targetTaskId listelerdeki id'lerden olmalı; öğe uydurma.",
       en
         ? 'Respect due dates and work hours; leave 10-15 minute buffers between back-to-back meetings when you suggest one.'
         : 'Son tarihlere ve çalışma saatlerine uy; art arda toplantılar için 10-15 dakikalık tampon öner.',
@@ -62,7 +89,9 @@ export function scheduleSuggestion(input: ScheduleSuggestionInput): PromptSpec<S
         body: joinLines([
           temporalContext({ now: input.now, locale, timezone: tz }),
           `${en ? 'Plan date' : 'Plan tarihi'}: ${input.date}`,
-          input.workHours ? `${en ? 'Work hours' : 'Çalışma saatleri'}: ${input.workHours.start}–${input.workHours.end}` : null,
+          input.workHours
+            ? `${en ? 'Work hours' : 'Çalışma saatleri'}: ${input.workHours.start}–${input.workHours.end}`
+            : null,
         ]),
       },
     ],
@@ -90,14 +119,22 @@ export function scheduleSuggestion(input: ScheduleSuggestionInput): PromptSpec<S
     commitments.items.length ? '' : null,
     commitments.items.length ? (en ? 'Commitments:' : 'Taahhütler:') : null,
     ...commitments.items.map(
-      (c) => `[${c.id}] ${clipInline(c.text, perItem)}${c.dueAt ? ` · ${en ? 'due' : 'son'} ${c.dueAt}` : ''}${c.counterpart ? ` · ${clipInline(c.counterpart, 60)}` : ''}`,
+      (c) =>
+        `[${c.id}] ${clipInline(c.text, perItem)}${c.dueAt ? ` · ${en ? 'due' : 'son'} ${c.dueAt}` : ''}${c.counterpart ? ` · ${clipInline(c.counterpart, 60)}` : ''}`,
     ),
     commitments.note,
     '',
     en ? 'Free blocks:' : 'Boş bloklar:',
-    ...blocks.items.map((b) => `${b.startAt} → ${b.endAt} (${formatPromptTime(b.startAt, tz)}–${formatPromptTime(b.endAt, tz)}, ${b.minutes} ${en ? 'min' : 'dk'})`),
+    ...blocks.items.map(
+      (b) =>
+        `${b.startAt} → ${b.endAt} (${formatPromptTime(b.startAt, tz)}–${formatPromptTime(b.endAt, tz)}, ${b.minutes} ${en ? 'min' : 'dk'})`,
+    ),
     blocks.note,
-    blocks.items.length === 0 ? (en ? '(no free blocks — return an empty list)' : '(boş blok yok — boş liste döndür)') : null,
+    blocks.items.length === 0
+      ? en
+        ? '(no free blocks — return an empty list)'
+        : '(boş blok yok — boş liste döndür)'
+      : null,
     input.conflicts?.length
       ? `\n${en ? 'Conflicts' : 'Çakışmalar'}:\n${bullets(input.conflicts.slice(0, 8).map((c) => `${c.eventAId} × ${c.eventBId} · ${c.overlapMinutes} ${en ? 'min overlap' : 'dk çakışma'}`))}`
       : null,
@@ -110,7 +147,9 @@ export function scheduleSuggestion(input: ScheduleSuggestionInput): PromptSpec<S
     tier: 'small',
     locale,
     system,
-    user: en ? 'Propose schedule improvements for the plan below.' : 'Aşağıdaki plan için takvim önerileri üret.',
+    user: en
+      ? 'Propose schedule improvements for the plan below.'
+      : 'Aşağıdaki plan için takvim önerileri üret.',
     context,
     schema: scheduleSuggestionAiSchema,
     maxOutputTokens: 1200,
@@ -121,7 +160,11 @@ export function scheduleSuggestion(input: ScheduleSuggestionInput): PromptSpec<S
 type ScheduleSuggestionItem = ScheduleSuggestionAi['suggestions'][number];
 
 /** True when [startAt, endAt) is well-formed and fully contained in one of the free blocks. */
-export function isInsideFreeBlocks(startAt: string, endAt: string, freeBlocks: readonly ScheduleFreeBlock[]): boolean {
+export function isInsideFreeBlocks(
+  startAt: string,
+  endAt: string,
+  freeBlocks: readonly ScheduleFreeBlock[],
+): boolean {
   const start = Date.parse(startAt);
   const end = Date.parse(endAt);
   if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return false;
@@ -135,7 +178,10 @@ export function isInsideFreeBlocks(startAt: string, endAt: string, freeBlocks: r
 export interface FreeBlockFilterResult {
   kept: ScheduleSuggestionItem[];
   /** Suggestions the model placed outside the free blocks or on unknown ids — never shown to the user. */
-  dropped: { suggestion: ScheduleSuggestionItem; reason: 'outside_free_blocks' | 'unknown_event' | 'unknown_task' }[];
+  dropped: {
+    suggestion: ScheduleSuggestionItem;
+    reason: 'outside_free_blocks' | 'unknown_event' | 'unknown_task';
+  }[];
 }
 
 /**

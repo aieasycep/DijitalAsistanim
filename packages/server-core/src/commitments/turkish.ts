@@ -3,7 +3,12 @@
  * aorist, second-person request, "… bekliyorum" expectation), what the object phrase is and which
  * counterpart is named in the clause. Negated, conditional, optative and question forms are rejected.
  */
-import { extractDates, lowercasePreservingIndices, turkishDative, type ExtractedDate } from '../dates';
+import {
+  extractDates,
+  lowercasePreservingIndices,
+  turkishDative,
+  type ExtractedDate,
+} from '../dates';
 import {
   ET_COMPOUNDS,
   NOUN_TO_VERB,
@@ -28,35 +33,161 @@ import {
   lookupVerbalNoun,
   type CounterpartCase,
 } from './verbs';
-import { NAME_STOPLIST, isNameToken, type ClauseAnalysis, type ClauseName, type AnalyzeOptions } from './shared';
+import {
+  NAME_STOPLIST,
+  isNameToken,
+  type ClauseAnalysis,
+  type ClauseName,
+  type AnalyzeOptions,
+} from './shared';
 
 const FILLERS = new Set(
   [
-    'ben', 'biz', 'de', 'da', 'sana', 'size', 'bana', 'bize', 'seninle', 'sizinle', 'senden', 'sizden', 'ayrıca', 'mutlaka', 'kesinlikle', 'hemen', 'tekrar',
-    'yine', 'inşallah', 'söz', 'tabii', 'tabi', 'tamam', 'peki', 'evet', 'olur', 'artık', 'şimdi', 'birazdan', 'sonra', 'önce', 'ilk', 'en', 'kısa', 'sürede',
-    'zamanda', 'geç', 'bir', 'an', 'bu', 'arada', 'o', 'zaman', 've', 'ama', 'fakat', 'ancak', 'lütfen', 'ise', 'bile', 'zaten', 'elbette', 'kesin',
-    'muhakkak', 'mümkünse', 'olursa', 'olabilirse', 'belki', 'gerekirse', 'acaba', 'rica', 'kadar', 'dek', 'değin', 'içinde', 'içerisinde', 'itibaren',
-    'itibariyle', 'saat', 'sabah', 'öğlen', 'akşam', 'gece', 'sabaha', 'akşama', 'öğlene', 'günü', 'gününe', 'günün', 'tarafıma', 'tarafımıza', 'tarafınıza',
-    'tarafına', 'mümkün', 'en geç', 'bugünden', 'yarından', 'da', 'de', 'ki', 'hâlâ', 'hala', 'kendim', 'kendimiz', 'bizzat', 'şahsen', 'ekte', 'ekli',
-    'sizinle', 'seninle', 'ilgili', 'için', 'sizler', 'sizlere', 'sizlerle', 'siz', 'sen', 'ilgilenip', 'olarak', 'garanti',
+    'ben',
+    'biz',
+    'de',
+    'da',
+    'sana',
+    'size',
+    'bana',
+    'bize',
+    'seninle',
+    'sizinle',
+    'senden',
+    'sizden',
+    'ayrıca',
+    'mutlaka',
+    'kesinlikle',
+    'hemen',
+    'tekrar',
+    'yine',
+    'inşallah',
+    'söz',
+    'tabii',
+    'tabi',
+    'tamam',
+    'peki',
+    'evet',
+    'olur',
+    'artık',
+    'şimdi',
+    'birazdan',
+    'sonra',
+    'önce',
+    'ilk',
+    'en',
+    'kısa',
+    'sürede',
+    'zamanda',
+    'geç',
+    'bir',
+    'an',
+    'bu',
+    'arada',
+    'o',
+    'zaman',
+    've',
+    'ama',
+    'fakat',
+    'ancak',
+    'lütfen',
+    'ise',
+    'bile',
+    'zaten',
+    'elbette',
+    'kesin',
+    'muhakkak',
+    'mümkünse',
+    'olursa',
+    'olabilirse',
+    'belki',
+    'gerekirse',
+    'acaba',
+    'rica',
+    'kadar',
+    'dek',
+    'değin',
+    'içinde',
+    'içerisinde',
+    'itibaren',
+    'itibariyle',
+    'saat',
+    'sabah',
+    'öğlen',
+    'akşam',
+    'gece',
+    'sabaha',
+    'akşama',
+    'öğlene',
+    'günü',
+    'gününe',
+    'günün',
+    'tarafıma',
+    'tarafımıza',
+    'tarafınıza',
+    'tarafına',
+    'mümkün',
+    'en geç',
+    'bugünden',
+    'yarından',
+    'da',
+    'de',
+    'ki',
+    'hâlâ',
+    'hala',
+    'kendim',
+    'kendimiz',
+    'bizzat',
+    'şahsen',
+    'ekte',
+    'ekli',
+    'sizinle',
+    'seninle',
+    'ilgili',
+    'için',
+    'sizler',
+    'sizlere',
+    'sizlerle',
+    'siz',
+    'sen',
+    'ilgilenip',
+    'olarak',
+    'garanti',
   ].map((w) => w.replace(/ı/g, 'i')),
 );
 
-const RE_CLOSING = /^(?:saygılar(?:ımla|ımızla|ımızı sunarız|ımı sunarım)?|sevgiler(?:imle|imizle)?|iyi çalışmalar|iyi günler|iyi akşamlar|iyi haftalar|iyi hafta sonları|teşekkürler|teşekkür eder(?:im|iz)|çok teşekkür(?:ler| ederim| ederiz)|rica eder(?:im|iz)|görüşmek üzere|kolay gelsin|hoşça kal(?:ın)?|bilgi(?:leri)?nize (?:sunar(?:ım|ız)|arz eder(?:im|iz))|umarım[^.!?]*|sanırım|görüşürüz|yakında görüşürüz|haber(?:leş|leşi)r(?:iz|im))[.!,]?$/u;
+const RE_CLOSING =
+  /^(?:saygılar(?:ımla|ımızla|ımızı sunarız|ımı sunarım)?|sevgiler(?:imle|imizle)?|iyi çalışmalar|iyi günler|iyi akşamlar|iyi haftalar|iyi hafta sonları|teşekkürler|teşekkür eder(?:im|iz)|çok teşekkür(?:ler| ederim| ederiz)|rica eder(?:im|iz)|görüşmek üzere|kolay gelsin|hoşça kal(?:ın)?|bilgi(?:leri)?nize (?:sunar(?:ım|ız)|arz eder(?:im|iz))|umarım[^.!?]*|sanırım|görüşürüz|yakında görüşürüz|haber(?:leş|leşi)r(?:iz|im))[.!,]?$/u;
 const RE_STRONG = /(?<![\p{L}])(?:söz|kesinlikle|mutlaka|muhakkak|kesin|garanti)(?![\p{L}])/u;
 const RE_QUESTION_PARTICLE = /(?<![\p{L}])m[iıuü](?:y[iı]m|y[iı]z|s[iı]n(?:[iı]z)?)?(?![\p{L}])/u;
 const RE_IF = /(?<![\p{L}])(?:eğer|şayet)(?![\p{L}])/u;
-const RE_COND_AORIST = /(?<![\p{L}])(?!(?:bursa|arsa|kursa|parsa|farsa)(?![\p{L}]))\p{L}{2,}(?:[iıuü]r|[ae]r|bilir)s[ae](?:m|k|n[iı]z|n)?(?![\p{L}'’])/u;
+const RE_COND_AORIST =
+  /(?<![\p{L}])(?!(?:bursa|arsa|kursa|parsa|farsa)(?![\p{L}]))\p{L}{2,}(?:[iıuü]r|[ae]r|bilir)s[ae](?:m|k|n[iı]z|n)?(?![\p{L}'’])/u;
 /** Polite hedges that look conditional but do not cancel the commitment ("mümkün olursa yarın göndereceğim"). */
-const RE_HEDGES = /(?<![\p{L}])(?:mümkün(?:se)?\s+olursa|olursa|olursam|olmazsa|gerekirse|isterseniz|istersen|isterse|uygunsa|uygun olursa|müsaitseniz|müsaitsen|müsaitse|vakit bulursam|fırsat bulursam|yetişirse|olabilirse)(?![\p{L}])/gu;
+const RE_HEDGES =
+  /(?<![\p{L}])(?:mümkün(?:se)?\s+olursa|olursa|olursam|olmazsa|gerekirse|isterseniz|istersen|isterse|uygunsa|uygun olursa|müsaitseniz|müsaitsen|müsaitse|vakit bulursam|fırsat bulursam|yetişirse|olabilirse)(?![\p{L}])/gu;
 const RE_PLAIN_COND = new RegExp(
   `(?<![\\p{L}])(?:${VERBS.map((v) => v.head.replace(/ı/g, '[iı]')).join('|')})(?:y[ae]|s[ae])(?:m|k|n[iı]z|n)?(?![\\p{L}])`,
   'u',
 );
-const NEUTRAL_FUTURE_STEMS = new Set(['ol', 'kal', 'dur', 'bil', 'san', 'iste', 'istey', 'um', 'bekley', 'bekle', 'de', 'diy']);
+const NEUTRAL_FUTURE_STEMS = new Set([
+  'ol',
+  'kal',
+  'dur',
+  'bil',
+  'san',
+  'iste',
+  'istey',
+  'um',
+  'bekley',
+  'bekle',
+  'de',
+  'diy',
+]);
 
 /** "Mehmet'e", "Ayşe'ye", "Selin'i", "Mehmet Bey'e", "Mehmet ile", "Ali'yle", "Mehmet'ten". */
-const RE_COUNTERPART = /(?<name>\p{Lu}\p{Ll}+(?:\s+(?!(?:Bey|Hanım|Abi|Abla|Hoca|Hocam)(?![\p{Ll}]))\p{Lu}\p{Ll}+)?)(?:\s+(?<hon>Bey|Hanım|Abi|Abla|Hoca|Hocam))?(?:(?<apo>['’])(?<suf>y?[ae]|n?[ıiuü]|yl[ae]|l[ae]|[dt][ae]n|nd[ae]n)|\s+(?<ile>ile))(?![\p{L}])/gu;
+const RE_COUNTERPART =
+  /(?<name>\p{Lu}\p{Ll}+(?:\s+(?!(?:Bey|Hanım|Abi|Abla|Hoca|Hocam)(?![\p{Ll}]))\p{Lu}\p{Ll}+)?)(?:\s+(?<hon>Bey|Hanım|Abi|Abla|Hoca|Hocam))?(?:(?<apo>['’])(?<suf>y?[ae]|n?[ıiuü]|yl[ae]|l[ae]|[dt][ae]n|nd[ae]n)|\s+(?<ile>ile))(?![\p{L}])/gu;
 
 function normWord(w: string): string {
   return lowercasePreservingIndices(w)
@@ -66,9 +197,13 @@ function normWord(w: string): string {
 
 function stripDatesAndFillers(text: string, dates: ExtractedDate[]): string {
   let out = text;
-  for (const d of [...dates].sort((a, b) => b.start - a.start)) out = `${out.slice(0, d.start)} ${out.slice(d.end)}`;
+  for (const d of [...dates].sort((a, b) => b.start - a.start))
+    out = `${out.slice(0, d.start)} ${out.slice(d.end)}`;
   return out
-    .replace(/(?<![\p{L}])(?:'?(?:y?[ae]|n?d[ae]n|d[ae]n|t[ae]n)\s+)?(?:kadar|dek|değin)(?![\p{L}])/gu, ' ')
+    .replace(
+      /(?<![\p{L}])(?:'?(?:y?[ae]|n?d[ae]n|d[ae]n|t[ae]n)\s+)?(?:kadar|dek|değin)(?![\p{L}])/gu,
+      ' ',
+    )
     .replace(/(?<![\p{L}\p{N}])['’](?:y?[ae]|n?d[ae]n|d[ae]n|t[ae]n|d[ae]|t[ae])(?![\p{L}])/gu, ' ')
     .split(/\s+/u)
     .filter((w) => w && !FILLERS.has(normWord(w)))
@@ -78,7 +213,11 @@ function stripDatesAndFillers(text: string, dates: ExtractedDate[]): string {
     .trim();
 }
 
-function findClauseNames(clause: string, dates: ExtractedDate[], hintFirstName: string | null): ClauseName[] {
+function findClauseNames(
+  clause: string,
+  dates: ExtractedDate[],
+  hintFirstName: string | null,
+): ClauseName[] {
   const out: ClauseName[] = [];
   const hint = hintFirstName?.toLocaleLowerCase('tr-TR') ?? null;
   RE_COUNTERPART.lastIndex = 0;
@@ -110,15 +249,24 @@ function findClauseNames(clause: string, dates: ExtractedDate[], hintFirstName: 
     const first = tokens[0] ?? '';
     const isFirstWord = clause.slice(0, start).trim().length === 0;
     // "X ile" at the very start could be a capitalized common noun ("Ekip ile …") unless it matches the hint.
-    if (withIle && isFirstWord && hint !== null && first.toLocaleLowerCase('tr-TR') !== hint) continue;
+    if (withIle && isFirstWord && hint !== null && first.toLocaleLowerCase('tr-TR') !== hint)
+      continue;
     if (NAME_STOPLIST.has(first.toLocaleLowerCase('tr-TR').replace(/ı/g, 'i'))) continue;
-    out.push({ name, phrase: clause.slice(start, end).trim(), start, end, kase: caseOfSuffix(m.groups?.suf, withIle) });
+    out.push({
+      name,
+      phrase: clause.slice(start, end).trim(),
+      start,
+      end,
+      kase: caseOfSuffix(m.groups?.suf, withIle),
+    });
   }
   return out;
 }
 
-const RE_INTERJECTION = /^\s*(?:(?:çok\s+)?teşekkürler|(?:çok\s+)?teşekkür ederi[mz]|tamam(?:dır)?|peki|olur|evet|anlaşıldı|not aldım|not ettim|merhaba|selam|tabii(?: ki)?|tabi(?: ki)?|elbette|kesinlikle|harika|süper|ok|okey|memnuniyetle|sorun değil|rica ederim|sağ ol(?:un)?|bilgi(?:niz)? için teşekkürler|söz|mutlaka)\s*[,!.;:]?\s*/iu;
-const RE_LEADING_ADVERBIAL = /^.*?(?<![\p{L}])(?:istinaden|ilişkin|dair|binaen|nazaran|itibaren|göre|üzere|için|sonrasında|öncesinde|ardından|sonra|önce)(?![\p{L}])[,\s]*/u;
+const RE_INTERJECTION =
+  /^\s*(?:(?:çok\s+)?teşekkürler|(?:çok\s+)?teşekkür ederi[mz]|tamam(?:dır)?|peki|olur|evet|anlaşıldı|not aldım|not ettim|merhaba|selam|tabii(?: ki)?|tabi(?: ki)?|elbette|kesinlikle|harika|süper|ok|okey|memnuniyetle|sorun değil|rica ederim|sağ ol(?:un)?|bilgi(?:niz)? için teşekkürler|söz|mutlaka)\s*[,!.;:]?\s*/iu;
+const RE_LEADING_ADVERBIAL =
+  /^.*?(?<![\p{L}])(?:istinaden|ilişkin|dair|binaen|nazaran|itibaren|göre|üzere|için|sonrasında|öncesinde|ardından|sonra|önce)(?![\p{L}])[,\s]*/u;
 
 function stripLeadIns(source: string): string {
   let s = source;
@@ -140,16 +288,31 @@ function caseOfSuffix(suf: string | undefined, ile: boolean): CounterpartCase {
   return 'none';
 }
 
-function buildObject(source: string, dates: ExtractedDate[], removeSpan: { start: number; end: number } | null, lemma: string): string {
+function buildObject(
+  source: string,
+  dates: ExtractedDate[],
+  removeSpan: { start: number; end: number } | null,
+  lemma: string,
+): string {
   let text = source;
-  if (removeSpan && removeSpan.end <= source.length) text = `${text.slice(0, removeSpan.start)} ${' '.repeat(removeSpan.end - removeSpan.start - 1)}${text.slice(removeSpan.end)}`;
+  if (removeSpan && removeSpan.end <= source.length)
+    text = `${text.slice(0, removeSpan.start)} ${' '.repeat(removeSpan.end - removeSpan.start - 1)}${text.slice(removeSpan.end)}`;
   const localDates = dates.filter((d) => d.end <= source.length);
   const lead = text.length - stripLeadIns(text).length;
   text = `${' '.repeat(lead)}${text.slice(lead)}`;
   let obj = stripDatesAndFillers(text, localDates);
   const compoundNoun = lemma.includes(' ') ? (lemma.split(' ')[0] ?? '') : null;
-  if (compoundNoun) obj = obj.replace(new RegExp(`(?:^|\\s)${compoundNoun.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'iu'), '').trim();
-  return obj.replace(/^[-–•*]\s*/u, '').replace(/^["“”']+|["“”']+$/gu, '').trim();
+  if (compoundNoun)
+    obj = obj
+      .replace(
+        new RegExp(`(?:^|\\s)${compoundNoun.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'iu'),
+        '',
+      )
+      .trim();
+  return obj
+    .replace(/^[-–•*]\s*/u, '')
+    .replace(/^["“”']+|["“”']+$/gu, '')
+    .trim();
 }
 
 function lastWord(clause: string): string {
@@ -208,21 +371,212 @@ export function counterpartPhrase(name: string, kase: CounterpartCase): string {
 }
 
 const KNOWN_NOUNS = new Set([
-  'teklif', 'rapor', 'dosya', 'dönüş', 'cevap', 'yanıt', 'onay', 'haber', 'bilgi', 'bildirim', 'belge', 'sözleşme', 'fatura', 'ödeme', 'fiyat', 'liste', 'plan',
-  'taslak', 'sunum', 'doküman', 'döküman', 'çizim', 'görsel', 'fotoğraf', 'form', 'imza', 'kayıt', 'karar', 'görüş', 'yorum', 'not', 'özet', 'program',
-  'takvim', 'adres', 'numara', 'link', 'bağlantı', 'ek', 'dekont', 'makbuz', 'revizyon', 'tarih', 'teyit', 'bilgilendirme', 'açıklama', 'güncelleme',
-  'katalog', 'broşür', 'numune', 'ölçü', 'mail', 'mesaj', 'davet', 'referans', 'öneri', 'teklifler', 'belgeler', 'dosyalar', 'raporlar', 'evrak', 'evraklar',
-  'ödemeler', 'geri bildirim', 'geri dönüş', 'dönüşler', 'cevaplar', 'yanıtlar', 'sonuç', 'sonuçlar', 'çıktı', 'çıktılar', 'proje', 'çalışma', 'sipariş',
-  'ürün', 'ürünler', 'imzalı', 'anket', 'başvuru', 'kontrat', 'protokol', 'tasarım', 'logo', 'video', 'ses', 'kod', 'şifre', 'erişim', 'hesap', 'bütçe',
-  'analiz', 'tablo', 'excel', 'pdf', 'sürüm', 'versiyon', 'brief', 'değerlendirme', 'onayı', 'malzeme', 'malzemeler', 'ölçüler', 'fiyatlar', 'konu',
-  'durum', 'mesele', 'talep', 'talepler', 'sorun', 'problem', 'istek', 'soru', 'sorular', 'iş', 'işler', 'görev', 'görevler', 'ödev', 'randevu', 'toplantı',
-  'fatura', 'faturalar', 'ekstre', 'sözleşmeler', 'kayıtlar', 'notlar', 'çizimler', 'görseller', 'fotoğraflar', 'linkler', 'adresler', 'numaralar', 'form',
-  'formlar', 'e-posta', 'eposta', 'mailler', 'mesajlar', 'davetiye', 'bilet', 'biletler', 'rezervasyon', 'onaylar', 'imzalar', 'para', 'ücret', 'tutar',
+  'teklif',
+  'rapor',
+  'dosya',
+  'dönüş',
+  'cevap',
+  'yanıt',
+  'onay',
+  'haber',
+  'bilgi',
+  'bildirim',
+  'belge',
+  'sözleşme',
+  'fatura',
+  'ödeme',
+  'fiyat',
+  'liste',
+  'plan',
+  'taslak',
+  'sunum',
+  'doküman',
+  'döküman',
+  'çizim',
+  'görsel',
+  'fotoğraf',
+  'form',
+  'imza',
+  'kayıt',
+  'karar',
+  'görüş',
+  'yorum',
+  'not',
+  'özet',
+  'program',
+  'takvim',
+  'adres',
+  'numara',
+  'link',
+  'bağlantı',
+  'ek',
+  'dekont',
+  'makbuz',
+  'revizyon',
+  'tarih',
+  'teyit',
+  'bilgilendirme',
+  'açıklama',
+  'güncelleme',
+  'katalog',
+  'broşür',
+  'numune',
+  'ölçü',
+  'mail',
+  'mesaj',
+  'davet',
+  'referans',
+  'öneri',
+  'teklifler',
+  'belgeler',
+  'dosyalar',
+  'raporlar',
+  'evrak',
+  'evraklar',
+  'ödemeler',
+  'geri bildirim',
+  'geri dönüş',
+  'dönüşler',
+  'cevaplar',
+  'yanıtlar',
+  'sonuç',
+  'sonuçlar',
+  'çıktı',
+  'çıktılar',
+  'proje',
+  'çalışma',
+  'sipariş',
+  'ürün',
+  'ürünler',
+  'imzalı',
+  'anket',
+  'başvuru',
+  'kontrat',
+  'protokol',
+  'tasarım',
+  'logo',
+  'video',
+  'ses',
+  'kod',
+  'şifre',
+  'erişim',
+  'hesap',
+  'bütçe',
+  'analiz',
+  'tablo',
+  'excel',
+  'pdf',
+  'sürüm',
+  'versiyon',
+  'brief',
+  'değerlendirme',
+  'onayı',
+  'malzeme',
+  'malzemeler',
+  'ölçüler',
+  'fiyatlar',
+  'konu',
+  'durum',
+  'mesele',
+  'talep',
+  'talepler',
+  'sorun',
+  'problem',
+  'istek',
+  'soru',
+  'sorular',
+  'iş',
+  'işler',
+  'görev',
+  'görevler',
+  'ödev',
+  'randevu',
+  'toplantı',
+  'fatura',
+  'faturalar',
+  'ekstre',
+  'sözleşmeler',
+  'kayıtlar',
+  'notlar',
+  'çizimler',
+  'görseller',
+  'fotoğraflar',
+  'linkler',
+  'adresler',
+  'numaralar',
+  'form',
+  'formlar',
+  'e-posta',
+  'eposta',
+  'mailler',
+  'mesajlar',
+  'davetiye',
+  'bilet',
+  'biletler',
+  'rezervasyon',
+  'onaylar',
+  'imzalar',
+  'para',
+  'ücret',
+  'tutar',
 ]);
 const POSSESSIVE_SUFFIXES = [
-  'ınızı', 'inizi', 'unuzu', 'ünüzü', 'ınıza', 'inize', 'unuza', 'ünüze', 'nızı', 'nizi', 'nuzu', 'nüzü', 'ımızı', 'imizi', 'umuzu', 'ümüzü', 'ları', 'leri', 'ını',
-  'ini', 'unu', 'ünü', 'nı', 'ni', 'nu', 'nü', 'yı', 'yi', 'yu', 'yü', 'ınız', 'iniz', 'unuz', 'ünüz', 'ım', 'im', 'um', 'üm', 'ın', 'in', 'un', 'ün', 'sı', 'si',
-  'su', 'sü', 'lar', 'ler', 'ya', 'ye', 'ı', 'i', 'u', 'ü', 'a', 'e',
+  'ınızı',
+  'inizi',
+  'unuzu',
+  'ünüzü',
+  'ınıza',
+  'inize',
+  'unuza',
+  'ünüze',
+  'nızı',
+  'nizi',
+  'nuzu',
+  'nüzü',
+  'ımızı',
+  'imizi',
+  'umuzu',
+  'ümüzü',
+  'ları',
+  'leri',
+  'ını',
+  'ini',
+  'unu',
+  'ünü',
+  'nı',
+  'ni',
+  'nu',
+  'nü',
+  'yı',
+  'yi',
+  'yu',
+  'yü',
+  'ınız',
+  'iniz',
+  'unuz',
+  'ünüz',
+  'ım',
+  'im',
+  'um',
+  'üm',
+  'ın',
+  'in',
+  'un',
+  'ün',
+  'sı',
+  'si',
+  'su',
+  'sü',
+  'lar',
+  'ler',
+  'ya',
+  'ye',
+  'ı',
+  'i',
+  'u',
+  'ü',
+  'a',
+  'e',
 ];
 const DEVOICE: Record<string, string> = { b: 'p', c: 'ç', d: 't', ğ: 'k' };
 
@@ -236,7 +590,8 @@ export function normalizeNounPhrase(phrase: string): string {
     if (KNOWN_NOUNS.has(stem)) return stem;
     const final = stem.slice(-1);
     const devoiced = DEVOICE[final];
-    if (devoiced && KNOWN_NOUNS.has(`${stem.slice(0, -1)}${devoiced}`)) return `${stem.slice(0, -1)}${devoiced}`;
+    if (devoiced && KNOWN_NOUNS.has(`${stem.slice(0, -1)}${devoiced}`))
+      return `${stem.slice(0, -1)}${devoiced}`;
     return null;
   };
   let noun = candidate(lower);
@@ -258,7 +613,13 @@ export function isKnownDeliverable(phrase: string): boolean {
   const normalized = normalizeNounPhrase(phrase);
   const last = normalized.split(/\s+/u).pop() ?? '';
   const twoWords = normalized.split(/\s+/u).slice(-2).join(' ');
-  return KNOWN_NOUNS.has(last) || KNOWN_NOUNS.has(twoWords) || /(?:[ıiuü]n[ıi]z[ıi]|n[ıi]z[ıi]|[ıiuü]n[ıi]|[ıiuü]m[ıi]z[ıi])$/u.test(phrase.split(/\s+/u).pop() ?? '');
+  return (
+    KNOWN_NOUNS.has(last) ||
+    KNOWN_NOUNS.has(twoWords) ||
+    /(?:[ıiuü]n[ıi]z[ıi]|n[ıi]z[ıi]|[ıiuü]n[ıi]|[ıiuü]m[ıi]z[ıi])$/u.test(
+      phrase.split(/\s+/u).pop() ?? '',
+    )
+  );
 }
 
 function verbForNoun(noun: string): string {
@@ -283,11 +644,19 @@ export function analyzeTurkishClause(clause: string, opts: AnalyzeOptions): Clau
   const strong = RE_STRONG.test(lower);
   const unhedged = lower.replace(RE_HEDGES, (h) => ' '.repeat(h.length));
   const conditionalRequest = RE_REQUEST_CONDITIONAL.exec(unhedged);
-  const conditional = RE_IF.test(unhedged) || RE_PLAIN_COND.test(unhedged) || (RE_COND_AORIST.test(unhedged) && !(conditionalRequest && RE_PLEASED.test(lower)));
+  const conditional =
+    RE_IF.test(unhedged) ||
+    RE_PLAIN_COND.test(unhedged) ||
+    (RE_COND_AORIST.test(unhedged) && !(conditionalRequest && RE_PLEASED.test(lower)));
 
   // 1) first-person forms from the lexicon (last match wins — the main verb closes a Turkish clause)
   RE_FIRST_PERSON_FORMS.lastIndex = 0;
-  let best: { start: number; end: number; lemma: string; kind: ReturnType<typeof lookupFirstPerson> } | null = null;
+  let best: {
+    start: number;
+    end: number;
+    lemma: string;
+    kind: ReturnType<typeof lookupFirstPerson>;
+  } | null = null;
   let m: RegExpExecArray | null;
   while ((m = RE_FIRST_PERSON_FORMS.exec(lower)) !== null) {
     const hit = lookupFirstPerson(m.groups?.form ?? '');
@@ -309,9 +678,13 @@ export function analyzeTurkishClause(clause: string, opts: AnalyzeOptions): Clau
     const objectSource = clause.slice(0, bestStart);
     const object = buildObject(objectSource, dates, null, best.lemma);
     const clauseName = names.find((n) => n.end <= bestStart) ?? null;
-    const objectWithoutName = clauseName ? buildObject(objectSource, dates, clauseName, best.lemma) : object;
-    if ((best.lemma === 'görüş' || best.lemma === 'konuş') && kind === 'aorist1pl' && !object) return null;
-    if (best.lemma === 'bak' && (kind === 'aorist1' || kind === 'aorist1pl') && !object) return null;
+    const objectWithoutName = clauseName
+      ? buildObject(objectSource, dates, clauseName, best.lemma)
+      : object;
+    if ((best.lemma === 'görüş' || best.lemma === 'konuş') && kind === 'aorist1pl' && !object)
+      return null;
+    if (best.lemma === 'bak' && (kind === 'aorist1' || kind === 'aorist1pl') && !object)
+      return null;
     const hasDate = dates.length > 0;
     const confidence: Record<typeof kind, number> = {
       future1: 0.8,
@@ -323,7 +696,13 @@ export function analyzeTurkishClause(clause: string, opts: AnalyzeOptions): Clau
       abil1: 0.55,
       abil1pl: 0.52,
     };
-    const form = kind.startsWith('future') ? 'future' : kind.startsWith('aorist') ? 'aorist' : kind.startsWith('prog') ? 'progressive' : 'ability';
+    const form = kind.startsWith('future')
+      ? 'future'
+      : kind.startsWith('aorist')
+        ? 'aorist'
+        : kind.startsWith('prog')
+          ? 'progressive'
+          : 'ability';
     return baseAnalysis({
       lemma: best.lemma,
       person: 'first',
@@ -348,7 +727,8 @@ export function analyzeTurkishClause(clause: string, opts: AnalyzeOptions): Clau
     const start = generic.index;
     const end = generic.index + generic[0].length;
     const stem = lower.slice(start, start + generic.groups.stem.length);
-    if (NEUTRAL_FUTURE_STEMS.has(stem.replace(/ı/g, 'i')) || NEUTRAL_FUTURE_STEMS.has(stem)) return null;
+    if (NEUTRAL_FUTURE_STEMS.has(stem.replace(/ı/g, 'i')) || NEUTRAL_FUTURE_STEMS.has(stem))
+      return null;
     const lemma = imperativeFromStem(stem);
     const objectSource = clause.slice(0, start);
     const object = buildObject(objectSource, dates, null, lemma);
@@ -394,7 +774,13 @@ export function analyzeTurkishClause(clause: string, opts: AnalyzeOptions): Clau
     const objRaw = clause.slice(e.index, e.index + e.groups.obj.length);
     const objDates = extractDates({ text: objRaw, now: opts.now, timezone: opts.timezone });
     const objectText = stripDatesAndFillers(objRaw, objDates);
-    if (!objectText || /(?<![\p{L}])(?:seni|sizi|beni|bizi|onu|onları|sabırsızlıkla|heyecanla|merakla)(?![\p{L}])/u.test(lowercasePreservingIndices(objectText))) return null;
+    if (
+      !objectText ||
+      /(?<![\p{L}])(?:seni|sizi|beni|bizi|onu|onları|sabırsızlıkla|heyecanla|merakla)(?![\p{L}])/u.test(
+        lowercasePreservingIndices(objectText),
+      )
+    )
+      return null;
     if (!isKnownDeliverable(objectText)) return null;
     const noun = normalizeNounPhrase(objectText);
     const lemma = verbForNoun(noun);
@@ -431,30 +817,62 @@ function lemmaOf(verb: { lemma: string }, lower: string, start: number): string 
   return compound ? `${compound} et` : null;
 }
 
-function detectRequest(clause: string, lower: string, conditionalRequest: RegExpExecArray | null): RequestHit | null {
+function detectRequest(
+  clause: string,
+  lower: string,
+  conditionalRequest: RegExpExecArray | null,
+): RequestHit | null {
   const polite = RE_POLITE.test(lower);
   const vn = RE_REQUEST_VERBAL_NOUN.exec(lower);
   if (vn?.groups?.form) {
     const verb = lookupVerbalNoun(vn.groups.form);
     const lemma = verb ? lemmaOf(verb, lower, vn.index) : null;
-    if (lemma) return { lemma, form: 'request', start: vn.index, end: vn.index + vn[0].length, confidence: 0.72 };
+    if (lemma)
+      return {
+        lemma,
+        form: 'request',
+        start: vn.index,
+        end: vn.index + vn[0].length,
+        confidence: 0.72,
+      };
   }
   const need = RE_REQUEST_NEED.exec(lower);
   if (need?.groups?.form) {
     const verb = lookupVerbalNoun(need.groups.form);
     const lemma = verb ? lemmaOf(verb, lower, need.index) : null;
-    if (lemma) return { lemma, form: 'request', start: need.index, end: need.index + need[0].length, confidence: 0.66 };
+    if (lemma)
+      return {
+        lemma,
+        form: 'request',
+        start: need.index,
+        end: need.index + need[0].length,
+        confidence: 0.66,
+      };
   }
   const q = RE_REQUEST_QUESTION.exec(lower);
   if (q?.groups?.form) {
     const verb = lookupRequestStem(q.groups.form);
     const lemma = verb ? lemmaOf(verb, lower, q.index) : null;
-    if (lemma) return { lemma, form: 'request', start: q.index, end: q.index + q[0].length, confidence: polite ? 0.75 : 0.7 };
+    if (lemma)
+      return {
+        lemma,
+        form: 'request',
+        start: q.index,
+        end: q.index + q[0].length,
+        confidence: polite ? 0.75 : 0.7,
+      };
   }
   if (conditionalRequest?.groups?.form && RE_PLEASED.test(lower)) {
     const verb = lookupRequestStem(conditionalRequest.groups.form);
     const lemma = verb ? lemmaOf(verb, lower, conditionalRequest.index) : null;
-    if (lemma) return { lemma, form: 'request', start: conditionalRequest.index, end: conditionalRequest.index + conditionalRequest[0].length, confidence: 0.62 };
+    if (lemma)
+      return {
+        lemma,
+        form: 'request',
+        start: conditionalRequest.index,
+        end: conditionalRequest.index + conditionalRequest[0].length,
+        confidence: 0.62,
+      };
   }
   if (polite) {
     RE_REQUEST_IMPERATIVE.lastIndex = 0;
@@ -462,11 +880,21 @@ function detectRequest(clause: string, lower: string, conditionalRequest: RegExp
     let im: RegExpExecArray | null;
     while ((im = RE_REQUEST_IMPERATIVE.exec(lower)) !== null) last = im;
     if (last?.groups?.form) {
-      const after = lower.slice(last.index + last[0].length).replace(/[.!,;:\s]+/gu, ' ').trim();
+      const after = lower
+        .slice(last.index + last[0].length)
+        .replace(/[.!,;:\s]+/gu, ' ')
+        .trim();
       const isFinal = after === '' || after === 'lütfen';
       const verb = lookupImperative(last.groups.form);
       const lemma = verb && isFinal ? lemmaOf(verb, lower, last.index) : null;
-      if (lemma) return { lemma, form: 'imperative', start: last.index, end: last.index + last[0].length, confidence: 0.6 };
+      if (lemma)
+        return {
+          lemma,
+          form: 'imperative',
+          start: last.index,
+          end: last.index + last[0].length,
+          confidence: 0.6,
+        };
     }
   }
   return null;
@@ -485,7 +913,19 @@ export function cleanTopic(topic: string): string {
   return t.replace(/[.!?]+$/u, '').toLocaleLowerCase('tr-TR');
 }
 
-const NO_TOPIC_OBJECT = new Set(['ara', 'dön', 'konuş', 'görüş', 'gel', 'git', 'uğra', 'katıl', 'ulaş', 'geç', 'bak']);
+const NO_TOPIC_OBJECT = new Set([
+  'ara',
+  'dön',
+  'konuş',
+  'görüş',
+  'gel',
+  'git',
+  'uğra',
+  'katıl',
+  'ulaş',
+  'geç',
+  'bak',
+]);
 
 export interface ComposeTurkishInput {
   analysis: ClauseAnalysis;
@@ -527,7 +967,12 @@ export function composeTurkish(input: ComposeTurkishInput): string {
     parts.push(counterpartFirstName ?? 'Karşı taraf');
     if (object) parts.push(decapitalizeObject(object));
     else if (a.person === 'first') {
-      const pronoun: Record<CounterpartCase, string> = { dat: 'size', acc: 'sizi', ile: 'sizinle', none: '' };
+      const pronoun: Record<CounterpartCase, string> = {
+        dat: 'size',
+        acc: 'sizi',
+        ile: 'sizinle',
+        none: '',
+      };
       if (pronoun[a.counterpartCase]) parts.push(pronoun[a.counterpartCase]);
     }
     parts.push(futureThird(lemma));

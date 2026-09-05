@@ -51,12 +51,18 @@ export function matchRules(
   return out;
 }
 
-export function matchVip(vips: readonly VipPerson[] | undefined, senderEmail: string, senderName?: string | null): VipPerson | null {
+export function matchVip(
+  vips: readonly VipPerson[] | undefined,
+  senderEmail: string,
+  senderName?: string | null,
+): VipPerson | null {
   if (!vips || vips.length === 0) return null;
   const email = senderEmail.trim().toLowerCase();
   const byEmail = vips.find((v) => v.email && v.email.trim().toLowerCase() === email);
   if (byEmail) return byEmail;
   const name = (senderName ?? '').trim().toLocaleLowerCase('tr-TR');
   if (!name) return null;
-  return vips.find((v) => !v.email && v.displayName.trim().toLocaleLowerCase('tr-TR') === name) ?? null;
+  return (
+    vips.find((v) => !v.email && v.displayName.trim().toLocaleLowerCase('tr-TR') === name) ?? null
+  );
 }

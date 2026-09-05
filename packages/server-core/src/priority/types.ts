@@ -10,7 +10,8 @@ import type {
   VipPerson,
 } from '@da/domain';
 
-export type PriorityCandidateKind = 'email' | 'event' | 'task' | 'commitment' | 'follow_up' | 'life_event' | 'notification';
+export type PriorityCandidateKind =
+  'email' | 'event' | 'task' | 'commitment' | 'follow_up' | 'life_event' | 'notification';
 
 export interface PriorityCandidate {
   id: string;

@@ -50,24 +50,22 @@ Deno.serve(
       run.step !== 'failed' &&
       Date.now() - Date.parse(run.started_at) < STALE_MS;
     if (!inProgress) {
-      const { error } = await admin
-        .from('first_analysis_runs')
-        .upsert(
-          {
-            user_id: user.id,
-            step: 'scanning',
-            emails_found: 0,
-            potential_important: 0,
-            upcoming_events: 0,
-            possible_follow_ups: 0,
-            window_hours: input.windowHours ?? 72,
-            started_at: now,
-            completed_at: null,
-            error: null,
-            briefing_id: null,
-          },
-          { onConflict: 'user_id' },
-        );
+      const { error } = await admin.from('first_analysis_runs').upsert(
+        {
+          user_id: user.id,
+          step: 'scanning',
+          emails_found: 0,
+          potential_important: 0,
+          upcoming_events: 0,
+          possible_follow_ups: 0,
+          window_hours: input.windowHours ?? 72,
+          started_at: now,
+          completed_at: null,
+          error: null,
+          briefing_id: null,
+        },
+        { onConflict: 'user_id' },
+      );
       if (error) throw new AppError('internal', `Analiz başlatılamadı: ${error.message}`);
       await audit(admin, {
         userId: user.id,

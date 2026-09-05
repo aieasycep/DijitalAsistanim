@@ -6,7 +6,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const ADMIN_URL = process.env.DATABASE_URL ?? 'postgresql://postgres@127.0.0.1:54329/postgres';
+export const ADMIN_URL =
+  process.env.DATABASE_URL ?? 'postgresql://postgres@127.0.0.1:54329/postgres';
 
 export function dbNameFromUrl(url) {
   return new URL(url).pathname.replace(/^\//, '') || 'postgres';
@@ -31,7 +32,9 @@ export function psql(url, args, opts = {}) {
 }
 
 export function createFreshDatabase(adminUrl, dbName) {
-  psql(adminUrl, ['-c', `drop database if exists "${dbName}" with (force)`], { allowFailure: true });
+  psql(adminUrl, ['-c', `drop database if exists "${dbName}" with (force)`], {
+    allowFailure: true,
+  });
   psql(adminUrl, ['-c', `create database "${dbName}" template template0 encoding 'UTF8'`]);
   return withDatabase(adminUrl, dbName);
 }

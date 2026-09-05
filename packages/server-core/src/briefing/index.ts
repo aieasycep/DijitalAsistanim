@@ -3,14 +3,54 @@
  * items, compose a deterministic fallback (no AI needed), merge a validated AI narration without
  * letting it invent items, plan the evening carry-over and render the share card text.
  */
-import type { Briefing, BriefingAudio, BriefingCounts, BriefingItem, BriefingKind, BriefingSection, CalendarEvent, Commitment, FollowUp, Insight, LifeEvent, Locale, SourceRef, TaskItem, WeeklyMetrics } from '@da/domain';
+import type {
+  Briefing,
+  BriefingAudio,
+  BriefingCounts,
+  BriefingItem,
+  BriefingKind,
+  BriefingSection,
+  CalendarEvent,
+  Commitment,
+  FollowUp,
+  Insight,
+  LifeEvent,
+  Locale,
+  SourceRef,
+  TaskItem,
+  WeeklyMetrics,
+} from '@da/domain';
 import { BRIEFING_SECTIONS } from '@da/domain';
 import type { BriefingAi } from '@da/validation';
 import type { BriefingCandidate } from '../ai/prompts/briefing';
-import { durationMinutes, externalAttendees, hasPhysicalLocation, isSchedulable } from '../calendar';
-import { MONTHS_EN_TITLE, MONTHS_TR_TITLE, addDays, dateKey, formatClock, localToUtcIso, parseDateKey, turkishDative, turkishLocative, turkishNumberLocative } from '../dates';
+import {
+  durationMinutes,
+  externalAttendees,
+  hasPhysicalLocation,
+  isSchedulable,
+} from '../calendar';
+import {
+  MONTHS_EN_TITLE,
+  MONTHS_TR_TITLE,
+  addDays,
+  dateKey,
+  formatClock,
+  localToUtcIso,
+  parseDateKey,
+  turkishDative,
+  turkishLocative,
+  turkishNumberLocative,
+} from '../dates';
 import { refreshFollowUpStatus, waitingDays } from '../followups';
-import { badgeLabel, formatDayOrDate, greetingFor, hasClockTime, selectTopInsights, sourceLabel, type InsightDraft } from '../insights';
+import {
+  badgeLabel,
+  formatDayOrDate,
+  greetingFor,
+  hasClockTime,
+  selectTopInsights,
+  sourceLabel,
+  type InsightDraft,
+} from '../insights';
 import { DAY, HOUR, localDateKey, localHour } from '../util';
 
 export const WORDS_PER_MINUTE = 150;
@@ -31,7 +71,10 @@ export interface BriefingCandidates {
   sections: BriefingSectionCandidates[];
 }
 
-export interface BriefingDraft extends Omit<Briefing, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'items'> {
+export interface BriefingDraft extends Omit<
+  Briefing,
+  'id' | 'userId' | 'createdAt' | 'updatedAt' | 'items'
+> {
   items: BriefingItemDraft[];
 }
 
@@ -58,7 +101,14 @@ export interface BriefingContext {
 }
 
 export const SECTION_ORDER: Record<BriefingKind, readonly BriefingSection[]> = {
-  morning: ['priorities', 'schedule', 'waiting_for_you', 'waiting_for_others', 'deadlines', 'personal'],
+  morning: [
+    'priorities',
+    'schedule',
+    'waiting_for_you',
+    'waiting_for_others',
+    'deadlines',
+    'personal',
+  ],
   midday: ['changes', 'rest_of_day'],
   evening: ['completed', 'carried_over', 'follow_ups', 'first_event_tomorrow'],
   weekly: ['priorities', 'deadlines', 'follow_ups', 'schedule'],
@@ -189,7 +239,8 @@ function lifeEventIcon(type: LifeEvent['type']): string {
 }
 
 function eventIcon(event: CalendarEvent): string {
-  if (/(yeme[kğ]|restoran|rezervasyon|dinner|lunch|brunch|kahvaltı)/i.test(event.title)) return 'restaurant';
+  if (/(yeme[kğ]|restoran|rezervasyon|dinner|lunch|brunch|kahvaltı)/i.test(event.title))
+    return 'restaurant';
   if (event.meetingUrl && !hasPhysicalLocation(event)) return 'videocam';
   return 'event';
 }
@@ -239,9 +290,20 @@ function eventPlace(event: CalendarEvent): string | null {
 
 function eventMeta(event: CalendarEvent, ctx: Ctx, opts: { withDay?: boolean } = {}): string {
   const parts: string[] = [];
-  if (event.allDay) parts.push(opts.withDay ? formatDayOrDate(event.startAt, { ...fmt(ctx), hasTime: false }) : ctx.en ? 'All day' : 'Tüm gün');
+  if (event.allDay)
+    parts.push(
+      opts.withDay
+        ? formatDayOrDate(event.startAt, { ...fmt(ctx), hasTime: false })
+        : ctx.en
+          ? 'All day'
+          : 'Tüm gün',
+    );
   else {
-    parts.push(opts.withDay ? formatDayOrDate(event.startAt, { ...fmt(ctx), hasTime: true }) : formatClock(event.startAt, ctx.timezone));
+    parts.push(
+      opts.withDay
+        ? formatDayOrDate(event.startAt, { ...fmt(ctx), hasTime: true })
+        : formatClock(event.startAt, ctx.timezone),
+    );
     parts.push(`${durationMinutes(event)} ${ctx.en ? 'min' : 'dk'}`);
   }
   const place = eventPlace(event);
@@ -269,31 +331,66 @@ function lifeEventMeta(le: LifeEvent, ctx: Ctx): string | null {
   const d = le.details;
   switch (le.type) {
     case 'shipment':
-      if (d.deliveryWindow?.start && d.deliveryWindow.end) return `${formatClock(d.deliveryWindow.start, ctx.timezone)}–${formatClock(d.deliveryWindow.end, ctx.timezone)}`;
+      if (d.deliveryWindow?.start && d.deliveryWindow.end)
+        return `${formatClock(d.deliveryWindow.start, ctx.timezone)}–${formatClock(d.deliveryWindow.end, ctx.timezone)}`;
       return le.eventAt ? formatDayOrDate(le.eventAt, { ...fmt(ctx), hasTime: false }) : null;
     case 'flight':
-      return d.departureAt ? formatDayOrDate(d.departureAt, { ...fmt(ctx), hasTime: true }) : le.eventAt ? formatDayOrDate(le.eventAt, fmt(ctx)) : null;
+      return d.departureAt
+        ? formatDayOrDate(d.departureAt, { ...fmt(ctx), hasTime: true })
+        : le.eventAt
+          ? formatDayOrDate(le.eventAt, fmt(ctx))
+          : null;
     case 'payment':
-      return d.dueAt ? formatDayOrDate(d.dueAt, { ...fmt(ctx), hasTime: false }) : le.eventAt ? formatDayOrDate(le.eventAt, { ...fmt(ctx), hasTime: false }) : null;
+      return d.dueAt
+        ? formatDayOrDate(d.dueAt, { ...fmt(ctx), hasTime: false })
+        : le.eventAt
+          ? formatDayOrDate(le.eventAt, { ...fmt(ctx), hasTime: false })
+          : null;
     case 'subscription':
       return d.renewsAt ? formatDayOrDate(d.renewsAt, { ...fmt(ctx), hasTime: false }) : null;
     case 'reservation':
-      return [d.reservationAt ? formatDayOrDate(d.reservationAt, { ...fmt(ctx), hasTime: true }) : null, d.venue ?? null].filter((x): x is string => !!x).join(' · ') || null;
+      return (
+        [
+          d.reservationAt ? formatDayOrDate(d.reservationAt, { ...fmt(ctx), hasTime: true }) : null,
+          d.venue ?? null,
+        ]
+          .filter((x): x is string => !!x)
+          .join(' · ') || null
+      );
     case 'security':
-      return [d.device, d.location, le.eventAt ? formatClock(le.eventAt, ctx.timezone) : null].filter((x): x is string => !!x).join(' · ') || null;
+      return (
+        [d.device, d.location, le.eventAt ? formatClock(le.eventAt, ctx.timezone) : null]
+          .filter((x): x is string => !!x)
+          .join(' · ') || null
+      );
   }
 }
 
 function lifeEventDue(le: LifeEvent): string | null {
   const d = le.details;
-  return d.dueAt ?? d.renewsAt ?? d.departureAt ?? d.reservationAt ?? d.deliveryWindow?.start ?? le.eventAt ?? null;
+  return (
+    d.dueAt ??
+    d.renewsAt ??
+    d.departureAt ??
+    d.reservationAt ??
+    d.deliveryWindow?.start ??
+    le.eventAt ??
+    null
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Item factories
 // ---------------------------------------------------------------------------
 
-function draft(section: BriefingSection, icon: string, title: string, meta: string | null, source: SourceRef | null, ref: { insightId?: string | null; entityType: BriefingItem['entityType']; entityId: string }): BriefingItemDraft {
+function draft(
+  section: BriefingSection,
+  icon: string,
+  title: string,
+  meta: string | null,
+  source: SourceRef | null,
+  ref: { insightId?: string | null; entityType: BriefingItem['entityType']; entityId: string },
+): BriefingItemDraft {
   return {
     candidateId: `${section}:${ref.entityType ?? 'item'}:${ref.entityId}`,
     section,
@@ -310,34 +407,78 @@ function draft(section: BriefingSection, icon: string, title: string, meta: stri
   };
 }
 
-function fromInsight(i: InsightLike, section: BriefingSection, ctx: Ctx, meta?: string | null): BriefingItemDraft {
+function fromInsight(
+  i: InsightLike,
+  section: BriefingSection,
+  ctx: Ctx,
+  meta?: string | null,
+): BriefingItemDraft {
   const badge = badgeLabel(i.badge, ctx.locale);
   const defaultMeta = i.timeLabel ? `${badge} · ${i.timeLabel}` : badge;
-  return draft(section, insightIcon(i, ctx), i.title, meta === undefined ? defaultMeta : meta, i.source, { insightId: insightId(i), entityType: i.entityType, entityId: i.entityId });
+  return draft(
+    section,
+    insightIcon(i, ctx),
+    i.title,
+    meta === undefined ? defaultMeta : meta,
+    i.source,
+    { insightId: insightId(i), entityType: i.entityType, entityId: i.entityId },
+  );
 }
 
-function fromEvent(event: CalendarEvent, section: BriefingSection, ctx: Ctx, opts: { withDay?: boolean } = {}): BriefingItemDraft {
-  return draft(section, eventIcon(event), event.title, eventMeta(event, ctx, opts), eventSource(event, ctx), { entityType: 'calendar_event', entityId: event.id });
+function fromEvent(
+  event: CalendarEvent,
+  section: BriefingSection,
+  ctx: Ctx,
+  opts: { withDay?: boolean } = {},
+): BriefingItemDraft {
+  return draft(
+    section,
+    eventIcon(event),
+    event.title,
+    eventMeta(event, ctx, opts),
+    eventSource(event, ctx),
+    { entityType: 'calendar_event', entityId: event.id },
+  );
 }
 
 function fromFollowUp(f: FollowUp, section: BriefingSection, ctx: Ctx): BriefingItemDraft {
   const days = waitingDays(f, ctx.now, ctx.timezone);
-  const meta = ctx.en ? `No reply for ${days} ${days === 1 ? 'day' : 'days'}` : `${days} gündür yanıt yok`;
-  return draft(section, 'schedule_send', `${f.counterpartName} · ${f.topic}`, meta, f.source, { entityType: 'follow_up', entityId: f.id });
+  const meta = ctx.en
+    ? `No reply for ${days} ${days === 1 ? 'day' : 'days'}`
+    : `${days} gündür yanıt yok`;
+  return draft(section, 'schedule_send', `${f.counterpartName} · ${f.topic}`, meta, f.source, {
+    entityType: 'follow_up',
+    entityId: f.id,
+  });
 }
 
 function fromCommitment(c: Commitment, section: BriefingSection, ctx: Ctx): BriefingItemDraft {
   const meta = c.dueAt ? formatDayOrDate(c.dueAt, fmt(ctx)) : (c.dueText ?? null);
-  return draft(section, 'handshake', c.text, meta, c.source, { entityType: 'commitment', entityId: c.id });
+  return draft(section, 'handshake', c.text, meta, c.source, {
+    entityType: 'commitment',
+    entityId: c.id,
+  });
 }
 
 function fromLifeEvent(le: LifeEvent, section: BriefingSection, ctx: Ctx): BriefingItemDraft {
-  return draft(section, lifeEventIcon(le.type), le.title, lifeEventMeta(le, ctx), le.source, { entityType: 'life_event', entityId: le.id });
+  return draft(section, lifeEventIcon(le.type), le.title, lifeEventMeta(le, ctx), le.source, {
+    entityType: 'life_event',
+    entityId: le.id,
+  });
 }
 
 function fromTask(t: TaskItem, section: BriefingSection, ctx: Ctx): BriefingItemDraft {
-  const meta = t.completedAt ? (ctx.en ? `Done · ${formatClock(t.completedAt, ctx.timezone)}` : `Tamamlandı · ${formatClock(t.completedAt, ctx.timezone)}`) : ctx.en ? 'Done' : 'Tamamlandı';
-  return draft(section, 'flag', t.title, meta, t.source ?? null, { entityType: 'task', entityId: t.id });
+  const meta = t.completedAt
+    ? ctx.en
+      ? `Done · ${formatClock(t.completedAt, ctx.timezone)}`
+      : `Tamamlandı · ${formatClock(t.completedAt, ctx.timezone)}`
+    : ctx.en
+      ? 'Done'
+      : 'Tamamlandı';
+  return draft(section, 'flag', t.title, meta, t.source ?? null, {
+    entityType: 'task',
+    entityId: t.id,
+  });
 }
 
 function dedupe(items: BriefingItemDraft[]): BriefingItemDraft[] {
@@ -368,7 +509,9 @@ function openFollowUps(input: BriefingContext, ctx: Ctx): FollowUp[] {
 }
 
 function theyOwe(input: BriefingContext): Commitment[] {
-  return (input.commitments ?? []).filter((c) => !c.deletedAt && c.status === 'open' && c.direction === 'other_owes');
+  return (input.commitments ?? []).filter(
+    (c) => !c.deletedAt && c.status === 'open' && c.direction === 'other_owes',
+  );
 }
 
 function liveLifeEvents(input: BriefingContext, ctx: Ctx): LifeEvent[] {
@@ -384,11 +527,19 @@ function liveLifeEvents(input: BriefingContext, ctx: Ctx): LifeEvent[] {
 function waitingMeta(i: InsightLike, ctx: Ctx): string {
   const person = i.source.person ?? null;
   let when: string;
-  if (i.dueAt) when = formatDayOrDate(i.dueAt, { ...fmt(ctx), hasTime: hasClockTime(i.dueAt, ctx.timezone) });
+  if (i.dueAt)
+    when = formatDayOrDate(i.dueAt, { ...fmt(ctx), hasTime: hasClockTime(i.dueAt, ctx.timezone) });
   else {
     const hours = Math.max(1, Math.floor((ctx.nowMs - ms(i.source.timestamp)) / HOUR));
     const days = Math.floor(hours / 24);
-    when = days >= 1 ? (ctx.en ? `waiting ${days} ${days === 1 ? 'day' : 'days'}` : `${days} gündür bekliyor`) : ctx.en ? `waiting ${hours} h` : `${hours} saattir bekliyor`;
+    when =
+      days >= 1
+        ? ctx.en
+          ? `waiting ${days} ${days === 1 ? 'day' : 'days'}`
+          : `${days} gündür bekliyor`
+        : ctx.en
+          ? `waiting ${hours} h`
+          : `${hours} saattir bekliyor`;
   }
   return person ? `${person} · ${when}` : when;
 }
@@ -401,11 +552,27 @@ function prioritiesSection(insights: InsightLike[], ctx: Ctx, max: number): Brie
   return dedupe(top.map((i) => fromInsight(i, 'priorities', ctx)));
 }
 
-function deadlinesSection(insights: InsightLike[], lifeEvents: LifeEvent[], ctx: Ctx, section: BriefingSection): BriefingItemDraft[] {
+function deadlinesSection(
+  insights: InsightLike[],
+  lifeEvents: LifeEvent[],
+  ctx: Ctx,
+  section: BriefingSection,
+): BriefingItemDraft[] {
   const timed: { item: BriefingItemDraft; at: number }[] = [];
-  const fromInsights = insights.filter((i): i is InsightLike & { dueAt: string } => (i.kind === 'deadline' || i.badge === 'deadline') && !!i.dueAt);
+  const fromInsights = insights.filter(
+    (i): i is InsightLike & { dueAt: string } =>
+      (i.kind === 'deadline' || i.badge === 'deadline') && !!i.dueAt,
+  );
   for (const i of fromInsights) {
-    timed.push({ item: fromInsight(i, section, ctx, formatDayOrDate(i.dueAt, { ...fmt(ctx), hasTime: hasClockTime(i.dueAt, ctx.timezone) })), at: ms(i.dueAt) });
+    timed.push({
+      item: fromInsight(
+        i,
+        section,
+        ctx,
+        formatDayOrDate(i.dueAt, { ...fmt(ctx), hasTime: hasClockTime(i.dueAt, ctx.timezone) }),
+      ),
+      at: ms(i.dueAt),
+    });
   }
   const covered = new Set(fromInsights.map((i) => i.entityId));
   for (const le of lifeEvents) {
@@ -417,17 +584,26 @@ function deadlinesSection(insights: InsightLike[], lifeEvents: LifeEvent[], ctx:
 }
 
 function personalSection(lifeEvents: LifeEvent[], ctx: Ctx): BriefingItemDraft[] {
-  return dedupe(lifeEvents.filter((l) => l.type !== 'security').map((l) => fromLifeEvent(l, 'personal', ctx)));
+  return dedupe(
+    lifeEvents.filter((l) => l.type !== 'security').map((l) => fromLifeEvent(l, 'personal', ctx)),
+  );
 }
 
-function waitingForOthersSection(input: BriefingContext, ctx: Ctx, section: BriefingSection): BriefingItemDraft[] {
+function waitingForOthersSection(
+  input: BriefingContext,
+  ctx: Ctx,
+  section: BriefingSection,
+): BriefingItemDraft[] {
   const items = openFollowUps(input, ctx).map((f) => fromFollowUp(f, section, ctx));
   for (const c of theyOwe(input)) items.push(fromCommitment(c, section, ctx));
   return dedupe(items);
 }
 
 /** Section candidates in the fixed order for the briefing kind; empty sections are omitted. */
-export function assembleBriefingCandidates(kind: BriefingKind, input: BriefingContext): BriefingCandidates {
+export function assembleBriefingCandidates(
+  kind: BriefingKind,
+  input: BriefingContext,
+): BriefingCandidates {
   const ctx = makeCtx(input);
   const insights = activeInsights(input, ctx);
   const lifeEvents = liveLifeEvents(input, ctx);
@@ -439,27 +615,67 @@ export function assembleBriefingCandidates(kind: BriefingKind, input: BriefingCo
       sections.set('priorities', prioritiesSection(insights, ctx, 5));
       sections.set('schedule', dedupe(todayEvents.map((e) => fromEvent(e, 'schedule', ctx))));
       const waiting = insights
-        .filter((i) => i.entityType === 'email_thread' && (i.kind === 'waiting_for_user' || i.badge === 'waiting' || (i.badge === 'urgent' && i.actions.some((a) => a.kind === 'reply'))))
-        .sort((a, b) => (ms(a.dueAt) || Number.POSITIVE_INFINITY) - (ms(b.dueAt) || Number.POSITIVE_INFINITY));
-      sections.set('waiting_for_you', dedupe(waiting.map((i) => draft('waiting_for_you', 'person', i.title, waitingMeta(i, ctx), i.source, { insightId: insightId(i), entityType: i.entityType, entityId: i.entityId }))));
+        .filter(
+          (i) =>
+            i.entityType === 'email_thread' &&
+            (i.kind === 'waiting_for_user' ||
+              i.badge === 'waiting' ||
+              (i.badge === 'urgent' && i.actions.some((a) => a.kind === 'reply'))),
+        )
+        .sort(
+          (a, b) =>
+            (ms(a.dueAt) || Number.POSITIVE_INFINITY) - (ms(b.dueAt) || Number.POSITIVE_INFINITY),
+        );
+      sections.set(
+        'waiting_for_you',
+        dedupe(
+          waiting.map((i) =>
+            draft('waiting_for_you', 'person', i.title, waitingMeta(i, ctx), i.source, {
+              insightId: insightId(i),
+              entityType: i.entityType,
+              entityId: i.entityId,
+            }),
+          ),
+        ),
+      );
       sections.set('waiting_for_others', waitingForOthersSection(input, ctx, 'waiting_for_others'));
       sections.set('deadlines', deadlinesSection(insights, lifeEvents, ctx, 'deadlines'));
       sections.set('personal', personalSection(lifeEvents, ctx));
       break;
     }
     case 'midday': {
-      const sinceMs = input.sinceAt ? ms(input.sinceAt) : ms(localToUtcIso(parseDateKey(ctx.today), 6, 0, ctx.timezone));
+      const sinceMs = input.sinceAt
+        ? ms(input.sinceAt)
+        : ms(localToUtcIso(parseDateKey(ctx.today), 6, 0, ctx.timezone));
       const since = Number.isNaN(sinceMs) ? ctx.nowMs - 6 * HOUR : sinceMs;
       const changed = insights.filter((i) => {
         if (!('createdAt' in i)) return true;
         return ms(i.createdAt) >= since || ms(i.updatedAt) >= since;
       });
-      sections.set('changes', dedupe(selectTopInsights(changed, { max: 6, maxPerPerson: 3 }).map((i) => fromInsight(i, 'changes', ctx))));
-      const rest: { item: BriefingItemDraft; at: number }[] = todayEvents.filter((e) => ms(e.endAt) > ctx.nowMs).map((e) => ({ item: fromEvent(e, 'rest_of_day', ctx), at: ms(e.startAt) }));
+      sections.set(
+        'changes',
+        dedupe(
+          selectTopInsights(changed, { max: 6, maxPerPerson: 3 }).map((i) =>
+            fromInsight(i, 'changes', ctx),
+          ),
+        ),
+      );
+      const rest: { item: BriefingItemDraft; at: number }[] = todayEvents
+        .filter((e) => ms(e.endAt) > ctx.nowMs)
+        .map((e) => ({ item: fromEvent(e, 'rest_of_day', ctx), at: ms(e.startAt) }));
       for (const i of insights) {
-        if (i.dueAt && ms(i.dueAt) > ctx.nowMs && localDateKey(i.dueAt, ctx.timezone) === ctx.today && i.entityType !== 'calendar_event' && i.kind !== 'suggestion') {
+        if (
+          i.dueAt &&
+          ms(i.dueAt) > ctx.nowMs &&
+          localDateKey(i.dueAt, ctx.timezone) === ctx.today &&
+          i.entityType !== 'calendar_event' &&
+          i.kind !== 'suggestion'
+        ) {
           // Life events keep their own label (a delivery window is not a clock time).
-          const meta = i.kind === 'life_event' && i.timeLabel ? i.timeLabel : formatDayOrDate(i.dueAt, fmt(ctx));
+          const meta =
+            i.kind === 'life_event' && i.timeLabel
+              ? i.timeLabel
+              : formatDayOrDate(i.dueAt, fmt(ctx));
           rest.push({ item: fromInsight(i, 'rest_of_day', ctx, meta), at: ms(i.dueAt) });
         }
       }
@@ -469,16 +685,40 @@ export function assembleBriefingCandidates(kind: BriefingKind, input: BriefingCo
     case 'evening': {
       const completed: BriefingItemDraft[] = (input.completedToday ?? []).map((i) => {
         const at = 'updatedAt' in i ? i.updatedAt : null;
-        const meta = at ? (ctx.en ? `Done · ${formatClock(at, ctx.timezone)}` : `Tamamlandı · ${formatClock(at, ctx.timezone)}`) : ctx.en ? 'Done' : 'Tamamlandı';
+        const meta = at
+          ? ctx.en
+            ? `Done · ${formatClock(at, ctx.timezone)}`
+            : `Tamamlandı · ${formatClock(at, ctx.timezone)}`
+          : ctx.en
+            ? 'Done'
+            : 'Tamamlandı';
         return { ...fromInsight(i, 'completed', ctx, meta), status: 'done' as const };
       });
-      for (const t of input.tasksDoneToday ?? []) completed.push({ ...fromTask(t, 'completed', ctx), status: 'done' });
+      for (const t of input.tasksDoneToday ?? [])
+        completed.push({ ...fromTask(t, 'completed', ctx), status: 'done' });
       sections.set('completed', dedupe(completed));
-      const carry = insights.filter((i) => i.kind === 'priority' || i.kind === 'waiting_for_user' || i.kind === 'deadline' || i.kind === 'commitment' || i.kind === 'security');
-      sections.set('carried_over', dedupe(selectTopInsights(carry, { max: 8, maxPerPerson: 3 }).map((i) => fromInsight(i, 'carried_over', ctx))));
+      const carry = insights.filter(
+        (i) =>
+          i.kind === 'priority' ||
+          i.kind === 'waiting_for_user' ||
+          i.kind === 'deadline' ||
+          i.kind === 'commitment' ||
+          i.kind === 'security',
+      );
+      sections.set(
+        'carried_over',
+        dedupe(
+          selectTopInsights(carry, { max: 8, maxPerPerson: 3 }).map((i) =>
+            fromInsight(i, 'carried_over', ctx),
+          ),
+        ),
+      );
       sections.set('follow_ups', waitingForOthersSection(input, ctx, 'follow_ups'));
       const first = eventsOn(input.events, ctx.tomorrow, ctx)[0];
-      sections.set('first_event_tomorrow', first ? dedupe([fromEvent(first, 'first_event_tomorrow', ctx, { withDay: true })]) : []);
+      sections.set(
+        'first_event_tomorrow',
+        first ? dedupe([fromEvent(first, 'first_event_tomorrow', ctx, { withDay: true })]) : [],
+      );
       break;
     }
     case 'weekly': {
@@ -486,10 +726,18 @@ export function assembleBriefingCandidates(kind: BriefingKind, input: BriefingCo
       sections.set('deadlines', deadlinesSection(insights, lifeEvents, ctx, 'deadlines'));
       sections.set('follow_ups', waitingForOthersSection(input, ctx, 'follow_ups'));
       const upcoming = input.events
-        .filter((e) => eventVisible(e, ctx) && ms(e.startAt) >= ctx.nowMs && ms(e.startAt) <= ctx.nowMs + 7 * DAY)
+        .filter(
+          (e) =>
+            eventVisible(e, ctx) &&
+            ms(e.startAt) >= ctx.nowMs &&
+            ms(e.startAt) <= ctx.nowMs + 7 * DAY,
+        )
         .sort((a, b) => ms(a.startAt) - ms(b.startAt))
         .slice(0, 8);
-      sections.set('schedule', dedupe(upcoming.map((e) => fromEvent(e, 'schedule', ctx, { withDay: true }))));
+      sections.set(
+        'schedule',
+        dedupe(upcoming.map((e) => fromEvent(e, 'schedule', ctx, { withDay: true }))),
+      );
       break;
     }
   }
@@ -503,9 +751,13 @@ export function assembleBriefingCandidates(kind: BriefingKind, input: BriefingCo
 }
 
 /** Candidate lines for the AI prompt (ids are the drafts' candidateIds). */
-export function toBriefingPromptCandidates(candidates: BriefingCandidates, ctx: { insights?: readonly InsightLike[] } = {}): BriefingCandidate[] {
+export function toBriefingPromptCandidates(
+  candidates: BriefingCandidates,
+  ctx: { insights?: readonly InsightLike[] } = {},
+): BriefingCandidate[] {
   const importanceByEntity = new Map<string, Insight['importance']>();
-  for (const i of ctx.insights ?? []) importanceByEntity.set(`${i.entityType}:${i.entityId}`, i.importance);
+  for (const i of ctx.insights ?? [])
+    importanceByEntity.set(`${i.entityType}:${i.entityId}`, i.importance);
   const out: BriefingCandidate[] = [];
   for (const s of candidates.sections) {
     for (const it of s.items) {
@@ -557,7 +809,10 @@ export function ttsFriendly(text: string, locale: Locale = 'tr'): string {
   s = s.replace(/\s*→\s*/g, ' - ');
   s = s.replace(/\s*[–—]\s*/g, ', ');
   s = s.replace(/[“”"]/g, '');
-  s = s.replace(/\s{2,}/g, ' ').replace(/\s+([,.])/g, '$1').trim();
+  s = s
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.])/g, '$1')
+    .trim();
   return s;
 }
 
@@ -567,7 +822,11 @@ interface Chapter {
   sections: BriefingSection[];
 }
 
-function sectionSentences(section: BriefingSection, items: readonly BriefingItemDraft[], ctx: Ctx): string {
+function sectionSentences(
+  section: BriefingSection,
+  items: readonly BriefingItemDraft[],
+  ctx: Ctx,
+): string {
   const en = ctx.en;
   switch (section) {
     case 'schedule':
@@ -576,8 +835,13 @@ function sectionSentences(section: BriefingSection, items: readonly BriefingItem
       const parts = items.map((it) => {
         const at = it.source?.timestamp;
         if (!at || Number.isNaN(ms(at))) return it.title;
-        if (section === 'first_event_tomorrow') return en ? `Tomorrow at ${formatClock(at, ctx.timezone)}: ${it.title}` : `Yarın saat ${clockLocative(at, ctx.timezone)} ${it.title}`;
-        return en ? `at ${formatClock(at, ctx.timezone)} ${it.title}` : `saat ${clockLocative(at, ctx.timezone)} ${it.title}`;
+        if (section === 'first_event_tomorrow')
+          return en
+            ? `Tomorrow at ${formatClock(at, ctx.timezone)}: ${it.title}`
+            : `Yarın saat ${clockLocative(at, ctx.timezone)} ${it.title}`;
+        return en
+          ? `at ${formatClock(at, ctx.timezone)} ${it.title}`
+          : `saat ${clockLocative(at, ctx.timezone)} ${it.title}`;
       });
       return capitalize(parts.join(', ')) + '.';
     }
@@ -585,9 +849,17 @@ function sectionSentences(section: BriefingSection, items: readonly BriefingItem
       return items.map((it) => ensurePeriod(it.title)).join(' ');
     case 'waiting_for_others':
     case 'follow_ups':
-      return items.map((it) => (it.meta ? `${it.title}: ${it.meta}.` : ensurePeriod(it.title))).join(' ');
+      return items
+        .map((it) => (it.meta ? `${it.title}: ${it.meta}.` : ensurePeriod(it.title)))
+        .join(' ');
     case 'deadlines':
-      return items.map((it) => (it.meta ? `${ensurePeriod(it.title).replace(/\.$/, '')}: ${it.meta}.` : ensurePeriod(it.title))).join(' ');
+      return items
+        .map((it) =>
+          it.meta
+            ? `${ensurePeriod(it.title).replace(/\.$/, '')}: ${it.meta}.`
+            : ensurePeriod(it.title),
+        )
+        .join(' ');
     case 'completed':
       return items.map((it) => ensurePeriod(it.title)).join(' ');
     default:
@@ -595,12 +867,27 @@ function sectionSentences(section: BriefingSection, items: readonly BriefingItem
   }
 }
 
-function buildChapters(kind: BriefingKind, candidates: BriefingCandidates, overview: string, ctx: Ctx): Chapter[] {
-  const chapters: Chapter[] = [{ title: ctx.en ? 'Overview' : 'Genel bakış', text: overview, sections: [] }];
+function buildChapters(
+  kind: BriefingKind,
+  candidates: BriefingCandidates,
+  overview: string,
+  ctx: Ctx,
+): Chapter[] {
+  const chapters: Chapter[] = [
+    { title: ctx.en ? 'Overview' : 'Genel bakış', text: overview, sections: [] },
+  ];
   const merged = new Map<string, { title: string; sections: BriefingSection[]; texts: string[] }>();
   for (const s of candidates.sections) {
-    const key = kind === 'morning' && (s.section === 'waiting_for_you' || s.section === 'waiting_for_others') ? 'waiting' : s.section;
-    const title = key === 'waiting' ? (ctx.en ? 'Waiting for replies' : 'Cevap bekleyenler') : sectionTitle(s.section, ctx.locale);
+    const key =
+      kind === 'morning' && (s.section === 'waiting_for_you' || s.section === 'waiting_for_others')
+        ? 'waiting'
+        : s.section;
+    const title =
+      key === 'waiting'
+        ? ctx.en
+          ? 'Waiting for replies'
+          : 'Cevap bekleyenler'
+        : sectionTitle(s.section, ctx.locale);
     const entry = merged.get(key) ?? { title, sections: [], texts: [] };
     entry.sections.push(s.section);
     entry.texts.push(sectionSentences(s.section, s.items, ctx));
@@ -613,7 +900,10 @@ function buildChapters(kind: BriefingKind, candidates: BriefingCandidates, overv
   return chapters;
 }
 
-function toAudio(chapters: Chapter[], locale: Locale): { audio: BriefingAudio; sectionChapter: Map<BriefingSection, number> } {
+function toAudio(
+  chapters: Chapter[],
+  locale: Locale,
+): { audio: BriefingAudio; sectionChapter: Map<BriefingSection, number> } {
   const sectionChapter = new Map<BriefingSection, number>();
   let cursor = 0;
   const out: BriefingAudio['chapters'] = [];
@@ -624,46 +914,102 @@ function toAudio(chapters: Chapter[], locale: Locale): { audio: BriefingAudio; s
     for (const s of c.sections) sectionChapter.set(s, index);
     cursor += durationSec;
   });
-  return { audio: { provider: 'device_tts', url: null, durationSec: cursor, chapters: out, script: out.map((c) => c.text).join('\n\n') }, sectionChapter };
+  return {
+    audio: {
+      provider: 'device_tts',
+      url: null,
+      durationSec: cursor,
+      chapters: out,
+      script: out.map((c) => c.text).join('\n\n'),
+    },
+    sectionChapter,
+  };
 }
 
 function itemsOf(candidates: BriefingCandidates, section: BriefingSection): BriefingItemDraft[] {
   return candidates.sections.find((s) => s.section === section)?.items ?? [];
 }
 
-function countsFor(kind: BriefingKind, candidates: BriefingCandidates, input: BriefingContext, ctx: Ctx, highlight: number): BriefingCounts {
+function countsFor(
+  kind: BriefingKind,
+  candidates: BriefingCandidates,
+  input: BriefingContext,
+  ctx: Ctx,
+  highlight: number,
+): BriefingCounts {
   const insights = activeInsights(input, ctx);
-  const importantEmails = insights.filter((i) => i.entityType === 'email_thread' && i.tags.includes('important')).length;
+  const importantEmails = insights.filter(
+    (i) => i.entityType === 'email_thread' && i.tags.includes('important'),
+  ).length;
   const events = eventsOn(input.events, kind === 'evening' ? ctx.tomorrow : ctx.today, ctx).length;
   const followUps = openFollowUps(input, ctx).length + theyOwe(input).length;
   const deadlineItems = itemsOf(candidates, 'deadlines');
-  const deadlines = deadlineItems.length > 0 ? deadlineItems.length : insights.filter((i) => i.kind === 'deadline' || i.badge === 'deadline').length;
-  return { importantEmails, events, followUps, deadlines, total: highlight, analyzedEmails: input.counts.analyzedEmails, analyzedCalendars: input.counts.analyzedCalendars, analyzedDays: input.counts.analyzedDays };
+  const deadlines =
+    deadlineItems.length > 0
+      ? deadlineItems.length
+      : insights.filter((i) => i.kind === 'deadline' || i.badge === 'deadline').length;
+  return {
+    importantEmails,
+    events,
+    followUps,
+    deadlines,
+    total: highlight,
+    analyzedEmails: input.counts.analyzedEmails,
+    analyzedCalendars: input.counts.analyzedCalendars,
+    analyzedDays: input.counts.analyzedDays,
+  };
 }
 
-function morningNarrative(candidates: BriefingCandidates, input: BriefingContext, ctx: Ctx, counts: BriefingCounts): string {
+function morningNarrative(
+  candidates: BriefingCandidates,
+  input: BriefingContext,
+  ctx: Ctx,
+  counts: BriefingCounts,
+): string {
   const en = ctx.en;
   const sentences: string[] = [];
-  const todayEvents = eventsOn(input.events, ctx.today, ctx).filter((e) => e.allDay || ms(e.endAt) > ctx.nowMs);
+  const todayEvents = eventsOn(input.events, ctx.today, ctx).filter(
+    (e) => e.allDay || ms(e.endAt) > ctx.nowMs,
+  );
   const timed = todayEvents.filter((e) => !e.allDay);
   if (timed.length === 0) {
     sentences.push(en ? 'Your calendar is quite calm today.' : 'Bugün takvimin oldukça sakin.');
   } else {
     const beforeNoon = timed.filter((e) => localHour(e.startAt, ctx.timezone) < 12);
-    if (beforeNoon.length === 0 && localHour(ctx.now, ctx.timezone) < 12) sentences.push(en ? 'No meetings before noon.' : 'Öğlene kadar toplantın bulunmuyor.');
-    const key = timed.find((e) => externalAttendees(e, { userEmail: ctx.userEmail }).length > 0) ?? timed[0];
+    if (beforeNoon.length === 0 && localHour(ctx.now, ctx.timezone) < 12)
+      sentences.push(en ? 'No meetings before noon.' : 'Öğlene kadar toplantın bulunmuyor.');
+    const key =
+      timed.find((e) => externalAttendees(e, { userEmail: ctx.userEmail }).length > 0) ?? timed[0];
     if (key) {
-      sentences.push(en ? `At ${formatClock(key.startAt, ctx.timezone)} you have ${key.title}.` : `Saat ${clockLocative(key.startAt, ctx.timezone)} ${key.title} var.`);
-      const attendeeNames = externalAttendees(key, { userEmail: ctx.userEmail }).map((a) => a.name?.trim().toLocaleLowerCase('tr-TR') ?? '');
-      const withPerson = (i: InsightLike): boolean => !!i.source.person && attendeeNames.includes(i.source.person.trim().toLocaleLowerCase('tr-TR'));
+      sentences.push(
+        en
+          ? `At ${formatClock(key.startAt, ctx.timezone)} you have ${key.title}.`
+          : `Saat ${clockLocative(key.startAt, ctx.timezone)} ${key.title} var.`,
+      );
+      const attendeeNames = externalAttendees(key, { userEmail: ctx.userEmail }).map(
+        (a) => a.name?.trim().toLocaleLowerCase('tr-TR') ?? '',
+      );
+      const withPerson = (i: InsightLike): boolean =>
+        !!i.source.person &&
+        attendeeNames.includes(i.source.person.trim().toLocaleLowerCase('tr-TR'));
       const live = activeInsights(input, ctx);
       // A mail received from the attendee, or the last mail the user sent them (open follow-up).
       const received = live.find((i) => i.entityType === 'email_thread' && withPerson(i));
-      const sent = received ? null : live.find((i) => i.entityType === 'follow_up' && withPerson(i));
+      const sent = received
+        ? null
+        : live.find((i) => i.entityType === 'follow_up' && withPerson(i));
       if (received?.source.person) {
-        sentences.push(en ? `Before the meeting it may help to look at the latest email from ${received.source.person}.` : `Toplantı öncesinde ${turkishAblative(received.source.person)} gelen son maile bakman faydalı olabilir.`);
+        sentences.push(
+          en
+            ? `Before the meeting it may help to look at the latest email from ${received.source.person}.`
+            : `Toplantı öncesinde ${turkishAblative(received.source.person)} gelen son maile bakman faydalı olabilir.`,
+        );
       } else if (sent?.source.person) {
-        sentences.push(en ? `Before the meeting it may help to look at the last email you sent to ${sent.source.person}.` : `Toplantı öncesinde ${turkishDative(sent.source.person)} gönderdiğin son maile bakman faydalı olabilir.`);
+        sentences.push(
+          en
+            ? `Before the meeting it may help to look at the last email you sent to ${sent.source.person}.`
+            : `Toplantı öncesinde ${turkishDative(sent.source.person)} gönderdiğin son maile bakman faydalı olabilir.`,
+        );
       }
     }
   }
@@ -678,9 +1024,19 @@ function morningNarrative(candidates: BriefingCandidates, input: BriefingContext
           : `Gelen ${counts.analyzedEmails} mail arasında dikkat gerektiren bir konu yok.`,
     );
   }
-  const urgent = itemsOf(candidates, 'priorities').find((it) => /^(Acil|Urgent)/.test(it.meta ?? ''));
-  if (urgent) sentences.push(en ? `Most urgent: ${ensurePeriod(urgent.title)}` : `En acili: ${ensurePeriod(urgent.title)}`);
-  if (timed.length > 1 && sentences.length < 5) sentences.push(en ? `You have ${timed.length} events in total today.` : `Bugün toplam ${timed.length} etkinliğin var.`);
+  const urgent = itemsOf(candidates, 'priorities').find((it) =>
+    /^(Acil|Urgent)/.test(it.meta ?? ''),
+  );
+  if (urgent)
+    sentences.push(
+      en ? `Most urgent: ${ensurePeriod(urgent.title)}` : `En acili: ${ensurePeriod(urgent.title)}`,
+    );
+  if (timed.length > 1 && sentences.length < 5)
+    sentences.push(
+      en
+        ? `You have ${timed.length} events in total today.`
+        : `Bugün toplam ${timed.length} etkinliğin var.`,
+    );
   const personal = itemsOf(candidates, 'personal')[0];
   if (personal && sentences.length < 5) sentences.push(ensurePeriod(personal.title));
   return sentences.slice(0, 5).join(' ');
@@ -691,9 +1047,14 @@ function middayNarrative(candidates: BriefingCandidates, ctx: Ctx): string {
   const changes = itemsOf(candidates, 'changes');
   const rest = itemsOf(candidates, 'rest_of_day');
   const sentences: string[] = [];
-  if (changes.length === 0) sentences.push(en ? 'Nothing new since this morning.' : 'Sabahtan beri yeni bir gelişme yok.');
+  if (changes.length === 0)
+    sentences.push(en ? 'Nothing new since this morning.' : 'Sabahtan beri yeni bir gelişme yok.');
   else {
-    sentences.push(en ? `${changes.length} new ${changes.length === 1 ? 'development' : 'developments'} since this morning.` : `Sabahtan beri ${changes.length} yeni gelişme var.`);
+    sentences.push(
+      en
+        ? `${changes.length} new ${changes.length === 1 ? 'development' : 'developments'} since this morning.`
+        : `Sabahtan beri ${changes.length} yeni gelişme var.`,
+    );
     for (const it of changes.slice(0, 2)) sentences.push(ensurePeriod(it.title));
   }
   const firstEvent = rest.find((it) => it.entityType === 'calendar_event');
@@ -708,36 +1069,77 @@ function middayNarrative(candidates: BriefingCandidates, ctx: Ctx): string {
   return sentences.slice(0, 5).join(' ');
 }
 
-function eveningNarrative(candidates: BriefingCandidates, input: BriefingContext, ctx: Ctx): string {
+function eveningNarrative(
+  candidates: BriefingCandidates,
+  input: BriefingContext,
+  ctx: Ctx,
+): string {
   const en = ctx.en;
   const done = itemsOf(candidates, 'completed');
   const carry = itemsOf(candidates, 'carried_over');
   const sentences: string[] = [];
-  if (done.length > 0) sentences.push(en ? `You completed ${done.length} ${done.length === 1 ? 'item' : 'items'} today.` : `Bugün ${done.length} konuyu tamamladın.`);
-  if (carry.length === 0) sentences.push(en ? 'Nothing carries over to tomorrow.' : 'Yarına açık konu kalmadı.');
+  if (done.length > 0)
+    sentences.push(
+      en
+        ? `You completed ${done.length} ${done.length === 1 ? 'item' : 'items'} today.`
+        : `Bugün ${done.length} konuyu tamamladın.`,
+    );
+  if (carry.length === 0)
+    sentences.push(en ? 'Nothing carries over to tomorrow.' : 'Yarına açık konu kalmadı.');
   else {
-    sentences.push(en ? `${carry.length} ${carry.length === 1 ? 'item carries' : 'items carry'} over to tomorrow.` : `Yarına ${carry.length} konu kaldı.`);
+    sentences.push(
+      en
+        ? `${carry.length} ${carry.length === 1 ? 'item carries' : 'items carry'} over to tomorrow.`
+        : `Yarına ${carry.length} konu kaldı.`,
+    );
     const first = carry[0];
     if (first) sentences.push(ensurePeriod(first.title));
   }
   const fu = openFollowUps(input, ctx)[0];
   if (fu) {
     const days = waitingDays(fu, ctx.now, ctx.timezone);
-    sentences.push(en ? `${fu.counterpartName} has not replied for ${days} ${days === 1 ? 'day' : 'days'}.` : `${fu.counterpartName} ${days} gündür yanıt vermedi.`);
+    sentences.push(
+      en
+        ? `${fu.counterpartName} has not replied for ${days} ${days === 1 ? 'day' : 'days'}.`
+        : `${fu.counterpartName} ${days} gündür yanıt vermedi.`,
+    );
   }
   const first = itemsOf(candidates, 'first_event_tomorrow')[0];
-  if (first?.source?.timestamp) sentences.push(en ? `Tomorrow your first event is ${first.title} at ${formatClock(first.source.timestamp, ctx.timezone)}.` : `Yarın ilk etkinliğin saat ${clockLocative(first.source.timestamp, ctx.timezone)} ${first.title}.`);
+  if (first?.source?.timestamp)
+    sentences.push(
+      en
+        ? `Tomorrow your first event is ${first.title} at ${formatClock(first.source.timestamp, ctx.timezone)}.`
+        : `Yarın ilk etkinliğin saat ${clockLocative(first.source.timestamp, ctx.timezone)} ${first.title}.`,
+    );
   else sentences.push(en ? 'No events on your calendar tomorrow.' : 'Yarın takvimde etkinlik yok.');
   return sentences.slice(0, 5).join(' ');
 }
 
-function weeklyNarrative(weekly: WeeklyMetrics | null | undefined, candidates: BriefingCandidates, ctx: Ctx): string {
+function weeklyNarrative(
+  weekly: WeeklyMetrics | null | undefined,
+  candidates: BriefingCandidates,
+  ctx: Ctx,
+): string {
   const en = ctx.en;
   const sentences: string[] = [];
   if (weekly) {
-    sentences.push(en ? `${weekly.analyzedEmails} emails were analyzed this week and ${weekly.importantItems} important topics were surfaced.` : `Bu hafta ${weekly.analyzedEmails} mail analiz edildi, ${weekly.importantItems} önemli konu öne çıkarıldı.`);
-    if (weekly.meetings > 0) sentences.push(en ? `Prep notes were ready for ${weekly.meetingsWithPrep} of your ${weekly.meetings} meetings.` : `${weekly.meetings} toplantının ${weekly.meetingsWithPrep} tanesi için hazırlık notu hazırdı.`);
-    if (weekly.followUps > 0) sentences.push(en ? `${weekly.followUpsAnswered} of ${weekly.followUps} follow-ups were answered.` : `${weekly.followUps} takibin ${weekly.followUpsAnswered} tanesi cevaplandı.`);
+    sentences.push(
+      en
+        ? `${weekly.analyzedEmails} emails were analyzed this week and ${weekly.importantItems} important topics were surfaced.`
+        : `Bu hafta ${weekly.analyzedEmails} mail analiz edildi, ${weekly.importantItems} önemli konu öne çıkarıldı.`,
+    );
+    if (weekly.meetings > 0)
+      sentences.push(
+        en
+          ? `Prep notes were ready for ${weekly.meetingsWithPrep} of your ${weekly.meetings} meetings.`
+          : `${weekly.meetings} toplantının ${weekly.meetingsWithPrep} tanesi için hazırlık notu hazırdı.`,
+      );
+    if (weekly.followUps > 0)
+      sentences.push(
+        en
+          ? `${weekly.followUpsAnswered} of ${weekly.followUps} follow-ups were answered.`
+          : `${weekly.followUps} takibin ${weekly.followUpsAnswered} tanesi cevaplandı.`,
+      );
     if (weekly.deadlines > 0) {
       sentences.push(
         weekly.deadlinesMissed === 0
@@ -749,19 +1151,37 @@ function weeklyNarrative(weekly: WeeklyMetrics | null | undefined, candidates: B
             : `${weekly.deadlines} son tarihin ${weekly.deadlinesMissed} tanesi kaçtı.`,
       );
     }
-    if (weekly.estimatedTimeSavedMinutes > 0) sentences.push(en ? `You saved about ${formatMinutes(weekly.estimatedTimeSavedMinutes, 'en')}.` : `Yaklaşık ${formatMinutes(weekly.estimatedTimeSavedMinutes, 'tr')} kazandın.`);
+    if (weekly.estimatedTimeSavedMinutes > 0)
+      sentences.push(
+        en
+          ? `You saved about ${formatMinutes(weekly.estimatedTimeSavedMinutes, 'en')}.`
+          : `Yaklaşık ${formatMinutes(weekly.estimatedTimeSavedMinutes, 'tr')} kazandın.`,
+      );
   } else {
     const p = itemsOf(candidates, 'priorities');
-    sentences.push(p.length > 0 ? (en ? `${p.length} topics stand out this week.` : `Bu hafta ${p.length} konu öne çıkıyor.`) : en ? 'A calm week.' : 'Sakin bir hafta.');
+    sentences.push(
+      p.length > 0
+        ? en
+          ? `${p.length} topics stand out this week.`
+          : `Bu hafta ${p.length} konu öne çıkıyor.`
+        : en
+          ? 'A calm week.'
+          : 'Sakin bir hafta.',
+    );
   }
   return sentences.slice(0, 5).join(' ');
 }
 
-function weeklyOutlook(weekly: WeeklyMetrics | null | undefined, candidates: BriefingCandidates, ctx: Ctx): string {
+function weeklyOutlook(
+  weekly: WeeklyMetrics | null | undefined,
+  candidates: BriefingCandidates,
+  ctx: Ctx,
+): string {
   if (weekly?.nextWeek?.trim()) return weekly.nextWeek.trim();
   const events = itemsOf(candidates, 'schedule').length;
   const deadlines = itemsOf(candidates, 'deadlines').length;
-  if (ctx.en) return `Next week: ${events} ${events === 1 ? 'event' : 'events'} and ${deadlines} ${deadlines === 1 ? 'deadline' : 'deadlines'} on the horizon.`;
+  if (ctx.en)
+    return `Next week: ${events} ${events === 1 ? 'event' : 'events'} and ${deadlines} ${deadlines === 1 ? 'deadline' : 'deadlines'} on the horizon.`;
   return `Gelecek hafta ${events} etkinlik ve ${deadlines} son tarih görünüyor.`;
 }
 
@@ -780,56 +1200,119 @@ function headlineFor(kind: BriefingKind, n: number, ctx: Ctx): string {
   const en = ctx.en;
   switch (kind) {
     case 'morning':
-      return n === 0 ? (en ? 'Everything is under control today.' : 'Bugün her şey kontrol altında.') : en ? `There are ${n} things you need to know today.` : `Bugün bilmen gereken ${n} şey var.`;
+      return n === 0
+        ? en
+          ? 'Everything is under control today.'
+          : 'Bugün her şey kontrol altında.'
+        : en
+          ? `There are ${n} things you need to know today.`
+          : `Bugün bilmen gereken ${n} şey var.`;
     case 'midday':
-      return n === 0 ? (en ? 'Everything is going as planned.' : 'Her şey planlandığı gibi.') : en ? `${n} important developments since this morning.` : `Sabahından beri ${n} önemli gelişme oldu.`;
+      return n === 0
+        ? en
+          ? 'Everything is going as planned.'
+          : 'Her şey planlandığı gibi.'
+        : en
+          ? `${n} important developments since this morning.`
+          : `Sabahından beri ${n} önemli gelişme oldu.`;
     case 'evening':
-      return n === 0 ? (en ? 'Nothing carries over to tomorrow.' : 'Yarına açık konu kalmadı.') : en ? `${n} items carry over to tomorrow.` : `Bugünden yarına ${n} konu kaldı.`;
+      return n === 0
+        ? en
+          ? 'Nothing carries over to tomorrow.'
+          : 'Yarına açık konu kalmadı.'
+        : en
+          ? `${n} items carry over to tomorrow.`
+          : `Bugünden yarına ${n} konu kaldı.`;
     case 'weekly':
       return en ? 'How was your week?' : 'Haftan nasıl geçti?';
   }
 }
 
-function sublineFor(kind: BriefingKind, counts: BriefingCounts, candidates: BriefingCandidates, weekly: WeeklyMetrics | null | undefined, ctx: Ctx): string {
+function sublineFor(
+  kind: BriefingKind,
+  counts: BriefingCounts,
+  candidates: BriefingCandidates,
+  weekly: WeeklyMetrics | null | undefined,
+  ctx: Ctx,
+): string {
   const en = ctx.en;
   switch (kind) {
     case 'evening': {
       const done = itemsOf(candidates, 'completed').length;
       const first = itemsOf(candidates, 'first_event_tomorrow')[0];
-      const parts = [en ? `${done} done` : `${done} tamamlandı`, en ? `${counts.followUps} follow-ups` : `${counts.followUps} takip`];
-      if (first?.source?.timestamp) parts.push(en ? `Tomorrow ${formatClock(first.source.timestamp, ctx.timezone)} ${first.title}` : `Yarın ${formatClock(first.source.timestamp, ctx.timezone)} ${first.title}`);
+      const parts = [
+        en ? `${done} done` : `${done} tamamlandı`,
+        en ? `${counts.followUps} follow-ups` : `${counts.followUps} takip`,
+      ];
+      if (first?.source?.timestamp)
+        parts.push(
+          en
+            ? `Tomorrow ${formatClock(first.source.timestamp, ctx.timezone)} ${first.title}`
+            : `Yarın ${formatClock(first.source.timestamp, ctx.timezone)} ${first.title}`,
+        );
       return parts.join(' · ');
     }
     case 'weekly':
-      if (weekly) return en ? `${weekly.analyzedEmails} emails · ${weekly.importantItems} important · ${weekly.meetings} meetings` : `${weekly.analyzedEmails} mail · ${weekly.importantItems} önemli konu · ${weekly.meetings} toplantı`;
-      return en ? `${counts.importantEmails} important emails · ${counts.events} events · ${counts.followUps} follow-ups` : `${counts.importantEmails} önemli mail · ${counts.events} etkinlik · ${counts.followUps} takip`;
+      if (weekly)
+        return en
+          ? `${weekly.analyzedEmails} emails · ${weekly.importantItems} important · ${weekly.meetings} meetings`
+          : `${weekly.analyzedEmails} mail · ${weekly.importantItems} önemli konu · ${weekly.meetings} toplantı`;
+      return en
+        ? `${counts.importantEmails} important emails · ${counts.events} events · ${counts.followUps} follow-ups`
+        : `${counts.importantEmails} önemli mail · ${counts.events} etkinlik · ${counts.followUps} takip`;
     default:
-      return en ? `${counts.importantEmails} important emails · ${counts.events} events · ${counts.followUps} follow-ups` : `${counts.importantEmails} önemli mail · ${counts.events} etkinlik · ${counts.followUps} takip`;
+      return en
+        ? `${counts.importantEmails} important emails · ${counts.events} events · ${counts.followUps} follow-ups`
+        : `${counts.importantEmails} önemli mail · ${counts.events} etkinlik · ${counts.followUps} takip`;
   }
 }
 
-function moodFor(kind: BriefingKind, counts: BriefingCounts, candidates: BriefingCandidates, ctx: Ctx): string {
+function moodFor(
+  kind: BriefingKind,
+  counts: BriefingCounts,
+  candidates: BriefingCandidates,
+  ctx: Ctx,
+): string {
   const en = ctx.en;
   switch (kind) {
     case 'morning': {
-      const urgent = itemsOf(candidates, 'priorities').filter((it) => /^(Acil|Urgent)/.test(it.meta ?? '')).length;
-      if (urgent >= 2) return en ? 'A brisk day; let us start with the urgent ones.' : 'Bugün tempolu bir gün; önce acil olanlara bakalım.';
-      if (counts.events === 0) return en ? 'Your calendar is quite calm today.' : 'Bugün takvimin oldukça sakin.';
-      if (counts.events <= 2) return en ? 'You have a fairly calm day.' : 'Bugün oldukça sakin bir günün var.';
+      const urgent = itemsOf(candidates, 'priorities').filter((it) =>
+        /^(Acil|Urgent)/.test(it.meta ?? ''),
+      ).length;
+      if (urgent >= 2)
+        return en
+          ? 'A brisk day; let us start with the urgent ones.'
+          : 'Bugün tempolu bir gün; önce acil olanlara bakalım.';
+      if (counts.events === 0)
+        return en ? 'Your calendar is quite calm today.' : 'Bugün takvimin oldukça sakin.';
+      if (counts.events <= 2)
+        return en ? 'You have a fairly calm day.' : 'Bugün oldukça sakin bir günün var.';
       if (counts.events <= 4) return en ? 'A balanced day ahead.' : 'Bugün dengeli bir günün var.';
       return en ? 'A busy day ahead.' : 'Bugün yoğun bir günün var.';
     }
     case 'midday':
-      return itemsOf(candidates, 'changes').length > 0 ? (en ? 'The day is on track, with a few new developments.' : 'Gün planlandığı gibi ilerliyor, birkaç yeni gelişme var.') : en ? 'Everything is going as planned.' : 'Her şey planlandığı gibi.';
+      return itemsOf(candidates, 'changes').length > 0
+        ? en
+          ? 'The day is on track, with a few new developments.'
+          : 'Gün planlandığı gibi ilerliyor, birkaç yeni gelişme var.'
+        : en
+          ? 'Everything is going as planned.'
+          : 'Her şey planlandığı gibi.';
     case 'evening':
       return en ? 'That is all for today. Rest well.' : 'Bugün için bu kadar. İyi dinlenmeler.';
     case 'weekly':
-      return en ? `${counts.total} important topics were surfaced this week.` : `Bu hafta ${counts.total} önemli konu öne çıkarıldı.`;
+      return en
+        ? `${counts.total} important topics were surfaced this week.`
+        : `Bu hafta ${counts.total} önemli konu öne çıkarıldı.`;
   }
 }
 
 /** Deterministic briefing built only from real items — used when the AI is unavailable or rejected. */
-export function composeBriefingFallback(kind: BriefingKind, candidates: BriefingCandidates, input: BriefingContext): BriefingDraft {
+export function composeBriefingFallback(
+  kind: BriefingKind,
+  candidates: BriefingCandidates,
+  input: BriefingContext,
+): BriefingDraft {
   const ctx = makeCtx(input);
   const weekly = input.weekly ?? null;
   const highlight =
@@ -845,7 +1328,13 @@ export function composeBriefingFallback(kind: BriefingKind, candidates: Briefing
   const subline = sublineFor(kind, counts, candidates, weekly, ctx);
   const mood = moodFor(kind, counts, candidates, ctx);
   const narrative =
-    kind === 'morning' ? morningNarrative(candidates, input, ctx, counts) : kind === 'midday' ? middayNarrative(candidates, ctx) : kind === 'evening' ? eveningNarrative(candidates, input, ctx) : weeklyNarrative(weekly, candidates, ctx);
+    kind === 'morning'
+      ? morningNarrative(candidates, input, ctx, counts)
+      : kind === 'midday'
+        ? middayNarrative(candidates, ctx)
+        : kind === 'evening'
+          ? eveningNarrative(candidates, input, ctx)
+          : weeklyNarrative(weekly, candidates, ctx);
   const outlook = kind === 'weekly' ? weeklyOutlook(weekly, candidates, ctx) : null;
   const greeting = greetingFor(ctx.now, ctx.timezone, input.userName, ctx.locale).replace(',', '');
   const overview = `${greeting}. ${mood} ${narrative}`.trim();
@@ -892,11 +1381,16 @@ function firstNumber(s: string): number | null {
  * known items; counts, subline, highlight number and the item set stay deterministic.
  * A headline whose number disagrees with the highlight number is rejected.
  */
-export function mergeAiBriefing(fallback: BriefingDraft, ai: BriefingAi, knownItemIds: readonly string[]): BriefingDraft {
+export function mergeAiBriefing(
+  fallback: BriefingDraft,
+  ai: BriefingAi,
+  knownItemIds: readonly string[],
+): BriefingDraft {
   const known = new Set(knownItemIds);
   const headline = ai.headline.trim();
   const headlineNumber = firstNumber(headline);
-  const headlineOk = headline.length > 0 && (headlineNumber === null || headlineNumber === fallback.highlightNumber);
+  const headlineOk =
+    headline.length > 0 && (headlineNumber === null || headlineNumber === fallback.highlightNumber);
   const validSections = new Set<string>(BRIEFING_SECTIONS);
   const bySection = new Map<BriefingSection, BriefingItemDraft[]>();
   for (const it of fallback.items) {
@@ -931,7 +1425,11 @@ export function mergeAiBriefing(fallback: BriefingDraft, ai: BriefingAi, knownIt
   }
   let audio = fallback.audio ?? null;
   if (ai.audioScript.length > 0) {
-    const chapters = ai.audioScript.map((c, index) => ({ index, title: c.title.trim() || `${index + 1}`, text: ttsFriendly(c.text) }));
+    const chapters = ai.audioScript.map((c, index) => ({
+      index,
+      title: c.title.trim() || `${index + 1}`,
+      text: ttsFriendly(c.text),
+    }));
     let cursor = 0;
     const built: BriefingAudio['chapters'] = chapters.map((c) => {
       const durationSec = Math.max(3, Math.round((wordCount(c.text) / WORDS_PER_MINUTE) * 60));
@@ -939,7 +1437,13 @@ export function mergeAiBriefing(fallback: BriefingDraft, ai: BriefingAi, knownIt
       cursor += durationSec;
       return chapter;
     });
-    audio = { provider: 'device_tts', url: null, durationSec: cursor, chapters: built, script: built.map((c) => c.text).join('\n\n') };
+    audio = {
+      provider: 'device_tts',
+      url: null,
+      durationSec: cursor,
+      chapters: built,
+      script: built.map((c) => c.text).join('\n\n'),
+    };
   }
   const chapterCount = audio?.chapters.length ?? 0;
   const merged: BriefingDraft = {
@@ -948,7 +1452,13 @@ export function mergeAiBriefing(fallback: BriefingDraft, ai: BriefingAi, knownIt
     mood: ai.mood.trim() || fallback.mood,
     narrative: ai.narrative.trim() || fallback.narrative,
     outlook: ai.outlook?.trim() || fallback.outlook || null,
-    items: items.map((it) => ({ ...it, chapterIndex: typeof it.chapterIndex === 'number' && it.chapterIndex < chapterCount ? it.chapterIndex : null })),
+    items: items.map((it) => ({
+      ...it,
+      chapterIndex:
+        typeof it.chapterIndex === 'number' && it.chapterIndex < chapterCount
+          ? it.chapterIndex
+          : null,
+    })),
     audio,
   };
   merged.estimatedReadSec = estimateReadSeconds(audio?.script ?? merged.narrative);
@@ -962,13 +1472,22 @@ export function mergeAiBriefing(fallback: BriefingDraft, ai: BriefingAi, knownIt
 export interface CarryOverPlan {
   closedAt: string;
   /** Insight updates to persist: forDate moves to tomorrow, status stays active. */
-  carryOver: { insightId: string; entityType: BriefingItem['entityType']; entityId: string | null; forDate: string }[];
+  carryOver: {
+    insightId: string;
+    entityType: BriefingItem['entityType'];
+    entityId: string | null;
+    forDate: string;
+  }[];
   /** Selected ids that are not carry-over candidates of this briefing. */
   ignoredIds: string[];
 }
 
 /** "Yarına Taşı": which selected insights move to tomorrow (only items of the carried_over section qualify). */
-export function eveningCarryOverPlan(briefing: Pick<BriefingDraft, 'items'>, selectedIds: readonly string[], opts: { tomorrowDateKey: string; now: string }): CarryOverPlan {
+export function eveningCarryOverPlan(
+  briefing: Pick<BriefingDraft, 'items'>,
+  selectedIds: readonly string[],
+  opts: { tomorrowDateKey: string; now: string },
+): CarryOverPlan {
   const candidates = new Map<string, BriefingItemDraft>();
   for (const it of briefing.items) {
     if (it.section !== 'carried_over') continue;
@@ -985,7 +1504,12 @@ export function eveningCarryOverPlan(briefing: Pick<BriefingDraft, 'items'>, sel
       continue;
     }
     seen.add(it.insightId);
-    carryOver.push({ insightId: it.insightId, entityType: it.entityType ?? null, entityId: it.entityId ?? null, forDate: opts.tomorrowDateKey });
+    carryOver.push({
+      insightId: it.insightId,
+      entityType: it.entityType ?? null,
+      entityId: it.entityId ?? null,
+      forDate: opts.tomorrowDateKey,
+    });
   }
   return { closedAt: opts.now, carryOver, ignoredIds };
 }
@@ -1010,10 +1534,26 @@ export function weeklyShareText(metrics: WeeklyMetrics, opts: { locale?: Locale 
   const en = locale === 'en';
   const range = rangeLabel(metrics.weekStart, metrics.weekEnd, locale);
   const lines = [en ? `MY DIGITAL WEEK · ${range}` : `DİJİTAL HAFTAM · ${range}`];
-  lines.push(en ? `${metrics.analyzedEmails} emails analyzed` : `${metrics.analyzedEmails} mail analiz edildi`);
-  lines.push(en ? `${metrics.importantItems} important topics surfaced` : `${metrics.importantItems} önemli konu öne çıkarıldı`);
-  lines.push(en ? `${metrics.meetings} meetings · ${metrics.meetingsWithPrep} with prep notes` : `${metrics.meetings} toplantı · ${metrics.meetingsWithPrep} hazırlık notu`);
-  lines.push(en ? `${metrics.followUps} follow-ups · ${metrics.followUpsAnswered} answered` : `${metrics.followUps} takip · ${metrics.followUpsAnswered} cevaplandı`);
+  lines.push(
+    en
+      ? `${metrics.analyzedEmails} emails analyzed`
+      : `${metrics.analyzedEmails} mail analiz edildi`,
+  );
+  lines.push(
+    en
+      ? `${metrics.importantItems} important topics surfaced`
+      : `${metrics.importantItems} önemli konu öne çıkarıldı`,
+  );
+  lines.push(
+    en
+      ? `${metrics.meetings} meetings · ${metrics.meetingsWithPrep} with prep notes`
+      : `${metrics.meetings} toplantı · ${metrics.meetingsWithPrep} hazırlık notu`,
+  );
+  lines.push(
+    en
+      ? `${metrics.followUps} follow-ups · ${metrics.followUpsAnswered} answered`
+      : `${metrics.followUps} takip · ${metrics.followUpsAnswered} cevaplandı`,
+  );
   lines.push(
     metrics.deadlinesMissed === 0
       ? en
@@ -1023,7 +1563,11 @@ export function weeklyShareText(metrics: WeeklyMetrics, opts: { locale?: Locale 
         ? `${metrics.deadlines} deadlines, ${metrics.deadlinesMissed} missed`
         : `${metrics.deadlines} son tarih, ${metrics.deadlinesMissed} tanesi kaçtı`,
   );
-  lines.push(en ? `Time saved: ${formatMinutes(metrics.estimatedTimeSavedMinutes, 'en')}` : `Kazandığın zaman: ${formatMinutes(metrics.estimatedTimeSavedMinutes, 'tr')}`);
+  lines.push(
+    en
+      ? `Time saved: ${formatMinutes(metrics.estimatedTimeSavedMinutes, 'en')}`
+      : `Kazandığın zaman: ${formatMinutes(metrics.estimatedTimeSavedMinutes, 'tr')}`,
+  );
   lines.push('Dijital Asistan · dijitalasistan.app');
   return lines.join('\n');
 }

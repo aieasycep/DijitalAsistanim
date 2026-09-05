@@ -76,11 +76,11 @@ packages/server-core         runtime-agnostic backend logic used by Edge Functio
 
 ## Environments
 
-| | Development | Preview | Production |
-| --- | --- | --- | --- |
-| Data | Demo fixtures (`EXPO_PUBLIC_DATA_MODE=demo`) or local Supabase | Supabase project (staging) | Supabase project (prod) |
-| Build | Expo dev client (`eas build --profile development`) | internal distribution | App Store / Play |
-| AI | optional keys | real keys, small budgets | real keys |
-| Push | Expo push (dev credentials) | Expo push | Expo push (APNs key / FCM) |
+|       | Development                                                    | Preview                    | Production                 |
+| ----- | -------------------------------------------------------------- | -------------------------- | -------------------------- |
+| Data  | Demo fixtures (`EXPO_PUBLIC_DATA_MODE=demo`) or local Supabase | Supabase project (staging) | Supabase project (prod)    |
+| Build | Expo dev client (`eas build --profile development`)            | internal distribution      | App Store / Play           |
+| AI    | optional keys                                                  | real keys, small budgets   | real keys                  |
+| Push  | Expo push (dev credentials)                                    | Expo push                  | Expo push (APNs key / FCM) |
 
 See `docs/DEPLOYMENT.md`, `docs/SECURITY.md`, `docs/AI_PIPELINE.md`, `docs/DATA_MODEL.md`.

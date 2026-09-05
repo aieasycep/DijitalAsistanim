@@ -58,26 +58,43 @@ export interface ReplyDraftInput extends PromptBase {
 }
 
 export const TONE_RULES: Record<ReplyTone, { tr: string; en: string }> = {
-  short: { tr: 'Ton: kısa. 1-3 cümle, doğrudan konuya gir.', en: 'Tone: short. 1-3 sentences, straight to the point.' },
-  professional: { tr: 'Ton: profesyonel. Nazik ve net; resmi ama soğuk değil.', en: 'Tone: professional. Polite and clear; formal but not cold.' },
-  friendly: { tr: 'Ton: samimi. Sıcak, günlük dil; abartısız.', en: 'Tone: friendly. Warm, everyday language; not over the top.' },
+  short: {
+    tr: 'Ton: kısa. 1-3 cümle, doğrudan konuya gir.',
+    en: 'Tone: short. 1-3 sentences, straight to the point.',
+  },
+  professional: {
+    tr: 'Ton: profesyonel. Nazik ve net; resmi ama soğuk değil.',
+    en: 'Tone: professional. Polite and clear; formal but not cold.',
+  },
+  friendly: {
+    tr: 'Ton: samimi. Sıcak, günlük dil; abartısız.',
+    en: 'Tone: friendly. Warm, everyday language; not over the top.',
+  },
   detailed: {
     tr: 'Ton: detaylı. Kaynaktaki her noktayı sırayla ele al; yine de gereksiz uzatma.',
     en: 'Tone: detailed. Address every point in the source in order; still no padding.',
   },
 };
 
-function analysisBlock(analysis: ReplyThreadAnalysis | null | undefined, locale: Locale): string | null {
+function analysisBlock(
+  analysis: ReplyThreadAnalysis | null | undefined,
+  locale: Locale,
+): string | null {
   if (!analysis) return null;
   const en = locale === 'en';
   const commitments = (analysis.commitments ?? []).slice(0, 5);
   const lines = joinLines([
     labelled(en ? 'Summary' : 'Özet', analysis.summary ? clipInline(analysis.summary, 320) : null),
-    analysis.keyPoints?.length ? `${en ? 'Key points' : 'Önemli noktalar'}:\n${bullets(analysis.keyPoints.slice(0, 5).map((p) => clipInline(p, 120)))}` : null,
+    analysis.keyPoints?.length
+      ? `${en ? 'Key points' : 'Önemli noktalar'}:\n${bullets(analysis.keyPoints.slice(0, 5).map((p) => clipInline(p, 120)))}`
+      : null,
     analysis.requiresUserAction === undefined
       ? null
-      : `${en ? 'Sender expects an action from the user' : 'Gönderen kullanıcıdan bir aksiyon bekliyor'}: ${analysis.requiresUserAction ? (en ? 'yes' : 'evet') : (en ? 'no' : 'hayır')}`,
-    labelled(en ? 'Deadline mentioned in the thread' : 'Yazışmada geçen son tarih', analysis.deadlineText ? clipInline(analysis.deadlineText, 120) : null),
+      : `${en ? 'Sender expects an action from the user' : 'Gönderen kullanıcıdan bir aksiyon bekliyor'}: ${analysis.requiresUserAction ? (en ? 'yes' : 'evet') : en ? 'no' : 'hayır'}`,
+    labelled(
+      en ? 'Deadline mentioned in the thread' : 'Yazışmada geçen son tarih',
+      analysis.deadlineText ? clipInline(analysis.deadlineText, 120) : null,
+    ),
     commitments.length
       ? `${en ? 'Open commitments' : 'Açık taahhütler'}:\n${bullets(commitments.map((c) => `${c.direction} · ${clipInline(c.text, 160)}${c.dueText ? ` · ${clipInline(c.dueText, 60)}` : ''}`))}`
       : null,
@@ -110,14 +127,29 @@ export function replyDraft(input: ReplyDraftInput): PromptSpec<ReplyDraftAi> {
       en
         ? `Greet the recipient by name when known. Sign off with only the first name: "${firstName}".`
         : `Alıcının adı biliniyorsa adıyla selamla. Kapanışta yalnızca ad kullan: "${firstName}".`,
-      en ? 'Plain text only: no markdown, no bullet symbols, no subject line inside the body.' : 'Sadece düz metin: markdown yok, madde işareti yok, gövdede konu satırı yok.',
-      en ? 'subject: keep the thread subject, prefixed with "Re: " if missing.' : 'subject: yazışmanın konusunu koru; yoksa başına "Re: " ekle.',
-      en ? 'basedOnIds: the message ids the draft relies on.' : "basedOnIds: taslağın dayandığı ileti id'leri.",
+      en
+        ? 'Plain text only: no markdown, no bullet symbols, no subject line inside the body.'
+        : 'Sadece düz metin: markdown yok, madde işareti yok, gövdede konu satırı yok.',
+      en
+        ? 'subject: keep the thread subject, prefixed with "Re: " if missing.'
+        : 'subject: yazışmanın konusunu koru; yoksa başına "Re: " ekle.',
+      en
+        ? 'basedOnIds: the message ids the draft relies on.'
+        : "basedOnIds: taslağın dayandığı ileti id'leri.",
       en ? `tone must equal "${input.tone}".` : `tone alanı "${input.tone}" olmalı.`,
     ],
-    sections: [{ title: en ? 'Context' : 'Bağlam', body: temporalContext({ now: input.now, locale, timezone: tz }) }],
+    sections: [
+      {
+        title: en ? 'Context' : 'Bağlam',
+        body: temporalContext({ now: input.now, locale, timezone: tz }),
+      },
+    ],
   });
-  const messages = capList([...input.thread.messages].slice(-REPLY_THREAD_MESSAGE_MAX), REPLY_THREAD_MESSAGE_MAX, locale);
+  const messages = capList(
+    [...input.thread.messages].slice(-REPLY_THREAD_MESSAGE_MAX),
+    REPLY_THREAD_MESSAGE_MAX,
+    locale,
+  );
   const body = messages.items
     .map((m) =>
       joinLines([
@@ -128,8 +160,12 @@ export function replyDraft(input: ReplyDraftInput): PromptSpec<ReplyDraftAi> {
     .join('\n\n');
   const context = joinLines([
     labelled(en ? 'Subject' : 'Konu', clipInline(input.thread.subject, 200)),
-    input.recipient ? labelled(en ? 'Reply to' : 'Yanıt alıcısı', personLabel(input.recipient)) : null,
-    input.userEmails?.length ? `${en ? 'User addresses' : 'Kullanıcının adresleri'}: ${input.userEmails.join(', ')}` : null,
+    input.recipient
+      ? labelled(en ? 'Reply to' : 'Yanıt alıcısı', personLabel(input.recipient))
+      : null,
+    input.userEmails?.length
+      ? `${en ? 'User addresses' : 'Kullanıcının adresleri'}: ${input.userEmails.join(', ')}`
+      : null,
     analysisBlock(input.analysis, locale),
     '',
     body,
@@ -141,8 +177,14 @@ export function replyDraft(input: ReplyDraftInput): PromptSpec<ReplyDraftAi> {
     locale,
     system,
     user: joinLines([
-      en ? 'Draft a reply to the last message in the thread below.' : 'Aşağıdaki yazışmadaki son iletiye bir yanıt taslağı hazırla.',
-      instruction ? (en ? `User instruction: ${instruction}` : `Kullanıcının isteği: ${instruction}`) : null,
+      en
+        ? 'Draft a reply to the last message in the thread below.'
+        : 'Aşağıdaki yazışmadaki son iletiye bir yanıt taslağı hazırla.',
+      instruction
+        ? en
+          ? `User instruction: ${instruction}`
+          : `Kullanıcının isteği: ${instruction}`
+        : null,
     ]),
     context,
     schema: replyDraftAiSchema,

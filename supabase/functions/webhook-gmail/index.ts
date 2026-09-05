@@ -55,13 +55,11 @@ Deno.serve(
     const admin = adminClient();
     const messageId = body.message?.messageId;
     if (messageId) {
-      const { error } = await admin
-        .from('webhook_events')
-        .insert({
-          id: `gmail:${messageId}`,
-          source: 'gmail',
-          processed_at: new Date().toISOString(),
-        });
+      const { error } = await admin.from('webhook_events').insert({
+        id: `gmail:${messageId}`,
+        source: 'gmail',
+        processed_at: new Date().toISOString(),
+      });
       if (error?.code === '23505') return json({ ok: true as const, duplicate: true });
     }
 

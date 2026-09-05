@@ -22,7 +22,14 @@ export {
   localToUtcIso,
   nextWeekday,
 } from './calendar';
-export { formatClock, formatDayLabel, formatDateLabel, formatDateLocative, formatDeadlinePhrase, type FormatDateOptions } from './format';
+export {
+  formatClock,
+  formatDayLabel,
+  formatDateLabel,
+  formatDateLocative,
+  formatDeadlinePhrase,
+  type FormatDateOptions,
+} from './format';
 export {
   turkishDative,
   turkishLocative,

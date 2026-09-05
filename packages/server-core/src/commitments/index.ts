@@ -8,14 +8,35 @@
  * Quoted history and signatures are ignored; negated, conditional, optative and question forms are rejected.
  */
 import type { CommitmentDirection, Locale, SourceRef } from '@da/domain';
-import { extractDates, localToUtcIso, lowercasePreservingIndices, parseDateKey, type ExtractedDate } from '../dates';
+import {
+  extractDates,
+  localToUtcIso,
+  lowercasePreservingIndices,
+  parseDateKey,
+  type ExtractedDate,
+} from '../dates';
 import { clamp, normalizeText, stripQuotedHistory, truncate, uniqBy } from '../util';
 import { analyzeEnglishClause, composeEnglish } from './english';
 import { detectVocative, splitClauses, splitSentences, stripSignature, type Span } from './segment';
 import { firstNameOf, resolveFullName, stripHonorifics, type ClauseAnalysis } from './shared';
 import { analyzeTurkishClause, composeTurkish, isKnownDeliverable } from './turkish';
-import { RE_EXPECTATION, RE_FIRST_PERSON_FORMS, RE_GENERIC_FUTURE, RE_REQUEST_CONDITIONAL, RE_REQUEST_IMPERATIVE, RE_REQUEST_NEED, RE_REQUEST_QUESTION, RE_REQUEST_VERBAL_NOUN } from './verbs';
-import type { CommitmentCandidate, CommitmentDraft, CommitmentDue, ExtractCommitmentsInput, NormalizeCommitmentOptions } from './types';
+import {
+  RE_EXPECTATION,
+  RE_FIRST_PERSON_FORMS,
+  RE_GENERIC_FUTURE,
+  RE_REQUEST_CONDITIONAL,
+  RE_REQUEST_IMPERATIVE,
+  RE_REQUEST_NEED,
+  RE_REQUEST_QUESTION,
+  RE_REQUEST_VERBAL_NOUN,
+} from './verbs';
+import type {
+  CommitmentCandidate,
+  CommitmentDraft,
+  CommitmentDue,
+  ExtractCommitmentsInput,
+  NormalizeCommitmentOptions,
+} from './types';
 
 export type {
   CommitmentCandidate,
@@ -27,7 +48,10 @@ export type {
   ExtractCommitmentsInput,
   NormalizeCommitmentOptions,
 } from './types';
-export { stripSignature as stripMailSignature, detectVocative as detectVocativeName } from './segment';
+export {
+  stripSignature as stripMailSignature,
+  detectVocative as detectVocativeName,
+} from './segment';
 export { turkishAccusative, normalizeNounPhrase } from './turkish';
 
 const MAX_TEXT = 20_000;
@@ -37,9 +61,12 @@ const MAX_QUOTE_LEN = 240;
 const DEFAULT_NOW = '2000-01-01T00:00:00.000Z';
 const DEFAULT_TZ = 'Europe/Istanbul';
 
-const RE_EN_VERBISH = /(?<![\p{L}])(?:(?:i|we)\s*(?:'ll|will|shall|'m going to|am going to|'re going to|are going to|can|could|promise to|plan to)|(?:can|could|would|will)\s+you|please|kindly|waiting for|let (?:me|us|you) know|get back to (?:me|you)|send (?:me|us)|i need you to)(?![\p{L}])/u;
-const RE_ADDRESSES_USER = /(?<![\p{L}])(?:size|sana|sizi|seni|sizinle|seninle|sizlere|sizlerle|tarafınıza|tarafına|you|your)(?![\p{L}])/u;
-const RE_EN_DELIVERABLE = /(?<![\p{L}])(?:proposal|report|file|files|document|documents|invoice|contract|draft|quote|quotation|update|feedback|answer|reply|details|numbers|figures|slides|deck|presentation|link|photos|pictures|list|plan|schedule|estimate|offer|agreement|signature|payment|confirmation|approval|summary|notes|minutes|specs?|design|mockup|version|pdf|spreadsheet|sheet|data|results|samples?|order|shipment|package|parcel|brief|timeline|budget|roadmap)(?![\p{L}])/u;
+const RE_EN_VERBISH =
+  /(?<![\p{L}])(?:(?:i|we)\s*(?:'ll|will|shall|'m going to|am going to|'re going to|are going to|can|could|promise to|plan to)|(?:can|could|would|will)\s+you|please|kindly|waiting for|let (?:me|us|you) know|get back to (?:me|you)|send (?:me|us)|i need you to)(?![\p{L}])/u;
+const RE_ADDRESSES_USER =
+  /(?<![\p{L}])(?:size|sana|sizi|seni|sizinle|seninle|sizlere|sizlerle|tarafınıza|tarafına|you|your)(?![\p{L}])/u;
+const RE_EN_DELIVERABLE =
+  /(?<![\p{L}])(?:proposal|report|file|files|document|documents|invoice|contract|draft|quote|quotation|update|feedback|answer|reply|details|numbers|figures|slides|deck|presentation|link|photos|pictures|list|plan|schedule|estimate|offer|agreement|signature|payment|confirmation|approval|summary|notes|minutes|specs?|design|mockup|version|pdf|spreadsheet|sheet|data|results|samples?|order|shipment|package|parcel|brief|timeline|budget|roadmap)(?![\p{L}])/u;
 
 function hasVerbForm(text: string): boolean {
   const lower = lowercasePreservingIndices(text);
@@ -58,19 +85,32 @@ function hasVerbForm(text: string): boolean {
   );
 }
 
-function analyzeClause(text: string, opts: { now: string; timezone: string; hintFirstName: string | null }, locale: Locale): ClauseAnalysis | null {
+function analyzeClause(
+  text: string,
+  opts: { now: string; timezone: string; hintFirstName: string | null },
+  locale: Locale,
+): ClauseAnalysis | null {
   if (locale === 'en') return analyzeEnglishClause(text, opts) ?? analyzeTurkishClause(text, opts);
   return analyzeTurkishClause(text, opts) ?? analyzeEnglishClause(text, opts);
 }
 
 function dueFromDates(dates: ExtractedDate[], timezone: string): CommitmentDue | null {
   if (dates.length === 0) return null;
-  const rank = (d: ExtractedDate): number => (d.kind === 'deadline' ? 3 : d.kind === 'time' ? 1 : 2);
+  const rank = (d: ExtractedDate): number =>
+    d.kind === 'deadline' ? 3 : d.kind === 'time' ? 1 : 2;
   const sorted = [...dates].sort((a, b) => rank(b) - rank(a) || a.start - b.start);
   const best = sorted[0];
   if (!best) return null;
-  const iso = best.hasTime ? best.iso : localToUtcIso(parseDateKey(best.localDate), 18, 0, timezone);
-  return { iso, text: best.text, evidence: best.evidence, hasTime: best.hasTime, localDate: best.localDate };
+  const iso = best.hasTime
+    ? best.iso
+    : localToUtcIso(parseDateKey(best.localDate), 18, 0, timezone);
+  return {
+    iso,
+    text: best.text,
+    evidence: best.evidence,
+    hasTime: best.hasTime,
+    localDate: best.localDate,
+  };
 }
 
 interface MessageContext {
@@ -79,21 +119,39 @@ interface MessageContext {
   hintName: string | null;
 }
 
-function resolveCounterpart(a: ClauseAnalysis, authorIsUser: boolean, ctx: MessageContext): { name: string | null; clauseNameIsCounterpart: boolean } {
+function resolveCounterpart(
+  a: ClauseAnalysis,
+  authorIsUser: boolean,
+  ctx: MessageContext,
+): { name: string | null; clauseNameIsCounterpart: boolean } {
   if (a.person === 'first' && authorIsUser) {
-    if (a.clauseName) return { name: resolveFullName(a.clauseName.name, ctx.hintName), clauseNameIsCounterpart: true };
-    if (ctx.vocative) return { name: resolveFullName(ctx.vocative, ctx.hintName), clauseNameIsCounterpart: false };
+    if (a.clauseName)
+      return {
+        name: resolveFullName(a.clauseName.name, ctx.hintName),
+        clauseNameIsCounterpart: true,
+      };
+    if (ctx.vocative)
+      return { name: resolveFullName(ctx.vocative, ctx.hintName), clauseNameIsCounterpart: false };
     return { name: ctx.hintName, clauseNameIsCounterpart: false };
   }
   if (authorIsUser) {
     // The user asks the reader for something: the reader is the counterpart.
-    return { name: ctx.vocative ? resolveFullName(ctx.vocative, ctx.hintName) : ctx.hintName, clauseNameIsCounterpart: false };
+    return {
+      name: ctx.vocative ? resolveFullName(ctx.vocative, ctx.hintName) : ctx.hintName,
+      clauseNameIsCounterpart: false,
+    };
   }
   // The other party wrote the text: they are the counterpart, whether promising or asking.
   return { name: ctx.hintName ?? ctx.signatureName, clauseNameIsCounterpart: false };
 }
 
-function compose(a: ClauseAnalysis, direction: CommitmentDirection, counterpartName: string | null, clauseNameIsCounterpart: boolean, topic: string | null | undefined): string {
+function compose(
+  a: ClauseAnalysis,
+  direction: CommitmentDirection,
+  counterpartName: string | null,
+  clauseNameIsCounterpart: boolean,
+  topic: string | null | undefined,
+): string {
   const counterpartFirstName = counterpartName ? firstNameOf(counterpartName) : null;
   const args = { analysis: a, direction, counterpartFirstName, clauseNameIsCounterpart, topic };
   const text = a.language === 'tr' ? composeTurkish(args) : composeEnglish(args);
@@ -104,16 +162,40 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function buildCandidate(a: ClauseAnalysis, clause: Span, sentence: Span, input: ExtractCommitmentsInput, ctx: MessageContext): CommitmentCandidate | null {
-  const direction: CommitmentDirection = a.person === 'first' ? (input.authorIsUser ? 'user_owes' : 'other_owes') : input.authorIsUser ? 'other_owes' : 'user_owes';
-  const { name: counterpartName, clauseNameIsCounterpart } = resolveCounterpart(a, input.authorIsUser, ctx);
-  const due = dueFromDates(extractDates({ text: clause.text, now: input.now, timezone: input.timezone }), input.timezone);
+function buildCandidate(
+  a: ClauseAnalysis,
+  clause: Span,
+  sentence: Span,
+  input: ExtractCommitmentsInput,
+  ctx: MessageContext,
+): CommitmentCandidate | null {
+  const direction: CommitmentDirection =
+    a.person === 'first'
+      ? input.authorIsUser
+        ? 'user_owes'
+        : 'other_owes'
+      : input.authorIsUser
+        ? 'other_owes'
+        : 'user_owes';
+  const { name: counterpartName, clauseNameIsCounterpart } = resolveCounterpart(
+    a,
+    input.authorIsUser,
+    ctx,
+  );
+  const due = dueFromDates(
+    extractDates({ text: clause.text, now: input.now, timezone: input.timezone }),
+    input.timezone,
+  );
   const object = clauseNameIsCounterpart ? a.objectWithoutName : a.object;
   // The other party's own plans count only when directed at the user, dated, or about a deliverable
   // ("Yönetim toplantısında sunacağım" is not a promise to the user).
   if (direction === 'other_owes' && a.person === 'first') {
-    const addressed = a.addressesYou === true || RE_ADDRESSES_USER.test(lowercasePreservingIndices(clause.text));
-    const deliverable = a.language === 'tr' ? isKnownDeliverable(object) : RE_EN_DELIVERABLE.test(object.toLowerCase());
+    const addressed =
+      a.addressesYou === true || RE_ADDRESSES_USER.test(lowercasePreservingIndices(clause.text));
+    const deliverable =
+      a.language === 'tr'
+        ? isKnownDeliverable(object)
+        : RE_EN_DELIVERABLE.test(object.toLowerCase());
     if (!due && !addressed && !deliverable) return null;
   }
 
@@ -147,12 +229,24 @@ export function extractCommitments(input: ExtractCommitmentsInput): CommitmentCa
   const raw = input.text ?? '';
   if (!raw.trim() || Number.isNaN(Date.parse(input.now))) return [];
   const locale: Locale = input.locale ?? 'tr';
-  const cleaned = stripQuotedHistory(normalizeText(raw.length > MAX_TEXT ? raw.slice(0, MAX_TEXT) : raw));
+  const cleaned = stripQuotedHistory(
+    normalizeText(raw.length > MAX_TEXT ? raw.slice(0, MAX_TEXT) : raw),
+  );
   const { body, signatureName } = stripSignature(cleaned);
   if (!body) return [];
-  const hintName = input.counterpartHint?.name ? stripHonorifics(input.counterpartHint.name) || null : null;
-  const ctx: MessageContext = { vocative: input.authorIsUser ? detectVocative(body) : null, signatureName, hintName };
-  const opts = { now: input.now, timezone: input.timezone, hintFirstName: hintName ? firstNameOf(hintName) : null };
+  const hintName = input.counterpartHint?.name
+    ? stripHonorifics(input.counterpartHint.name) || null
+    : null;
+  const ctx: MessageContext = {
+    vocative: input.authorIsUser ? detectVocative(body) : null,
+    signatureName,
+    hintName,
+  };
+  const opts = {
+    now: input.now,
+    timezone: input.timezone,
+    hintFirstName: hintName ? firstNameOf(hintName) : null,
+  };
 
   const out: CommitmentCandidate[] = [];
   for (const sentence of splitSentences(body)) {
@@ -163,22 +257,49 @@ export function extractCommitments(input: ExtractCommitmentsInput): CommitmentCa
       if (candidate) out.push(candidate);
     }
   }
-  return uniqBy(out, (c) => `${c.direction}|${c.text.toLocaleLowerCase('tr-TR')}|${c.due?.localDate ?? ''}`).slice(0, MAX_CANDIDATES);
+  return uniqBy(
+    out,
+    (c) => `${c.direction}|${c.text.toLocaleLowerCase('tr-TR')}|${c.due?.localDate ?? ''}`,
+  ).slice(0, MAX_CANDIDATES);
 }
 
 /**
  * Normalized commitment text for a verbatim quote: "yarın Mehmet'e teklifi göndereceğim" → "Mehmet'e teklifi gönder".
  * Falls back to the cleaned quote when no verb form is recognized.
  */
-export function normalizeCommitmentText(quote: string, counterpart: string | null | undefined, locale: Locale = 'tr', opts: NormalizeCommitmentOptions = {}): string {
-  const cleanedQuote = normalizeText(quote).replace(/[.!?\s]+$/u, '').trim();
+export function normalizeCommitmentText(
+  quote: string,
+  counterpart: string | null | undefined,
+  locale: Locale = 'tr',
+  opts: NormalizeCommitmentOptions = {},
+): string {
+  const cleanedQuote = normalizeText(quote)
+    .replace(/[.!?\s]+$/u, '')
+    .trim();
   if (!cleanedQuote) return '';
   const hintName = counterpart ? stripHonorifics(counterpart) || null : null;
-  const analysis = analyzeClause(cleanedQuote, { now: opts.now ?? DEFAULT_NOW, timezone: opts.timezone ?? DEFAULT_TZ, hintFirstName: hintName ? firstNameOf(hintName) : null }, locale);
-  if (!analysis) return truncate((cleanedQuote[0] ?? '').toLocaleUpperCase(locale === 'tr' ? 'tr-TR' : 'en-US') + cleanedQuote.slice(1), MAX_TEXT_LEN);
+  const analysis = analyzeClause(
+    cleanedQuote,
+    {
+      now: opts.now ?? DEFAULT_NOW,
+      timezone: opts.timezone ?? DEFAULT_TZ,
+      hintFirstName: hintName ? firstNameOf(hintName) : null,
+    },
+    locale,
+  );
+  if (!analysis)
+    return truncate(
+      (cleanedQuote[0] ?? '').toLocaleUpperCase(locale === 'tr' ? 'tr-TR' : 'en-US') +
+        cleanedQuote.slice(1),
+      MAX_TEXT_LEN,
+    );
   const direction = opts.direction ?? 'user_owes';
-  const clauseNameIsCounterpart = direction === 'user_owes' && analysis.person === 'first' && analysis.clauseName !== null;
-  const counterpartName = clauseNameIsCounterpart && analysis.clauseName ? resolveFullName(analysis.clauseName.name, hintName) : hintName;
+  const clauseNameIsCounterpart =
+    direction === 'user_owes' && analysis.person === 'first' && analysis.clauseName !== null;
+  const counterpartName =
+    clauseNameIsCounterpart && analysis.clauseName
+      ? resolveFullName(analysis.clauseName.name, hintName)
+      : hintName;
   return compose(analysis, direction, counterpartName, clauseNameIsCounterpart, opts.topic);
 }
 
@@ -191,7 +312,17 @@ function fnv1a(s: string): string {
   return h.toString(16).padStart(8, '0');
 }
 
-const FOLD: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u' };
+const FOLD: Record<string, string> = {
+  ç: 'c',
+  ğ: 'g',
+  ı: 'i',
+  ö: 'o',
+  ş: 's',
+  ü: 'u',
+  â: 'a',
+  î: 'i',
+  û: 'u',
+};
 
 function foldKey(s: string): string {
   return s
@@ -202,13 +333,19 @@ function foldKey(s: string): string {
 }
 
 /** Stable key so re-running extraction over the same source never duplicates a commitment. */
-export function commitmentDedupeKey(candidate: Pick<CommitmentCandidate, 'text' | 'direction' | 'due'>, sourceId: string): string {
+export function commitmentDedupeKey(
+  candidate: Pick<CommitmentCandidate, 'text' | 'direction' | 'due'>,
+  sourceId: string,
+): string {
   const key = `${foldKey(candidate.text)}|${candidate.due?.localDate ?? ''}`;
   return `commit:${sourceId}:${candidate.direction}:${fnv1a(key)}`;
 }
 
 /** Row-shaped draft: high-confidence candidates open directly, the rest are proposed for user confirmation. */
-export function toCommitmentDraft(candidate: CommitmentCandidate, source: SourceRef): CommitmentDraft {
+export function toCommitmentDraft(
+  candidate: CommitmentCandidate,
+  source: SourceRef,
+): CommitmentDraft {
   return {
     text: candidate.text,
     quote: candidate.quote,

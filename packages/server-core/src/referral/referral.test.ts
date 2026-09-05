@@ -45,43 +45,94 @@ describe('referral · validateRedemption', () => {
     expect(r.code).toBe('ABCD2345');
     expect(r.referrerUserId).toBe('user-mehmet');
     expect(r.credits).toEqual([
-      { userId: 'user-mehmet', role: 'referrer', days: 14, startsAt: now, expiresAt: '2026-09-19T08:00:00.000Z' },
-      { userId: 'user-ayse', role: 'referred', days: 14, startsAt: now, expiresAt: '2026-09-19T08:00:00.000Z' },
+      {
+        userId: 'user-mehmet',
+        role: 'referrer',
+        days: 14,
+        startsAt: now,
+        expiresAt: '2026-09-19T08:00:00.000Z',
+      },
+      {
+        userId: 'user-ayse',
+        role: 'referred',
+        days: 14,
+        startsAt: now,
+        expiresAt: '2026-09-19T08:00:00.000Z',
+      },
     ]);
   });
 
   it('stacks the referrer credit after a running one', () => {
     const r = validateRedemption(input({ referrerCreditExpiresAt: '2026-09-10T08:00:00.000Z' }));
-    expect(r.ok && r.credits[0]).toMatchObject({ role: 'referrer', startsAt: '2026-09-10T08:00:00.000Z', expiresAt: '2026-09-24T08:00:00.000Z' });
+    expect(r.ok && r.credits[0]).toMatchObject({
+      role: 'referrer',
+      startsAt: '2026-09-10T08:00:00.000Z',
+      expiresAt: '2026-09-24T08:00:00.000Z',
+    });
     const past = validateRedemption(input({ referrerCreditExpiresAt: '2026-09-01T08:00:00.000Z' }));
     expect(past.ok && past.credits[0]?.startsAt).toBe(now);
   });
 
   it('rejects malformed or unknown codes as invalid with a Turkish message', () => {
-    expect(validateRedemption(input({ code: 'ABC' }))).toEqual({ ok: false, reason: 'invalid', message: 'Bu davet kodu geçerli değil.' });
-    expect(validateRedemption(input({ code: 'ABCD0123' }))).toMatchObject({ ok: false, reason: 'invalid' });
-    expect(validateRedemption(input({ referrerUserId: null }))).toMatchObject({ ok: false, reason: 'invalid' });
+    expect(validateRedemption(input({ code: 'ABC' }))).toEqual({
+      ok: false,
+      reason: 'invalid',
+      message: 'Bu davet kodu geçerli değil.',
+    });
+    expect(validateRedemption(input({ code: 'ABCD0123' }))).toMatchObject({
+      ok: false,
+      reason: 'invalid',
+    });
+    expect(validateRedemption(input({ referrerUserId: null }))).toMatchObject({
+      ok: false,
+      reason: 'invalid',
+    });
   });
 
   it('rejects self-referral, repeat redemption and old accounts', () => {
-    expect(validateRedemption(input({ referrerUserId: 'user-ayse' }))).toMatchObject({ ok: false, reason: 'self_referral' });
-    expect(validateRedemption(input({ redeemerAlreadyRedeemed: true }))).toMatchObject({ ok: false, reason: 'already_redeemed' });
-    const old = validateRedemption(input({ redeemerCreatedAt: '2026-08-28T07:59:00.000Z', locale: 'en' }));
-    expect(old).toEqual({ ok: false, reason: 'account_too_old', message: 'Invite codes can only be used on new accounts.' });
-    expect(validateRedemption(input({ redeemerCreatedAt: '2026-08-29T08:00:00.000Z' })).ok).toBe(true);
+    expect(validateRedemption(input({ referrerUserId: 'user-ayse' }))).toMatchObject({
+      ok: false,
+      reason: 'self_referral',
+    });
+    expect(validateRedemption(input({ redeemerAlreadyRedeemed: true }))).toMatchObject({
+      ok: false,
+      reason: 'already_redeemed',
+    });
+    const old = validateRedemption(
+      input({ redeemerCreatedAt: '2026-08-28T07:59:00.000Z', locale: 'en' }),
+    );
+    expect(old).toEqual({
+      ok: false,
+      reason: 'account_too_old',
+      message: 'Invite codes can only be used on new accounts.',
+    });
+    expect(validateRedemption(input({ redeemerCreatedAt: '2026-08-29T08:00:00.000Z' })).ok).toBe(
+      true,
+    );
   });
 
   it('rejects device reuse and referrers over the 30-day cap', () => {
-    expect(validateRedemption(input({ referrerDeviceHashes: ['dev-1', 'dev-9'] }))).toMatchObject({ ok: false, reason: 'device_reuse' });
-    expect(validateRedemption(input({ deviceFingerprintHash: null, referrerDeviceHashes: ['dev-1'] })).ok).toBe(true);
-    expect(validateRedemption(input({ referrerRedemptionsLast30d: 20 }))).toMatchObject({ ok: false, reason: 'referrer_limit' });
+    expect(validateRedemption(input({ referrerDeviceHashes: ['dev-1', 'dev-9'] }))).toMatchObject({
+      ok: false,
+      reason: 'device_reuse',
+    });
+    expect(
+      validateRedemption(input({ deviceFingerprintHash: null, referrerDeviceHashes: ['dev-1'] }))
+        .ok,
+    ).toBe(true);
+    expect(validateRedemption(input({ referrerRedemptionsLast30d: 20 }))).toMatchObject({
+      ok: false,
+      reason: 'referrer_limit',
+    });
     expect(validateRedemption(input({ referrerRedemptionsLast30d: 19 })).ok).toBe(true);
   });
 });
 
 describe('referral · sharing', () => {
   it('builds the invite URL from the web base and deep link', () => {
-    expect(inviteUrl('https://dijitalasistan.app/', 'abcd 2345')).toBe('https://dijitalasistan.app/app/referral?code=ABCD2345');
+    expect(inviteUrl('https://dijitalasistan.app/', 'abcd 2345')).toBe(
+      'https://dijitalasistan.app/app/referral?code=ABCD2345',
+    );
   });
 
   it('builds natural Turkish and English share texts containing code and link', () => {
@@ -94,7 +145,9 @@ describe('referral · sharing', () => {
   });
 
   it('encodes the WhatsApp share URL', () => {
-    const u = whatsappShareUrl('Kod: ABCD2345\nhttps://dijitalasistan.app/app/referral?code=ABCD2345');
+    const u = whatsappShareUrl(
+      'Kod: ABCD2345\nhttps://dijitalasistan.app/app/referral?code=ABCD2345',
+    );
     expect(u.startsWith('https://wa.me/?text=')).toBe(true);
     expect(new URL(u).searchParams.get('text')).toContain('ABCD2345');
   });

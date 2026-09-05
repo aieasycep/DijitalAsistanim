@@ -284,15 +284,13 @@ Deno.serve(
         throw new AppError('internal', `Sohbet oluşturulamadı: ${error?.message ?? ''}`);
       threadId = (t as { id: string }).id;
     }
-    await admin
-      .from('assistant_messages')
-      .insert({
-        user_id: user.id,
-        thread_id: threadId,
-        role: 'user',
-        content: input.message,
-        input_mode: input.inputMode,
-      });
+    await admin.from('assistant_messages').insert({
+      user_id: user.id,
+      thread_id: threadId,
+      role: 'user',
+      content: input.message,
+      input_mode: input.inputMode,
+    });
 
     // Retrieval
     let queryEmbedding: string | null = null;

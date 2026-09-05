@@ -48,7 +48,11 @@ export class MemoryStorage implements KeyValueStorage {
  * Demo mode is a development affordance. It is refused in production builds regardless of env so a
  * mis-set EXPO_PUBLIC_DATA_MODE can never ship fixtures to real users.
  */
-export function resolveMode(input: { requested?: string | null; isProduction: boolean; hasSupabase: boolean }): 'demo' | 'supabase' {
+export function resolveMode(input: {
+  requested?: string | null;
+  isProduction: boolean;
+  hasSupabase: boolean;
+}): 'demo' | 'supabase' {
   if (input.isProduction) return 'supabase';
   if (input.requested === 'supabase') return 'supabase';
   if (input.requested === 'demo') return 'demo';

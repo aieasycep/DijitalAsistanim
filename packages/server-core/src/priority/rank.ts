@@ -1,9 +1,20 @@
 /** Deterministic ranking and diverse top-N selection. */
 import { scoreCandidate, tierRank } from './score';
-import type { PriorityCandidate, PriorityContext, RankedCandidate, SelectTopOptions } from './types';
+import type {
+  PriorityCandidate,
+  PriorityContext,
+  RankedCandidate,
+  SelectTopOptions,
+} from './types';
 
-export function rankCandidates(candidates: readonly PriorityCandidate[], ctx: PriorityContext): RankedCandidate[] {
-  const ranked = candidates.map((candidate) => ({ candidate, priority: scoreCandidate(candidate, ctx) }));
+export function rankCandidates(
+  candidates: readonly PriorityCandidate[],
+  ctx: PriorityContext,
+): RankedCandidate[] {
+  const ranked = candidates.map((candidate) => ({
+    candidate,
+    priority: scoreCandidate(candidate, ctx),
+  }));
   return ranked.sort(compareRanked);
 }
 
@@ -15,7 +26,8 @@ export function compareRanked(a: RankedCandidate, b: RankedCandidate): number {
   const da = a.candidate.deadlineAt ? Date.parse(a.candidate.deadlineAt) : Number.POSITIVE_INFINITY;
   const db = b.candidate.deadlineAt ? Date.parse(b.candidate.deadlineAt) : Number.POSITIVE_INFINITY;
   if (da !== db) return da - db;
-  if (a.candidate.ageHours !== b.candidate.ageHours) return a.candidate.ageHours - b.candidate.ageHours;
+  if (a.candidate.ageHours !== b.candidate.ageHours)
+    return a.candidate.ageHours - b.candidate.ageHours;
   return a.candidate.id.localeCompare(b.candidate.id);
 }
 
@@ -27,7 +39,10 @@ function personKey(c: PriorityCandidate): string | null {
  * Top priorities with diversity: at most `maxPerThread` per thread and `maxPerPerson` per person.
  * A second pass relaxes the person cap (never the thread cap) so a busy day still fills the list.
  */
-export function selectTopPriorities(ranked: readonly RankedCandidate[], opts: SelectTopOptions = {}): RankedCandidate[] {
+export function selectTopPriorities(
+  ranked: readonly RankedCandidate[],
+  opts: SelectTopOptions = {},
+): RankedCandidate[] {
   const max = opts.max ?? 5;
   const maxPerThread = opts.maxPerThread ?? 1;
   const maxPerPerson = opts.maxPerPerson ?? 2;

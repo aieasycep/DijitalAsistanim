@@ -37,9 +37,15 @@ export function budgetLimitFor(plan: Plan, limits: AiDailyTokenLimits): number {
   return plan === 'pro' ? limits.pro : limits.free;
 }
 
-export function nextBudgetReset(now: string | Date = new Date(), timezone: string = DEFAULT_BUDGET_TIMEZONE): string {
+export function nextBudgetReset(
+  now: string | Date = new Date(),
+  timezone: string = DEFAULT_BUDGET_TIMEZONE,
+): string {
   const todayKey = localDateKey(now, timezone);
-  const tomorrowKey = localDateKey(addDays(zonedTimeToUtc(todayKey, '12:00', timezone), 1), timezone);
+  const tomorrowKey = localDateKey(
+    addDays(zonedTimeToUtc(todayKey, '12:00', timezone), 1),
+    timezone,
+  );
   return zonedTimeToUtc(tomorrowKey, '00:00', timezone);
 }
 

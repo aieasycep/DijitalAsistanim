@@ -71,7 +71,10 @@
     "queuedOffline": "Bağlantı gelince gönderilecek.",
     "genericError": "Bir şeyler ters gitti.",
     "sourceLine": "{{label}} · {{person}} · {{time}}",
-    "sourceLineNoPerson": "{{label}} · {{time}}"
+    "sourceLineNoPerson": "{{label}} · {{time}}",
+    "skipIntro": "Atla",
+    "or": "veya",
+    "refresh": "Yenile"
   },
   "greeting": {
     "morning": "Günaydın, {{name}}",
@@ -135,7 +138,19 @@
     "syncing": "Analiz ediliyor…",
     "completedToast": "Tamamlandı olarak işaretlendi",
     "dismissedToast": "Öğrendim · Bunu daha az göstereceğim",
-    "vipToast": "Öğrendim · {{name}} artık VIP."
+    "vipToast": "Öğrendim · {{name}} artık VIP.",
+    "closeDay": "Günü Kapat",
+    "preparingHeadline": "Brifingin hazırlanıyor.",
+    "preparingBody": "İlk brifingin birkaç dakika içinde burada olacak.",
+    "capture": "Ekle",
+    "connectBody": "Gmail veya Outlook bağla; önemli konular birkaç dakika içinde burada görünür.",
+    "menu": {
+      "title": "Bu kart için",
+      "noReason": "Bu kart için bir gerekçe kaydedilmemiş.",
+      "showMoreToast": "Öğrendim · Bunu daha sık göstereceğim",
+      "stopFollowingToast": "Öğrendim · Bunu artık takip etmeyeceğim",
+      "noPerson": "Bu kartta bir kişi bulunamadı."
+    }
   },
   "briefing": {
     "morningKicker": "SABAH BRİFİNGİ · {{date}}",
@@ -188,10 +203,35 @@
       "speed": "{{speed}}x",
       "chapters": "Bölümler",
       "usingDeviceVoice": "Cihaz sesi kullanılıyor",
-      "miniTitle": "Sabah Brifingi · {{chapter}}"
+      "miniTitle": "Sabah Brifingi · {{chapter}}",
+      "middayTitle": "Öğle Nabzı",
+      "eveningTitle": "Akşam Kapanışı",
+      "weeklyTitle": "Haftalık Özet",
+      "unavailable": "Sesli brifing şu an hazırlanamadı.",
+      "chapter": "Bölüm {{index}}",
+      "nothingPlaying": "Şu an çalan bir brifing yok."
     },
     "generateFailed": "Brifing şu an hazırlanamadı.",
-    "regenerate": "Yeniden Hazırla"
+    "regenerate": "Yeniden Hazırla",
+    "notReadyTitle": "Henüz hazır değil.",
+    "notReadyBody": "Brifing {{time}}'da hazırlanacak.",
+    "notReadyBodyGeneric": "Brifing hazır olduğunda burada görünecek.",
+    "carryOverSelect": "Yarına taşınacak konuları seç",
+    "closeWithout": "Taşımadan kapat",
+    "closed": "Gün kapatıldı",
+    "readTime": "{{minutes}} dk okuma",
+    "nextWeek": "GELECEK HAFTA",
+    "busiestDay": "EN YOĞUN GÜN",
+    "topPeople": "EN ÇOK İLETİŞİM",
+    "weeklyShareTitle": "Dijital Haftam",
+    "interactions": "{{count}} etkileşim",
+    "upgrade": "Pro'ya Geç",
+    "proBody": {
+      "midday": "Öğle nabzı Pro'da. Sabah brifingin her zaman ücretsiz.",
+      "evening": "Akşam kapanışı Pro'da. Sabah brifingin her zaman ücretsiz.",
+      "weekly": "Haftalık özet Pro'da. Sabah brifingin her zaman ücretsiz.",
+      "audio": "Sesli brifing Pro'da. Okumak her zaman ücretsiz."
+    }
   },
   "flow": {
     "title": "Akış",
@@ -505,19 +545,35 @@
     "welcome": {
       "title": "Dijital hayatın artık tek yerde.",
       "cta": "Başlayalım",
-      "signIn": "Zaten hesabım var"
+      "signIn": "Zaten hesabım var",
+      "skip": "Atla",
+      "sampleName": "Yunus"
     },
     "value1": {
       "title": "Gürültüyü azalt.",
       "from": "{{count}} mail",
-      "to": "{{count}} önemli konu"
+      "to": "{{count}} önemli konu",
+      "body": "Gelen her şeyi okur, yalnızca önemli olanı gösterir.",
+      "eyebrow": "{{from}} → {{to}}",
+      "rows": ["Ahmet revize teklif bekliyor", "Başvuru bugün 17:00", "Teklife 3 gündür cevap yok"]
     },
     "value2": {
-      "title": "Gününü sen sormadan hazırlarız."
+      "title": "Gününü sen sormadan hazırlarız.",
+      "eyebrow": "Her sabah {{time}}",
+      "body": "Okumak istemezsen 2 dakikada dinle.",
+      "sampleMood": "Bugün oldukça sakin bir günün var.",
+      "sampleNarrative": "Öğlene kadar toplantın bulunmuyor. Saat 14:30'da Mehmet ile müşteri toplantın var…"
     },
     "value3": {
       "title": "Kontrol her zaman sende.",
-      "body": "Sadece okur; sen onaylamadan hiçbir şey göndermez veya değiştirmez."
+      "body": "Sadece okur; sen onaylamadan hiçbir şey göndermez veya değiştirmez.",
+      "eyebrow": "Onay Merkezi",
+      "sampleAction": "MAİL GÖNDER",
+      "sampleTitle": "Mehmet Yılmaz'a takip mesajı gönder",
+      "sampleWhy": "Teklife 3 gündür yanıt gelmedi.",
+      "sampleChangeLabel": "Değişim",
+      "sampleChange": "1 mail · Kısa, profesyonel ton",
+      "cta": "Hesap Oluştur"
     },
     "auth": {
       "title": "Hesabını oluştur",
@@ -531,7 +587,20 @@
       "otpTitle": "Kodu gir",
       "otpBody": "{{email}} adresine gönderdiğimiz 6 haneli kodu gir.",
       "legal": "Devam ederek Kullanım Şartları'nı ve Gizlilik Politikası'nı kabul etmiş olursun.",
-      "failed": "Giriş yapılamadı. Tekrar dene."
+      "failed": "Giriş yapılamadı. Tekrar dene.",
+      "subtitle": "Giriş yöntemin, bağlayacağın hesaplardan bağımsızdır.",
+      "signInTitle": "Giriş yap",
+      "terms": "Kullanım Şartları",
+      "privacy": "Gizlilik Politikası",
+      "sendCode": "Kod Gönder",
+      "verify": "Doğrula",
+      "otpPlaceholder": "6 haneli kod",
+      "otpInvalid": "Kod 6 haneli olmalı.",
+      "codeSent": "Kod gönderildi. Mailini kontrol et.",
+      "resend": "Kodu yeniden gönder",
+      "changeEmail": "E-postayı değiştir",
+      "appleUnavailable": "Apple ile giriş bu cihazda kullanılamıyor.",
+      "demoNotice": "Deneme modu · gerçek hesap gerekmez"
     },
     "connect": {
       "title": "Dijital hayatını bağla.",
@@ -539,7 +608,20 @@
       "connect": "Bağla",
       "connected": "Bağlandı",
       "continue": "Devam Et",
-      "demoHint": "Deneme verisiyle devam et"
+      "demoHint": "Deneme verisiyle devam et",
+      "step": "ADIM {{current}} / {{total}}",
+      "continueCount": "Devam Et · {{count}} hesap bağlı",
+      "connecting": "Bağlanıyor…",
+      "requirement": "Mail ve takvim bağla",
+      "connectedToast": "{{name}} bağlandı",
+      "providerMeta": {
+        "gmail": "Google hesabın",
+        "outlook": "İş maili · Microsoft 365",
+        "google_calendar": "Google Calendar",
+        "microsoft_calendar": "Outlook takvimi",
+        "apple_calendar": "iCloud · cihazdan okunur",
+        "device_calendar": "Cihazdan okunur"
+      }
     },
     "explainer": {
       "gmailTitle": "Gmail erişimine neden ihtiyacımız var?",
@@ -555,21 +637,46 @@
       "assure2": "Verilerin reklam için kullanılmaz.",
       "assure3": "Bağlantını istediğin zaman kaldırabilirsin.",
       "cta": "Güvenli şekilde bağla",
-      "readOnly": "Yalnızca okuma izni istenir."
+      "readOnly": "Yalnızca okuma izni istenir.",
+      "kicker": {
+        "gmail": "GMAIL",
+        "outlook": "OUTLOOK · MICROSOFT 365",
+        "calendar": "TAKVİM"
+      },
+      "ctaGoogle": "Google ile Bağlan",
+      "ctaMicrosoft": "Microsoft ile Bağlan",
+      "ctaCalendar": "{{provider}}'i Bağla",
+      "footnote": {
+        "google": "Sonraki adımda Google'ın kendi izin ekranı açılır.",
+        "microsoft": "Sonraki adımda Microsoft'un kendi izin ekranı açılır.",
+        "device": "{{provider}} cihazdan okunur; ayrı giriş gerekmez."
+      }
     },
     "calendarPermission": {
       "title": "Takvimini okuyarak gününü ve çakışmaları anlayabiliriz.",
       "cta": "Takvime erişime izin ver",
       "denied": "Takvim izni verilmedi.",
       "deniedBody": "Ayarlar'dan takvim erişimini açabilirsin.",
-      "openSettings": "Ayarları Aç"
+      "openSettings": "Ayarları Aç",
+      "body": "Takviminde değişiklik yapmadan önce senden onay isteriz.",
+      "deniedTitle": "Takvim erişimi kapalı",
+      "skip": "Şimdilik Atla",
+      "syncing": "Takvim okunuyor…",
+      "synced": "{{count}} etkinlik eklendi"
     },
     "briefingPrefs": {
       "title": "Günün ne zaman başlıyor?",
       "morning": "Sabah Brifingi",
       "midday": "Öğle Nabzı",
       "evening": "Akşam Kapanışı",
-      "weekend": "Hafta sonu brifing gönder"
+      "weekend": "Hafta sonu brifing gönder",
+      "subtitle": "Brifingleri ne zaman hazırlayayım? Sonradan değiştirebilirsin.",
+      "morningMeta": "Günün tamamı · sesli sürüm",
+      "middayMeta": "Yalnızca değişenler",
+      "eveningMeta": "Yarına kalanlar",
+      "weekendMeta": "Sadece sabah · Kişisel öncelikli",
+      "pickTime": "{{label}} saati",
+      "saved": "Brifing saatleri kaydedildi"
     },
     "personalization": {
       "title": "Senin için neler daha önemli?",
@@ -582,14 +689,28 @@
         "appointments": "Randevular",
         "deadlines": "Son Tarihler",
         "all": "Hepsi"
-      }
+      },
+      "subtitle": "Birden fazla seçebilirsin. Zamanla kendim de öğrenirim.",
+      "continueCount": "Devam Et · {{count}} seçili"
     },
     "vip": {
       "title": "Kimlerden gelen şeyleri asla kaçırmak istemezsin?",
       "search": "Kişi ara…",
       "addManual": "E-posta ile ekle",
       "skip": "Şimdilik geç",
-      "contactsPermission": "Kişilere erişim isteğe bağlıdır."
+      "contactsPermission": "Kişilere erişim isteğe bağlıdır.",
+      "subtitle": "VIP kişilerin mesajları her zaman öne çıkar.",
+      "suggested": "ÖNERİLENLER",
+      "selected": "SEÇİLENLER · {{count}}",
+      "results": "SONUÇLAR",
+      "continueCount": "Devam Et ({{count}})",
+      "namePlaceholder": "Ad Soyad",
+      "add": "Ekle",
+      "added": "{{name}} VIP olarak eklendi",
+      "removed": "{{name}} listeden çıkarıldı",
+      "fromContacts": "Rehberden seç",
+      "noResults": "Kişi bulunamadı.",
+      "remove": "Kaldır"
     },
     "analysis": {
       "title": "Dijital hayatın analiz ediliyor…",
@@ -606,13 +727,20 @@
         "followUps": "{{count}} olası takip"
       },
       "failed": "Analiz tamamlanamadı.",
-      "retry": "Tekrar Dene"
+      "retry": "Tekrar Dene",
+      "subtitle": "Son 72 saat · {{providers}}",
+      "prioritizing": "Öncelikler sıralanıyor",
+      "footer": "Genelde 20–40 saniye sürer. Mail içerikleri cihazında özetlenir, hiçbir şey gönderilmez.",
+      "slow": "Biraz daha sürüyor…",
+      "failedBody": "Bağlantını kontrol edip tekrar deneyebilirsin."
     },
     "aha": {
       "title": "Hazır.",
       "body": "Son 72 saatte bilmen gereken {{count}} şey bulduk.",
       "bodyZero": "Son 72 saatte acil bir şey yok. Bu iyi bir haber.",
-      "cta": "Brifingimi Gör"
+      "cta": "Brifingimi Gör",
+      "kicker": "HAZIR.",
+      "more": "+ {{count}} konu daha"
     },
     "notifications": {
       "title": "Sadece önemli olduğunda haber verelim.",
@@ -622,7 +750,11 @@
         "Kargon bugün geliyor."
       ],
       "cta": "Bildirimleri Aç",
-      "later": "Şimdi Değil"
+      "later": "Şimdi Değil",
+      "subtitle": "Günde ortalama 3 bildirim. Pazarlama bildirimi yok, “bak bana” bildirimi yok.",
+      "exampleTimes": ["14:10", "08:00", "11:30"],
+      "deniedToast": "Bildirimleri Ayarlar'dan istediğin zaman açabilirsin.",
+      "enabledToast": "Bildirimler açık"
     }
   },
   "settings": {
@@ -983,7 +1115,8 @@
     "notFound": "Bu içerik bulunamadı.",
     "cardFailed": "Bu kart yüklenemedi.",
     "invalidUrl": "Bu bağlantı açılamıyor.",
-    "handoffFailed": "Uygulama açılamadı."
+    "handoffFailed": "Uygulama açılamadı.",
+    "oauthCancelled": "Bağlantı iptal edildi."
   },
   "empty": {
     "important": "Her şey kontrol altında.",
@@ -1045,6 +1178,14 @@
     "loading": "Yükleniyor",
     "priority": "Öncelik kartı: {{title}}",
     "swipeDone": "Tamamlamak için sağa kaydır",
-    "swipeSnooze": "Ertelemek için sola kaydır"
+    "swipeSnooze": "Ertelemek için sola kaydır",
+    "search": "Ara",
+    "capture": "Ekle",
+    "share": "Paylaş",
+    "menu": "Kart menüsü",
+    "selectChapter": "{{title}} bölümüne git",
+    "timePicker": "{{label}} saatini seç",
+    "remove": "Kaldır",
+    "page": "Sayfa {{current}} / {{total}}"
   }
 }

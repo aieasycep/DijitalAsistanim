@@ -51,6 +51,7 @@ eas submit --platform ios / android
 ```bash
 pnpm --filter @da/web build && pnpm --filter @da/web start
 ```
+
 Set `NEXT_PUBLIC_*`, `APPLE_TEAM_ID`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `ANDROID_SHA256_CERT_FINGERPRINTS`,
 `NEXT_PUBLIC_APP_STORE_URL`, `NEXT_PUBLIC_PLAY_STORE_URL`. Point `dijitalasistan.app` at the deployment.
 
@@ -63,15 +64,15 @@ Set `NEXT_PUBLIC_*`, `APPLE_TEAM_ID`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `ANDRO
 
 ## 5. Optional integrations
 
-| Feature | Variables | Without it |
-| --- | --- | --- |
-| Gmail push | `GOOGLE_PUBSUB_TOPIC`, `GOOGLE_PUBSUB_VERIFICATION_TOKEN` | polling every 10 min |
-| Graph notifications | `MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE` | polling |
-| Server TTS | `TTS_PROVIDER`, keys | device TTS |
-| Server STT | `STT_PROVIDER`, keys | type-to-ask fallback |
-| Embeddings | `EMBEDDING_PROVIDER`, key | Postgres FTS |
-| Travel time | `ROUTES_PROVIDER=google`, `GOOGLE_ROUTES_API_KEY` | no travel hints |
-| Sentry / PostHog | DSN / key | silent no-op |
+| Feature             | Variables                                                 | Without it           |
+| ------------------- | --------------------------------------------------------- | -------------------- |
+| Gmail push          | `GOOGLE_PUBSUB_TOPIC`, `GOOGLE_PUBSUB_VERIFICATION_TOKEN` | polling every 10 min |
+| Graph notifications | `MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE`                    | polling              |
+| Server TTS          | `TTS_PROVIDER`, keys                                      | device TTS           |
+| Server STT          | `STT_PROVIDER`, keys                                      | type-to-ask fallback |
+| Embeddings          | `EMBEDDING_PROVIDER`, key                                 | Postgres FTS         |
+| Travel time         | `ROUTES_PROVIDER=google`, `GOOGLE_ROUTES_API_KEY`         | no travel hints      |
+| Sentry / PostHog    | DSN / key                                                 | silent no-op         |
 
 ## 6. Rollout checklist
 

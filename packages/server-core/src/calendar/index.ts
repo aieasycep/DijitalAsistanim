@@ -5,7 +5,17 @@
  *
  * Product law: nothing here moves a meeting. Every output is a suggestion the user approves.
  */
-import type { CalendarConflict, CalendarEvent, Commitment, FreeBlock, ISODate, Locale, PlanDay, ScheduleSuggestion, TaskItem } from '@da/domain';
+import type {
+  CalendarConflict,
+  CalendarEvent,
+  Commitment,
+  FreeBlock,
+  ISODate,
+  Locale,
+  PlanDay,
+  ScheduleSuggestion,
+  TaskItem,
+} from '@da/domain';
 import { formatClock, formatDayLabel, timeWithDative, turkishDative } from '../dates';
 import { AppError } from '../errors';
 import { MINUTE, addMinutes, localDateKey, zonedTimeToUtc } from '../util';
@@ -64,7 +74,10 @@ export function durationMinutes(event: Pick<CalendarEvent, 'startAt' | 'endAt'>)
 }
 
 /** Attendees other than the organizer-user (people the meeting is *with*). */
-export function externalAttendees(event: CalendarEvent, opts: EventFilterOptions = {}): CalendarEvent['attendees'] {
+export function externalAttendees(
+  event: CalendarEvent,
+  opts: EventFilterOptions = {},
+): CalendarEvent['attendees'] {
   const email = opts.userEmail?.trim().toLowerCase();
   return event.attendees.filter((a) => {
     if (email && a.email?.trim().toLowerCase() === email) return false;
@@ -73,10 +86,13 @@ export function externalAttendees(event: CalendarEvent, opts: EventFilterOptions
   });
 }
 
-const ONLINE_LOCATION = /^(online|çevrimiçi|cevrimici|remote|uzaktan|zoom|teams|google meet|meet)$/i;
+const ONLINE_LOCATION =
+  /^(online|çevrimiçi|cevrimici|remote|uzaktan|zoom|teams|google meet|meet)$/i;
 
 /** True when the event has a physical place worth travelling to. */
-export function hasPhysicalLocation(event: Pick<CalendarEvent, 'location' | 'meetingUrl'>): boolean {
+export function hasPhysicalLocation(
+  event: Pick<CalendarEvent, 'location' | 'meetingUrl'>,
+): boolean {
   const loc = event.location?.trim() ?? '';
   if (!loc) return false;
   if (ONLINE_LOCATION.test(loc)) return false;
@@ -95,7 +111,10 @@ function sameMirroredEvent(a: CalendarEvent, b: CalendarEvent): boolean {
 }
 
 /** Overlapping timed events (all-day, cancelled and declined events are ignored). */
-export function detectConflicts(events: readonly CalendarEvent[], opts: EventFilterOptions = {}): CalendarConflict[] {
+export function detectConflicts(
+  events: readonly CalendarEvent[],
+  opts: EventFilterOptions = {},
+): CalendarConflict[] {
   const active = events.filter((e) => isSchedulable(e, opts)).sort(byStart);
   const out: CalendarConflict[] = [];
   for (let i = 0; i < active.length; i++) {
@@ -106,9 +125,18 @@ export function detectConflicts(events: readonly CalendarEvent[], opts: EventFil
       if (!b) continue;
       if (ms(b.startAt) >= ms(a.endAt)) break;
       if (sameMirroredEvent(a, b)) continue;
-      const overlap = Math.round((Math.min(ms(a.endAt), ms(b.endAt)) - Math.max(ms(a.startAt), ms(b.startAt))) / MINUTE);
+      const overlap = Math.round(
+        (Math.min(ms(a.endAt), ms(b.endAt)) - Math.max(ms(a.startAt), ms(b.startAt))) / MINUTE,
+      );
       if (overlap <= 0) continue;
-      out.push({ id: `conflict:${a.id}:${b.id}`, eventA: a, eventB: b, overlapMinutes: overlap, suggestions: [], status: 'open' });
+      out.push({
+        id: `conflict:${a.id}:${b.id}`,
+        eventA: a,
+        eventB: b,
+        overlapMinutes: overlap,
+        suggestions: [],
+        status: 'open',
+      });
     }
   }
   return out;
@@ -126,7 +154,10 @@ export interface BackToBackOptions extends EventFilterOptions {
 }
 
 /** Consecutive events with less than `minGapMin` minutes between them (overlaps are conflicts, not warnings). */
-export function detectBackToBack(events: readonly CalendarEvent[], opts: BackToBackOptions = {}): BackToBackWarning[] {
+export function detectBackToBack(
+  events: readonly CalendarEvent[],
+  opts: BackToBackOptions = {},
+): BackToBackWarning[] {
   const minGap = opts.minGapMin ?? DEFAULT_MIN_GAP_MINUTES;
   const active = events.filter((e) => isSchedulable(e, opts)).sort(byStart);
   const out: BackToBackWarning[] = [];
@@ -134,7 +165,8 @@ export function detectBackToBack(events: readonly CalendarEvent[], opts: BackToB
   for (const event of active) {
     if (prev) {
       const gap = Math.round((ms(event.startAt) - ms(prev.endAt)) / MINUTE);
-      if (gap >= 0 && gap < minGap) out.push({ fromEventId: prev.id, toEventId: event.id, gapMinutes: gap });
+      if (gap >= 0 && gap < minGap)
+        out.push({ fromEventId: prev.id, toEventId: event.id, gapMinutes: gap });
     }
     if (!prev || ms(event.endAt) > ms(prev.endAt)) prev = event;
   }
@@ -164,13 +196,19 @@ function roundUpToFiveMinutes(t: number): number {
 }
 
 function block(start: number, end: number): FreeBlock {
-  return { startAt: new Date(start).toISOString(), endAt: new Date(end).toISOString(), minutes: Math.round((end - start) / MINUTE) };
+  return {
+    startAt: new Date(start).toISOString(),
+    endAt: new Date(end).toISOString(),
+    minutes: Math.round((end - start) / MINUTE),
+  };
 }
 
 /** Free time inside the working window of a local date, after removing every schedulable event. */
 export function freeBlocks(events: readonly CalendarEvent[], opts: FreeBlockOptions): FreeBlock[] {
   const minMinutes = opts.minMinutes ?? DEFAULT_MIN_BLOCK_MINUTES;
-  const windowStart = ms(zonedTimeToUtc(opts.date, opts.dayStart ?? DEFAULT_DAY_START, opts.timezone));
+  const windowStart = ms(
+    zonedTimeToUtc(opts.date, opts.dayStart ?? DEFAULT_DAY_START, opts.timezone),
+  );
   const windowEnd = ms(zonedTimeToUtc(opts.date, opts.dayEnd ?? DEFAULT_DAY_END, opts.timezone));
   if (windowEnd <= windowStart) return [];
   let cursor = windowStart;
@@ -218,7 +256,10 @@ function capitalize(s: string): string {
 }
 
 /** "Bugün" / "Yarın" / "Cuma" / "12 Eylül" — title-cased day label. */
-export function dayLabelTitle(iso: string, opts: { now: string; timezone: string; locale?: Locale }): string {
+export function dayLabelTitle(
+  iso: string,
+  opts: { now: string; timezone: string; locale?: Locale },
+): string {
   return capitalize(formatDayLabel(iso, opts));
 }
 
@@ -243,7 +284,11 @@ export interface PrepTimeOptions {
  * Propose a prep block right before an event, inside a free block. When nothing is free directly
  * before the event, the latest free block that ends at most 90 minutes earlier is used.
  */
-export function suggestPrepTime(event: CalendarEvent, blocks: readonly FreeBlock[], opts: PrepTimeOptions = {}): ScheduleSuggestion | null {
+export function suggestPrepTime(
+  event: CalendarEvent,
+  blocks: readonly FreeBlock[],
+  opts: PrepTimeOptions = {},
+): ScheduleSuggestion | null {
   const minutes = Math.max(5, opts.minutes ?? DEFAULT_PREP_MINUTES);
   const timezone = opts.timezone ?? DEFAULT_TIMEZONE;
   const locale = opts.locale ?? 'tr';
@@ -253,7 +298,9 @@ export function suggestPrepTime(event: CalendarEvent, blocks: readonly FreeBlock
   const nowMs = opts.now ? ms(opts.now) : Number.NEGATIVE_INFINITY;
   const need = minutes * MINUTE;
   let proposed: { start: number; end: number } | null = null;
-  const usable = blocks.filter((b) => b.minutes >= minutes && ms(b.startAt) >= Math.min(nowMs, start)).sort((a, b) => ms(b.startAt) - ms(a.startAt));
+  const usable = blocks
+    .filter((b) => b.minutes >= minutes && ms(b.startAt) >= Math.min(nowMs, start))
+    .sort((a, b) => ms(b.startAt) - ms(a.startAt));
   for (const b of usable) {
     const bStart = ms(b.startAt);
     const bEnd = ms(b.endAt);
@@ -266,11 +313,17 @@ export function suggestPrepTime(event: CalendarEvent, blocks: readonly FreeBlock
     break;
   }
   if (!proposed) return null;
-  const range = clockRange(new Date(proposed.start).toISOString(), new Date(proposed.end).toISOString(), timezone);
+  const range = clockRange(
+    new Date(proposed.start).toISOString(),
+    new Date(proposed.end).toISOString(),
+    timezone,
+  );
   return {
     id: `prep:${event.id}`,
     kind: 'add_prep_time',
-    title: en ? `Reserve ${minutes} min to prepare before ${event.title}.` : `${event.title} öncesi ${minutes} dk hazırlık ayır.`,
+    title: en
+      ? `Reserve ${minutes} min to prepare before ${event.title}.`
+      : `${event.title} öncesi ${minutes} dk hazırlık ayır.`,
     detail: en ? `${range} is free.` : `${range} arası boş.`,
     proposedStartAt: new Date(proposed.start).toISOString(),
     proposedEndAt: new Date(proposed.end).toISOString(),
@@ -304,18 +357,35 @@ interface Placeable {
   priorityRank: number;
 }
 
-const PRIORITY_RANK: Record<TaskItem['priority'], number> = { critical: 0, high: 1, normal: 2, low: 3 };
+const PRIORITY_RANK: Record<TaskItem['priority'], number> = {
+  critical: 0,
+  high: 1,
+  normal: 2,
+  low: 3,
+};
 
 function placeables(input: ScheduleSuggestionsInput): Placeable[] {
   const nowMs = ms(input.now);
   const items: Placeable[] = [];
   for (const t of input.tasks) {
     if (t.deletedAt || t.status !== 'open' || t.scheduledStartAt) continue;
-    items.push({ kind: 'task', id: t.id, title: t.title, dueAt: t.dueAt ?? null, priorityRank: PRIORITY_RANK[t.priority] });
+    items.push({
+      kind: 'task',
+      id: t.id,
+      title: t.title,
+      dueAt: t.dueAt ?? null,
+      priorityRank: PRIORITY_RANK[t.priority],
+    });
   }
   for (const c of input.commitments) {
     if (c.deletedAt || c.status !== 'open' || c.direction !== 'user_owes') continue;
-    items.push({ kind: 'commitment', id: c.id, title: c.text, dueAt: c.dueAt ?? null, priorityRank: 2 });
+    items.push({
+      kind: 'commitment',
+      id: c.id,
+      title: c.text,
+      dueAt: c.dueAt ?? null,
+      priorityRank: 2,
+    });
   }
   return items
     .filter((p) => !p.dueAt || ms(p.dueAt) >= nowMs - 24 * 60 * MINUTE)
@@ -348,21 +418,33 @@ export function scheduleSuggestions(input: ScheduleSuggestionsInput): ScheduleSu
     if (start <= nowMs || start > nowMs + 24 * 60 * MINUTE) continue;
     if (externalAttendees(event, input).length === 0) continue;
     if (event.prepGeneratedAt) continue;
-    const prep = suggestPrepTime(event, input.freeBlocks, { minutes: input.prepMinutes, timezone: tz, locale, now: input.now });
+    const prep = suggestPrepTime(event, input.freeBlocks, {
+      minutes: input.prepMinutes,
+      timezone: tz,
+      locale,
+      now: input.now,
+    });
     if (prep) out.push(prep);
     if (out.length >= max) return out;
   }
 
   // 2 — tasks / promises into free blocks
   const queue = placeables(input);
-  const blocks = [...input.freeBlocks].filter((b) => ms(b.endAt) > nowMs).sort((a, b) => ms(a.startAt) - ms(b.startAt));
+  const blocks = [...input.freeBlocks]
+    .filter((b) => ms(b.endAt) > nowMs)
+    .sort((a, b) => ms(a.startAt) - ms(b.startAt));
   for (const b of blocks) {
     if (out.length >= max) break;
     const blockStart = Math.max(ms(b.startAt), nowMs);
     const blockEnd = ms(b.endAt);
     const available = Math.round((blockEnd - blockStart) / MINUTE);
     if (available < DEFAULT_MIN_BLOCK_MINUTES) continue;
-    const idx = queue.findIndex((p) => !p.dueAt || ms(p.dueAt) >= blockStart + DEFAULT_TASK_MINUTES * MINUTE || ms(p.dueAt) >= blockEnd);
+    const idx = queue.findIndex(
+      (p) =>
+        !p.dueAt ||
+        ms(p.dueAt) >= blockStart + DEFAULT_TASK_MINUTES * MINUTE ||
+        ms(p.dueAt) >= blockEnd,
+    );
     if (idx < 0) continue;
     const item = queue.splice(idx, 1)[0];
     if (!item) continue;
@@ -372,7 +454,9 @@ export function scheduleSuggestions(input: ScheduleSuggestionsInput): ScheduleSu
     const day = dayLabelTitle(b.startAt, fmt);
     const range = clockRange(b.startAt, b.endAt, tz);
     const duration = formatDuration(b.minutes, locale);
-    const title = en ? `You have ${duration} free ${day.toLowerCase()} between ${range}.` : `${day} ${range} arasında ${duration} boşluğun var.`;
+    const title = en
+      ? `You have ${duration} free ${day.toLowerCase()} between ${range}.`
+      : `${day} ${range} arasında ${duration} boşluğun var.`;
     const detail =
       item.kind === 'task'
         ? en
@@ -403,7 +487,10 @@ export function scheduleSuggestions(input: ScheduleSuggestionsInput): ScheduleSu
 
   // 3 — buffers after back-to-back meetings (only when the shifted slot stays free)
   const minGap = input.minGapMin ?? DEFAULT_MIN_GAP_MINUTES;
-  for (const w of detectBackToBack(activeEvents, { minGapMin: minGap, userEmail: input.userEmail })) {
+  for (const w of detectBackToBack(activeEvents, {
+    minGapMin: minGap,
+    userEmail: input.userEmail,
+  })) {
     if (out.length >= max) break;
     const from = activeEvents.find((e) => e.id === w.fromEventId);
     const to = activeEvents.find((e) => e.id === w.toEventId);
@@ -412,7 +499,9 @@ export function scheduleSuggestions(input: ScheduleSuggestionsInput): ScheduleSu
     const shift = (minGap - w.gapMinutes) * MINUTE;
     const newStart = ms(to.startAt) + shift;
     const newEnd = ms(to.endAt) + shift;
-    const collides = activeEvents.some((e) => e.id !== to.id && e.id !== from.id && ms(e.startAt) < newEnd && ms(e.endAt) > newStart);
+    const collides = activeEvents.some(
+      (e) => e.id !== to.id && e.id !== from.id && ms(e.startAt) < newEnd && ms(e.endAt) > newStart,
+    );
     if (collides) continue;
     const newStartIso = new Date(newStart).toISOString();
     const t = formatClock(newStartIso, tz);
@@ -424,12 +513,16 @@ export function scheduleSuggestions(input: ScheduleSuggestionsInput): ScheduleSu
       title: en
         ? `Your ${formatClock(from.startAt, tz)} and ${formatClock(to.startAt, tz)} meetings are back-to-back.`
         : `${formatClock(from.startAt, tz)} ve ${formatClock(to.startAt, tz)} toplantıların arka arkaya.`,
-      detail: en ? `No break in between; I could suggest moving ${to.title} to ${t}.` : `Arada mola yok; ${to.title} toplantısını ${timeWithDative(hh, mm)} kaydırmayı önerebilirim.`,
+      detail: en
+        ? `No break in between; I could suggest moving ${to.title} to ${t}.`
+        : `Arada mola yok; ${to.title} toplantısını ${timeWithDative(hh, mm)} kaydırmayı önerebilirim.`,
       proposedStartAt: newStartIso,
       proposedEndAt: new Date(newEnd).toISOString(),
       targetEventId: to.id,
       targetTaskId: null,
-      reason: en ? `${minGap} min buffer between meetings` : `Toplantılar arasında ${minGap} dk tampon`,
+      reason: en
+        ? `${minGap} min buffer between meetings`
+        : `Toplantılar arasında ${minGap} dk tampon`,
     });
   }
 
@@ -466,7 +559,10 @@ function affectedPeople(event: CalendarEvent, userEmail: string | null | undefin
   return externalAttendees(event, { userEmail }).length;
 }
 
-function counterpartName(event: CalendarEvent, userEmail: string | null | undefined): string | null {
+function counterpartName(
+  event: CalendarEvent,
+  userEmail: string | null | undefined,
+): string | null {
   const first = externalAttendees(event, { userEmail })[0];
   return first?.name?.trim() || first?.email?.trim() || null;
 }
@@ -475,25 +571,37 @@ function counterpartName(event: CalendarEvent, userEmail: string | null | undefi
  * Options to resolve a conflict: move the event that affects the fewest people into free time,
  * propose a new time for the other one, shorten the first, or keep both. Nothing is applied.
  */
-export function resolveConflictOptions(conflict: CalendarConflict, blocks: readonly FreeBlock[], opts: ConflictOptionsInput = {}): ConflictOption[] {
+export function resolveConflictOptions(
+  conflict: CalendarConflict,
+  blocks: readonly FreeBlock[],
+  opts: ConflictOptionsInput = {},
+): ConflictOption[] {
   const locale = opts.locale ?? 'tr';
   const en = locale === 'en';
   const tz = opts.timezone ?? DEFAULT_TIMEZONE;
   const nowMs = opts.now ? ms(opts.now) : Number.NEGATIVE_INFINITY;
   const { eventA, eventB } = conflict;
   // "B" = the event that is cheaper to move: fewer people, then the one the user organises, then the later one.
-  const [first, second] = ms(eventA.startAt) <= ms(eventB.startAt) ? [eventA, eventB] : [eventB, eventA];
+  const [first, second] =
+    ms(eventA.startAt) <= ms(eventB.startAt) ? [eventA, eventB] : [eventB, eventA];
   const peopleFirst = affectedPeople(first, opts.userEmail);
   const peopleSecond = affectedPeople(second, opts.userEmail);
   let movable = second;
   let fixed = first;
-  if (peopleFirst < peopleSecond || (peopleFirst === peopleSecond && first.organizerIsUser && !second.organizerIsUser)) {
+  if (
+    peopleFirst < peopleSecond ||
+    (peopleFirst === peopleSecond && first.organizerIsUser && !second.organizerIsUser)
+  ) {
     movable = first;
     fixed = second;
   }
   const out: ConflictOption[] = [];
   const sortedBlocks = [...blocks].sort((a, b) => ms(a.startAt) - ms(b.startAt));
-  const findSlot = (minutes: number, notBefore: number, avoid: CalendarEvent): { start: number; end: number } | null => {
+  const findSlot = (
+    minutes: number,
+    notBefore: number,
+    avoid: CalendarEvent,
+  ): { start: number; end: number } | null => {
     for (const b of sortedBlocks) {
       const start = Math.max(ms(b.startAt), notBefore, nowMs);
       const end = start + minutes * MINUTE;
@@ -508,11 +616,20 @@ export function resolveConflictOptions(conflict: CalendarConflict, blocks: reado
     const t = formatClock(iso, tz);
     return timeWithDative(Number(t.slice(0, 2)), Number(t.slice(3, 5)));
   };
-  const moveSuggestion = (event: CalendarEvent, slot: { start: number; end: number }, id: string, reason: string): ScheduleSuggestion => ({
+  const moveSuggestion = (
+    event: CalendarEvent,
+    slot: { start: number; end: number },
+    id: string,
+    reason: string,
+  ): ScheduleSuggestion => ({
     id,
     kind: 'move_event',
-    title: en ? `Move “${event.title}” to ${formatClock(new Date(slot.start).toISOString(), tz)}` : `“${event.title}” etkinliğini ${withDative(new Date(slot.start).toISOString())} al`,
-    detail: en ? `${clockRange(new Date(slot.start).toISOString(), new Date(slot.end).toISOString(), tz)} is free.` : `${clockRange(new Date(slot.start).toISOString(), new Date(slot.end).toISOString(), tz)} boş görünüyor.`,
+    title: en
+      ? `Move “${event.title}” to ${formatClock(new Date(slot.start).toISOString(), tz)}`
+      : `“${event.title}” etkinliğini ${withDative(new Date(slot.start).toISOString())} al`,
+    detail: en
+      ? `${clockRange(new Date(slot.start).toISOString(), new Date(slot.end).toISOString(), tz)} is free.`
+      : `${clockRange(new Date(slot.start).toISOString(), new Date(slot.end).toISOString(), tz)} boş görünüyor.`,
     proposedStartAt: new Date(slot.start).toISOString(),
     proposedEndAt: new Date(slot.end).toISOString(),
     targetEventId: event.id,
@@ -523,7 +640,9 @@ export function resolveConflictOptions(conflict: CalendarConflict, blocks: reado
   // 1 — move the cheaper event after the fixed one ends (recommended)
   const slotB = findSlot(durationMinutes(movable), ms(fixed.endAt), fixed);
   if (slotB) {
-    const reason = en ? 'Moving this affects the fewest people' : 'Bu etkinliği kaydırmak en az kişiyi etkiler';
+    const reason = en
+      ? 'Moving this affects the fewest people'
+      : 'Bu etkinliği kaydırmak en az kişiyi etkiler';
     const s = moveSuggestion(movable, slotB, `${conflict.id}:move_b`, reason);
     out.push({
       id: `${conflict.id}:move_b`,
@@ -541,7 +660,9 @@ export function resolveConflictOptions(conflict: CalendarConflict, blocks: reado
   const slotA = findSlot(durationMinutes(fixed), nowMs, movable);
   if (slotA) {
     const person = counterpartName(fixed, opts.userEmail);
-    const reason = en ? 'Alternative when the other event cannot move' : 'Diğer etkinlik taşınamazsa alternatif';
+    const reason = en
+      ? 'Alternative when the other event cannot move'
+      : 'Diğer etkinlik taşınamazsa alternatif';
     const s = moveSuggestion(fixed, slotA, `${conflict.id}:move_a`, reason);
     const subtitle = person
       ? en
@@ -553,7 +674,9 @@ export function resolveConflictOptions(conflict: CalendarConflict, blocks: reado
     out.push({
       id: `${conflict.id}:move_a`,
       kind: 'move_a',
-      title: en ? `Propose ${formatClock(s.proposedStartAt, tz)} for “${fixed.title}”` : `“${fixed.title}” için ${withDative(s.proposedStartAt)} öner`,
+      title: en
+        ? `Propose ${formatClock(s.proposedStartAt, tz)} for “${fixed.title}”`
+        : `“${fixed.title}” için ${withDative(s.proposedStartAt)} öner`,
       subtitle,
       icon: 'event_repeat',
       isRecommended: out.length === 0,
@@ -570,21 +693,29 @@ export function resolveConflictOptions(conflict: CalendarConflict, blocks: reado
     out.push({
       id: `${conflict.id}:shorten_a`,
       kind: 'shorten_a',
-      title: en ? `Shorten “${first.title}” by ${cut} min` : `“${first.title}” etkinliğini ${cut} dk kısalt`,
-      subtitle: en ? `${clockRange(first.startAt, newEnd, tz)} · You make it to the next one on time` : `${clockRange(first.startAt, newEnd, tz)} · Sonrakine zamanında yetişirsin`,
+      title: en
+        ? `Shorten “${first.title}” by ${cut} min`
+        : `“${first.title}” etkinliğini ${cut} dk kısalt`,
+      subtitle: en
+        ? `${clockRange(first.startAt, newEnd, tz)} · You make it to the next one on time`
+        : `${clockRange(first.startAt, newEnd, tz)} · Sonrakine zamanında yetişirsin`,
       icon: 'schedule',
       isRecommended: out.length === 0,
       needsFurtherStep: true,
       suggestion: {
         id: `${conflict.id}:shorten_a`,
         kind: 'move_event',
-        title: en ? `End “${first.title}” at ${formatClock(newEnd, tz)}` : `“${first.title}” ${formatClock(newEnd, tz)} bitsin`,
+        title: en
+          ? `End “${first.title}” at ${formatClock(newEnd, tz)}`
+          : `“${first.title}” ${formatClock(newEnd, tz)} bitsin`,
         detail: en ? `${cut} min shorter` : `${cut} dk daha kısa`,
         proposedStartAt: first.startAt,
         proposedEndAt: newEnd,
         targetEventId: first.id,
         targetTaskId: null,
-        reason: en ? 'Removes the overlap without moving anything' : 'Hiçbir şeyi taşımadan çakışmayı kaldırır',
+        reason: en
+          ? 'Removes the overlap without moving anything'
+          : 'Hiçbir şeyi taşımadan çakışmayı kaldırır',
       },
     });
   }
@@ -631,7 +762,8 @@ export interface RoutesProvider {
 export type RoutesFetch = (input: string, init: RequestInit) => Promise<Response>;
 
 export const GOOGLE_ROUTES_URL = 'https://routes.googleapis.com/directions/v2:computeRoutes';
-export const GOOGLE_ROUTES_FIELD_MASK = 'routes.duration,routes.staticDuration,routes.distanceMeters';
+export const GOOGLE_ROUTES_FIELD_MASK =
+  'routes.duration,routes.staticDuration,routes.distanceMeters';
 
 interface GoogleRoutesResponse {
   routes?: { duration?: string; staticDuration?: string; distanceMeters?: number }[];
@@ -667,7 +799,8 @@ export class GoogleRoutesProvider implements RoutesProvider {
       units: 'METRIC',
     };
     if (mode === 'DRIVE') body['routingPreference'] = 'TRAFFIC_AWARE';
-    if (req.departureAt && Date.parse(req.departureAt) > Date.now() + MINUTE) body['departureTime'] = new Date(req.departureAt).toISOString();
+    if (req.departureAt && Date.parse(req.departureAt) > Date.now() + MINUTE)
+      body['departureTime'] = new Date(req.departureAt).toISOString();
     let res: Response;
     try {
       res = await this.fetchFn(GOOGLE_ROUTES_URL, {
@@ -680,11 +813,15 @@ export class GoogleRoutesProvider implements RoutesProvider {
         body: JSON.stringify(body),
       });
     } catch (cause) {
-      throw new AppError('provider_unavailable', 'Yol tarifi sağlayıcısına ulaşılamıyor.', { cause });
+      throw new AppError('provider_unavailable', 'Yol tarifi sağlayıcısına ulaşılamıyor.', {
+        cause,
+      });
     }
     if (res.status === 404) return null;
     if (!res.ok) {
-      throw new AppError('provider_unavailable', 'Yol tarifi sağlayıcısı hata döndürdü.', { details: { status: res.status } });
+      throw new AppError('provider_unavailable', 'Yol tarifi sağlayıcısı hata döndürdü.', {
+        details: { status: res.status },
+      });
     }
     let json: GoogleRoutesResponse;
     try {
@@ -696,7 +833,11 @@ export class GoogleRoutesProvider implements RoutesProvider {
     if (!route) return null;
     const seconds = parseSeconds(route.duration) ?? parseSeconds(route.staticDuration);
     if (seconds === null) return null;
-    return { durationMinutes: Math.max(1, Math.ceil(seconds / 60)), distanceMeters: typeof route.distanceMeters === 'number' ? route.distanceMeters : null, provider: this.name };
+    return {
+      durationMinutes: Math.max(1, Math.ceil(seconds / 60)),
+      distanceMeters: typeof route.distanceMeters === 'number' ? route.distanceMeters : null,
+      provider: this.name,
+    };
   }
 }
 
@@ -735,7 +876,11 @@ export interface LeaveBy {
  * When to leave for an event with a physical location. Null when the event has no place, no
  * origin or provider is known, or the provider cannot answer (never throws).
  */
-export async function leaveByTime(event: CalendarEvent, routes: RoutesProvider | null, opts: LeaveByOptions): Promise<LeaveBy | null> {
+export async function leaveByTime(
+  event: CalendarEvent,
+  routes: RoutesProvider | null,
+  opts: LeaveByOptions,
+): Promise<LeaveBy | null> {
   if (!routes) return null;
   const origin = opts.origin?.trim();
   if (!origin) return null;
@@ -745,7 +890,12 @@ export async function leaveByTime(event: CalendarEvent, routes: RoutesProvider |
   if (Number.isNaN(start)) return null;
   let estimate: RouteEstimate | null;
   try {
-    estimate = await routes.computeRoute({ origin, destination, departureAt: opts.now ?? null, travelMode: opts.travelMode ?? 'DRIVE' });
+    estimate = await routes.computeRoute({
+      origin,
+      destination,
+      departureAt: opts.now ?? null,
+      travelMode: opts.travelMode ?? 'DRIVE',
+    });
   } catch {
     return null;
   }
@@ -773,7 +923,9 @@ export interface CalendarWriteCheck {
 
 /** 'conflict' when the provider copy changed after the approval was prepared. */
 export function resolveCalendarWrite(check: CalendarWriteCheck): 'apply' | 'conflict' {
-  const expected = check.expectedProviderUpdatedAt ? ms(check.expectedProviderUpdatedAt) : Number.NaN;
+  const expected = check.expectedProviderUpdatedAt
+    ? ms(check.expectedProviderUpdatedAt)
+    : Number.NaN;
   const remote = check.remoteProviderUpdatedAt ? ms(check.remoteProviderUpdatedAt) : Number.NaN;
   if (Number.isNaN(expected) || Number.isNaN(remote)) return 'apply';
   return remote > expected ? 'conflict' : 'apply';
@@ -807,20 +959,53 @@ export function buildPlanDay(input: BuildPlanDayInput): PlanDay {
   const { date, timezone } = input;
   const events = input.events
     .filter((e) => !e.deletedAt && e.status !== 'cancelled')
-    .filter((e) => onDate(e.startAt, date, timezone) || (e.allDay && onDate(addMinutes(e.endAt, -1), date, timezone) && ms(e.startAt) <= ms(zonedTimeToUtc(date, '00:00', timezone))))
+    .filter(
+      (e) =>
+        onDate(e.startAt, date, timezone) ||
+        (e.allDay &&
+          onDate(addMinutes(e.endAt, -1), date, timezone) &&
+          ms(e.startAt) <= ms(zonedTimeToUtc(date, '00:00', timezone))),
+    )
     .filter((e) => !isDeclined(e, input))
     .sort(byStart);
   const tasks = (input.tasks ?? [])
     .filter((t) => !t.deletedAt && t.status === 'open')
     .filter((t) => onDate(t.scheduledStartAt, date, timezone) || onDate(t.dueAt, date, timezone))
-    .sort((a, b) => ms(a.scheduledStartAt ?? a.dueAt ?? '') - ms(b.scheduledStartAt ?? b.dueAt ?? ''));
+    .sort(
+      (a, b) => ms(a.scheduledStartAt ?? a.dueAt ?? '') - ms(b.scheduledStartAt ?? b.dueAt ?? ''),
+    );
   const commitments = (input.commitments ?? [])
     .filter((c) => !c.deletedAt && (c.status === 'open' || c.status === 'proposed'))
     .filter((c) => onDate(c.dueAt, date, timezone))
     .sort((a, b) => ms(a.dueAt ?? '') - ms(b.dueAt ?? ''));
-  const blocks = freeBlocks(events, { date, timezone, dayStart: input.dayStart, dayEnd: input.dayEnd, now: input.now, userEmail: input.userEmail });
-  const suggestions = (input.suggestions ?? []).filter((s) => onDate(s.proposedStartAt, date, timezone));
-  const conflicts = (input.conflicts ?? []).filter((c) => c.status !== 'resolved' && (onDate(c.eventA.startAt, date, timezone) || onDate(c.eventB.startAt, date, timezone)));
-  const backToBackWarnings = detectBackToBack(events, { minGapMin: input.minGapMin, userEmail: input.userEmail }).map((w) => ({ fromEventId: w.fromEventId, toEventId: w.toEventId }));
-  return { date, events, tasks, commitments, freeBlocks: blocks, suggestions, conflicts, backToBackWarnings };
+  const blocks = freeBlocks(events, {
+    date,
+    timezone,
+    dayStart: input.dayStart,
+    dayEnd: input.dayEnd,
+    now: input.now,
+    userEmail: input.userEmail,
+  });
+  const suggestions = (input.suggestions ?? []).filter((s) =>
+    onDate(s.proposedStartAt, date, timezone),
+  );
+  const conflicts = (input.conflicts ?? []).filter(
+    (c) =>
+      c.status !== 'resolved' &&
+      (onDate(c.eventA.startAt, date, timezone) || onDate(c.eventB.startAt, date, timezone)),
+  );
+  const backToBackWarnings = detectBackToBack(events, {
+    minGapMin: input.minGapMin,
+    userEmail: input.userEmail,
+  }).map((w) => ({ fromEventId: w.fromEventId, toEventId: w.toEventId }));
+  return {
+    date,
+    events,
+    tasks,
+    commitments,
+    freeBlocks: blocks,
+    suggestions,
+    conflicts,
+    backToBackWarnings,
+  };
 }

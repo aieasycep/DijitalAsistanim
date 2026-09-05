@@ -83,7 +83,11 @@ function intlLocale(locale: Locale): string {
 }
 
 /** "5 Eylül 2026 Cumartesi 09:30" / "Saturday 5 September 2026 09:30" — deterministic given tz. */
-export function formatPromptDateTime(iso: string, timezone: string = DEFAULT_PROMPT_TIMEZONE, locale: Locale = 'tr'): string {
+export function formatPromptDateTime(
+  iso: string,
+  timezone: string = DEFAULT_PROMPT_TIMEZONE,
+  locale: Locale = 'tr',
+): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return new Intl.DateTimeFormat(intlLocale(locale), {
@@ -98,7 +102,11 @@ export function formatPromptDateTime(iso: string, timezone: string = DEFAULT_PRO
   }).format(d);
 }
 
-export function formatPromptDate(iso: string, timezone: string = DEFAULT_PROMPT_TIMEZONE, locale: Locale = 'tr'): string {
+export function formatPromptDate(
+  iso: string,
+  timezone: string = DEFAULT_PROMPT_TIMEZONE,
+  locale: Locale = 'tr',
+): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return new Intl.DateTimeFormat(intlLocale(locale), {
@@ -113,7 +121,12 @@ export function formatPromptDate(iso: string, timezone: string = DEFAULT_PROMPT_
 export function formatPromptTime(iso: string, timezone: string = DEFAULT_PROMPT_TIMEZONE): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(d);
 }
 
 /** Header lines that let the model resolve relative dates without guessing. */
@@ -136,18 +149,27 @@ export function personLabel(p: PromptParticipant | null | undefined): string {
 
 /** Single-line clip for subjects / titles (HTML stripped, newlines collapsed). */
 export function clipInline(text: string | null | undefined, max = 160): string {
-  const flat = normalizeText(text ?? '').replace(/\s*\n\s*/g, ' ').trim();
+  const flat = normalizeText(text ?? '')
+    .replace(/\s*\n\s*/g, ' ')
+    .trim();
   if (flat.length <= max) return flat;
   return `${flat.slice(0, Math.max(0, max - 1)).trimEnd()}…`;
 }
 
 /** Keep at most `max` items, appending a note so the model knows the list was cut. */
-export function capList<T>(items: readonly T[], max: number, locale: Locale = 'tr'): { items: T[]; note: string | null } {
+export function capList<T>(
+  items: readonly T[],
+  max: number,
+  locale: Locale = 'tr',
+): { items: T[]; note: string | null } {
   if (items.length <= max) return { items: [...items], note: null };
   const dropped = items.length - max;
   return {
     items: items.slice(0, max),
-    note: locale === 'en' ? `(${dropped} more items were omitted for length.)` : `(${dropped} öğe daha uzunluk nedeniyle listeye alınmadı.)`,
+    note:
+      locale === 'en'
+        ? `(${dropped} more items were omitted for length.)`
+        : `(${dropped} öğe daha uzunluk nedeniyle listeye alınmadı.)`,
   };
 }
 

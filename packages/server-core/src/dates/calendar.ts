@@ -24,8 +24,13 @@ export function localDateTimeOf(iso: string | Date, timezone: string): LocalDate
     minute: '2-digit',
     hourCycle: 'h23',
   }).formatToParts(new Date(iso));
-  const get = (t: Intl.DateTimeFormatPartTypes): number => Number(parts.find((p) => p.type === t)?.value ?? '0');
-  return { date: { y: get('year'), m: get('month'), d: get('day') }, hh: get('hour') % 24, mm: get('minute') };
+  const get = (t: Intl.DateTimeFormatPartTypes): number =>
+    Number(parts.find((p) => p.type === t)?.value ?? '0');
+  return {
+    date: { y: get('year'), m: get('month'), d: get('day') },
+    hh: get('hour') % 24,
+    mm: get('minute'),
+  };
 }
 
 export function localDateOf(iso: string | Date, timezone: string): LocalDate {
@@ -99,7 +104,11 @@ export function localToUtcIso(d: LocalDate, hh: number, mm: number, timezone: st
 }
 
 /** Next date (including today) whose ISO weekday equals `target`. */
-export function nextWeekday(from: LocalDate, target: number, opts: { skipToday?: boolean; nextWeek?: boolean } = {}): LocalDate {
+export function nextWeekday(
+  from: LocalDate,
+  target: number,
+  opts: { skipToday?: boolean; nextWeek?: boolean } = {},
+): LocalDate {
   const w = isoWeekday(from);
   if (opts.nextWeek) {
     const mondayNext = addDays(from, 8 - w);

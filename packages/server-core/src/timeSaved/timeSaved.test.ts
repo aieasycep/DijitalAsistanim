@@ -31,13 +31,23 @@ describe('timeSaved · computeTimeSavedMinutes', () => {
 
   it('ignores missing, negative and non-finite inputs', () => {
     expect(computeTimeSavedMinutes({})).toBe(0);
-    expect(computeTimeSavedMinutes({ prepNotesGenerated: -4, repliesDrafted: Number.NaN, deadlinesCaught: 2 })).toBe(10);
+    expect(
+      computeTimeSavedMinutes({
+        prepNotesGenerated: -4,
+        repliesDrafted: Number.NaN,
+        deadlinesCaught: 2,
+      }),
+    ).toBe(10);
   });
 
   it('caps at 20 hours per week and scales the breakdown to match', () => {
     expect(TIME_SAVED_WEEKLY_CAP_MINUTES).toBe(1200);
     expect(computeTimeSavedMinutes({ prepNotesGenerated: 200 })).toBe(1200);
-    const b = computeTimeSavedBreakdown({ prepNotesGenerated: 100, repliesDrafted: 300, unreadLowPriorityMails: 400 });
+    const b = computeTimeSavedBreakdown({
+      prepNotesGenerated: 100,
+      repliesDrafted: 300,
+      unreadLowPriorityMails: 400,
+    });
     expect(b.total).toBe(1200);
     expect(b.unreadMails + b.prepNotes + b.followUpDrafts).toBe(1200);
     expect(b.prepNotes).toBeGreaterThan(b.unreadMails);
@@ -45,7 +55,14 @@ describe('timeSaved · computeTimeSavedMinutes', () => {
   });
 
   it('groups the breakdown into mail / prep / drafts buckets', () => {
-    const b = computeTimeSavedBreakdown({ unreadLowPriorityMails: 40, importantSummariesRead: 10, deadlinesCaught: 2, prepNotesGenerated: 3, followUpDraftsUsed: 2, repliesDrafted: 5 });
+    const b = computeTimeSavedBreakdown({
+      unreadLowPriorityMails: 40,
+      importantSummariesRead: 10,
+      deadlinesCaught: 2,
+      prepNotesGenerated: 3,
+      followUpDraftsUsed: 2,
+      repliesDrafted: 5,
+    });
     expect(b).toEqual({ unreadMails: 35, prepNotes: 36, followUpDrafts: 32, total: 103 });
   });
 });
@@ -79,7 +96,14 @@ describe('timeSaved · buildWeeklyMetrics', () => {
     meetingsWithPrep: 8,
     deadlines: 4,
     deadlinesMissed: 0,
-    timeSaved: { unreadLowPriorityMails: 40, importantSummariesRead: 10, prepNotesGenerated: 3, followUpDraftsUsed: 2, repliesDrafted: 5, deadlinesCaught: 2 },
+    timeSaved: {
+      unreadLowPriorityMails: 40,
+      importantSummariesRead: 10,
+      prepNotesGenerated: 3,
+      followUpDraftsUsed: 2,
+      repliesDrafted: 5,
+      deadlinesCaught: 2,
+    },
     meetingsByDay: { '2026-09-01': 3, '2026-09-02': 5, '2026-09-03': 5, '2026-09-04': 0 },
     topPeople: [
       { name: 'Ahmet Yılmaz', count: 4 },
@@ -100,7 +124,11 @@ describe('timeSaved · buildWeeklyMetrics', () => {
     expect(m.timeSavedBreakdown).toEqual({ unreadMails: 35, prepNotes: 36, followUpDrafts: 32 });
     expect(m.followUpsAnswered).toBe(6);
     expect(m.meetingsWithPrep).toBe(8);
-    expect(m.busiestDay).toEqual({ date: '2026-09-02', meetings: 5, note: 'En yoğun günün Çarşamba oldu: 5 toplantı.' });
+    expect(m.busiestDay).toEqual({
+      date: '2026-09-02',
+      meetings: 5,
+      note: 'En yoğun günün Çarşamba oldu: 5 toplantı.',
+    });
     expect(m.topPeople).toEqual([
       { name: 'Zeynep Kaya', count: 7 },
       { name: 'Ahmet Yılmaz', count: 4 },
@@ -112,12 +140,26 @@ describe('timeSaved · buildWeeklyMetrics', () => {
   });
 
   it('supports English, editorial next-week text and empty inputs', () => {
-    const en = buildWeeklyMetrics({ ...raw, locale: 'en', nextWeek: { meetings: 1, deadlines: 0 } });
+    const en = buildWeeklyMetrics({
+      ...raw,
+      locale: 'en',
+      nextWeek: { meetings: 1, deadlines: 0 },
+    });
     expect(en.busiestDay?.note).toBe('Your busiest day was Wednesday: 5 meetings.');
     expect(en.nextWeek).toBe('Next week you have 1 meeting.');
-    expect(buildWeeklyMetrics({ ...raw, nextWeek: 'Pazartesi sunumla başlıyorsun.' }).nextWeek).toBe('Pazartesi sunumla başlıyorsun.');
-    expect(buildWeeklyMetrics({ ...raw, nextWeek: { meetings: 0, deadlines: 0 } }).nextWeek).toBe('Gelecek hafta şimdilik sakin görünüyor.');
-    const empty = buildWeeklyMetrics({ ...raw, meetingsByDay: {}, topPeople: [], nextWeek: null, timeSaved: {} });
+    expect(
+      buildWeeklyMetrics({ ...raw, nextWeek: 'Pazartesi sunumla başlıyorsun.' }).nextWeek,
+    ).toBe('Pazartesi sunumla başlıyorsun.');
+    expect(buildWeeklyMetrics({ ...raw, nextWeek: { meetings: 0, deadlines: 0 } }).nextWeek).toBe(
+      'Gelecek hafta şimdilik sakin görünüyor.',
+    );
+    const empty = buildWeeklyMetrics({
+      ...raw,
+      meetingsByDay: {},
+      topPeople: [],
+      nextWeek: null,
+      timeSaved: {},
+    });
     expect(empty.busiestDay).toBeNull();
     expect(empty.topPeople).toEqual([]);
     expect(empty.estimatedTimeSavedMinutes).toBe(0);

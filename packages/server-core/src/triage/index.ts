@@ -23,4 +23,8 @@ export {
   isAutomatedSender,
   isSecuritySender,
 } from './senders';
-export { matchRules as matchTriageRules, matchVip as matchTriageVip, type RuleMatch } from './rules';
+export {
+  matchRules as matchTriageRules,
+  matchVip as matchTriageVip,
+  type RuleMatch,
+} from './rules';

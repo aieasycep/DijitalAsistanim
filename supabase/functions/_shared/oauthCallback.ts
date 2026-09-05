@@ -196,18 +196,16 @@ export async function handleOAuthCallback(
         k === 'email' ? 'mail' : k === 'calendar' ? 'calendar' : 'tasks',
       );
       for (const resource of resources) {
-        await db
-          .from('sync_states')
-          .upsert(
-            {
-              user_id: stateRow.user_id,
-              account_id: accountId,
-              resource,
-              mode: 'polling',
-              backfill_until: new Date(Date.now() - 90 * 86_400_000).toISOString(),
-            },
-            { onConflict: 'account_id,resource' },
-          );
+        await db.from('sync_states').upsert(
+          {
+            user_id: stateRow.user_id,
+            account_id: accountId,
+            resource,
+            mode: 'polling',
+            backfill_until: new Date(Date.now() - 90 * 86_400_000).toISOString(),
+          },
+          { onConflict: 'account_id,resource' },
+        );
       }
       const { count } = await db
         .from('connected_accounts')

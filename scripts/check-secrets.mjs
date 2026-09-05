@@ -6,15 +6,48 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const IGNORE_DIRS = new Set(['node_modules', '.git', '.next', '.expo', 'dist', 'build', 'coverage', 'ios', 'android', '.turbo', 'design-reference']);
-const TEXT_EXT = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.sql', '.md', '.yml', '.yaml', '.toml', '.env', '.example', '.kt', '.swift', '.plist']);
+const IGNORE_DIRS = new Set([
+  'node_modules',
+  '.git',
+  '.next',
+  '.expo',
+  'dist',
+  'build',
+  'coverage',
+  'ios',
+  'android',
+  '.turbo',
+  'design-reference',
+]);
+const TEXT_EXT = new Set([
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.json',
+  '.sql',
+  '.md',
+  '.yml',
+  '.yaml',
+  '.toml',
+  '.env',
+  '.example',
+  '.kt',
+  '.swift',
+  '.plist',
+]);
 
 const SECRET_PATTERNS = [
   { name: 'Anthropic key', re: /sk-ant-[A-Za-z0-9_-]{20,}/ },
   { name: 'OpenAI key', re: /sk-(proj-|live-)?[A-Za-z0-9]{32,}/ },
   { name: 'Google OAuth secret', re: /GOCSPX-[A-Za-z0-9_-]{20,}/ },
   { name: 'Google API key', re: /AIza[0-9A-Za-z_-]{35}/ },
-  { name: 'Supabase service role JWT', re: /eyJ[A-Za-z0-9_-]{20,}\.eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/ },
+  {
+    name: 'Supabase service role JWT',
+    re: /eyJ[A-Za-z0-9_-]{20,}\.eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/,
+  },
   { name: 'RevenueCat secret', re: /sk_[A-Za-z0-9]{24,}/ },
   { name: 'Private key block', re: /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
   { name: 'Slack token', re: /xox[baprs]-[A-Za-z0-9-]{10,}/ },
@@ -38,7 +71,16 @@ const SERVER_ONLY_NAMES = [
   'INTERNAL_FUNCTION_SECRET',
   'CRON_SECRET',
 ];
-const CLIENT_DIRS = ['apps/mobile', 'packages/ui', 'packages/api-client', 'packages/design-tokens', 'packages/i18n', 'packages/domain', 'packages/validation', 'apps/web/src'];
+const CLIENT_DIRS = [
+  'apps/mobile',
+  'packages/ui',
+  'packages/api-client',
+  'packages/design-tokens',
+  'packages/i18n',
+  'packages/domain',
+  'packages/validation',
+  'apps/web/src',
+];
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
@@ -60,9 +102,14 @@ for (const file of files) {
   const content = readFileSync(file, 'utf8');
   for (const { name, re } of SECRET_PATTERNS) {
     const m = content.match(re);
-    if (m && !/example|placeholder|YOUR-|<.*>/i.test(m[0])) problems.push(`${rel}: possible ${name} committed`);
+    if (m && !/example|placeholder|YOUR-|<.*>/i.test(m[0]))
+      problems.push(`${rel}: possible ${name} committed`);
   }
-  if (CLIENT_DIRS.some((d) => rel.startsWith(d)) && !rel.endsWith('.md') && !rel.includes('.env.example')) {
+  if (
+    CLIENT_DIRS.some((d) => rel.startsWith(d)) &&
+    !rel.endsWith('.md') &&
+    !rel.includes('.env.example')
+  ) {
     for (const name of SERVER_ONLY_NAMES) {
       if (content.includes(`process.env.${name}`) || content.includes(`Deno.env.get('${name}')`)) {
         problems.push(`${rel}: references server-only secret ${name} from client code`);

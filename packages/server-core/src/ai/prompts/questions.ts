@@ -8,7 +8,16 @@ import { suggestedQuestionsAiSchema } from '@da/validation';
 import type { z } from 'zod';
 import { PROMPT_CHAR_LIMITS } from '../redact';
 import type { PromptSpec } from '../types';
-import { DEFAULT_PROMPT_TIMEZONE, bullets, clipInline, composeSystem, formatPromptTime, joinLines, temporalContext, type PromptBase } from './shared';
+import {
+  DEFAULT_PROMPT_TIMEZONE,
+  bullets,
+  clipInline,
+  composeSystem,
+  formatPromptTime,
+  joinLines,
+  temporalContext,
+  type PromptBase,
+} from './shared';
 
 export type SuggestedQuestionsAi = z.infer<typeof suggestedQuestionsAiSchema>;
 
@@ -40,18 +49,29 @@ export interface SuggestedQuestionsInput extends PromptBase {
 
 const ITEM_MAX = 8;
 
-function countsLine(counts: Partial<BriefingCounts> | null | undefined, en: boolean): string | null {
+function countsLine(
+  counts: Partial<BriefingCounts> | null | undefined,
+  en: boolean,
+): string | null {
   if (!counts) return null;
   const parts: string[] = [];
-  if (counts.importantEmails !== undefined) parts.push(`${counts.importantEmails} ${en ? 'important emails' : 'önemli mail'}`);
+  if (counts.importantEmails !== undefined)
+    parts.push(`${counts.importantEmails} ${en ? 'important emails' : 'önemli mail'}`);
   if (counts.events !== undefined) parts.push(`${counts.events} ${en ? 'events' : 'etkinlik'}`);
-  if (counts.followUps !== undefined) parts.push(`${counts.followUps} ${en ? 'follow-ups' : 'takip'}`);
-  if (counts.deadlines !== undefined) parts.push(`${counts.deadlines} ${en ? 'deadlines' : 'son tarih'}`);
+  if (counts.followUps !== undefined)
+    parts.push(`${counts.followUps} ${en ? 'follow-ups' : 'takip'}`);
+  if (counts.deadlines !== undefined)
+    parts.push(`${counts.deadlines} ${en ? 'deadlines' : 'son tarih'}`);
   if (parts.length === 0) return null;
   return `${en ? 'Today' : 'Bugün'}: ${parts.join(' · ')}`;
 }
 
-function contactBlock(contact: SuggestedQuestionsContact, en: boolean, tz: string, perItem: number): string {
+function contactBlock(
+  contact: SuggestedQuestionsContact,
+  en: boolean,
+  tz: string,
+  perItem: number,
+): string {
   const header = [contact.name, contact.relation, contact.company]
     .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
     .map((s) => clipInline(s, 80))
@@ -62,12 +82,18 @@ function contactBlock(contact: SuggestedQuestionsContact, en: boolean, tz: strin
   return joinLines([
     `${en ? 'Person' : 'Kişi'}: ${header}`,
     last,
-    contact.userOwes?.length ? `${en ? 'User owes them' : 'Kullanıcının ona borçlu olduğu'}:\n${bullets(contact.userOwes.slice(0, ITEM_MAX).map((s) => clipInline(s, perItem)))}` : null,
-    contact.theyOwe?.length ? `${en ? 'They owe the user' : 'Onun kullanıcıya borçlu olduğu'}:\n${bullets(contact.theyOwe.slice(0, ITEM_MAX).map((s) => clipInline(s, perItem)))}` : null,
+    contact.userOwes?.length
+      ? `${en ? 'User owes them' : 'Kullanıcının ona borçlu olduğu'}:\n${bullets(contact.userOwes.slice(0, ITEM_MAX).map((s) => clipInline(s, perItem)))}`
+      : null,
+    contact.theyOwe?.length
+      ? `${en ? 'They owe the user' : 'Onun kullanıcıya borçlu olduğu'}:\n${bullets(contact.theyOwe.slice(0, ITEM_MAX).map((s) => clipInline(s, perItem)))}`
+      : null,
   ]);
 }
 
-export function suggestedQuestions(input: SuggestedQuestionsInput): PromptSpec<SuggestedQuestionsAi> {
+export function suggestedQuestions(
+  input: SuggestedQuestionsInput,
+): PromptSpec<SuggestedQuestionsAi> {
   const locale = input.locale ?? 'tr';
   const tz = input.timezone ?? DEFAULT_PROMPT_TIMEZONE;
   const en = locale === 'en';
@@ -84,7 +110,9 @@ export function suggestedQuestions(input: SuggestedQuestionsInput): PromptSpec<S
         ? `You suggest questions ${userName} could ask their assistant right now, based only on what is going on in their day.`
         : `${userName} adlı kullanıcının asistanına şu an sorabileceği soruları, yalnızca gününde olup bitenlere dayanarak öneriyorsun.`,
     rules: [
-      en ? '3 to 6 questions, each under 80 characters, written in first person as the user would type them.' : '3 ile 6 soru; her biri 80 karakterden kısa, kullanıcının yazacağı gibi birinci tekil şahısla.',
+      en
+        ? '3 to 6 questions, each under 80 characters, written in first person as the user would type them.'
+        : '3 ile 6 soru; her biri 80 karakterden kısa, kullanıcının yazacağı gibi birinci tekil şahısla.',
       en
         ? 'Every question must point at a provided count, person, event, topic, open loop or deadline; nothing generic like "What can you do?".'
         : 'Her soru verilen bir sayıya, kişiye, etkinliğe, konuya, açık işe ya da son tarihe dayansın; "Neler yapabilirsin?" gibi genel sorular yok.',
@@ -95,15 +123,29 @@ export function suggestedQuestions(input: SuggestedQuestionsInput): PromptSpec<S
         : en
           ? 'Prefer what is due or happening soonest; mix mail, calendar and people when the context has them.'
           : 'En yakın olana ve süresi dolmak üzere olana öncelik ver; bağlamda varsa mail, takvim ve kişileri karıştır.',
-      en ? 'Use names, titles and counts exactly as given; do not add details that are not in the context.' : 'Ad, başlık ve sayıları verildiği gibi kullan; bağlamda olmayan ayrıntı ekleme.',
-      en ? 'reason: a few words on why it is useful now.' : 'reason: neden şimdi işe yaradığını anlatan birkaç kelime.',
+      en
+        ? 'Use names, titles and counts exactly as given; do not add details that are not in the context.'
+        : 'Ad, başlık ve sayıları verildiği gibi kullan; bağlamda olmayan ayrıntı ekleme.',
+      en
+        ? 'reason: a few words on why it is useful now.'
+        : 'reason: neden şimdi işe yaradığını anlatan birkaç kelime.',
       en ? 'No markdown, no emoji.' : 'Markdown yok, emoji yok.',
     ],
-    sections: [{ title: en ? 'Context' : 'Bağlam', body: temporalContext({ now: input.now, locale, timezone: tz }) }],
+    sections: [
+      {
+        title: en ? 'Context' : 'Bağlam',
+        body: temporalContext({ now: input.now, locale, timezone: tz }),
+      },
+    ],
   });
-  const list = (label: string, items: string[] | undefined) => (items?.length ? `${label}:\n${bullets(items.slice(0, ITEM_MAX).map((s) => clipInline(s, perItem)))}` : null);
+  const list = (label: string, items: string[] | undefined) =>
+    items?.length
+      ? `${label}:\n${bullets(items.slice(0, ITEM_MAX).map((s) => clipInline(s, perItem)))}`
+      : null;
   const people = [
-    ...(input.topPeople ?? []).map((p) => (p.count ? `${clipInline(p.name, 80)} (${p.count})` : clipInline(p.name, 80))),
+    ...(input.topPeople ?? []).map((p) =>
+      p.count ? `${clipInline(p.name, 80)} (${p.count})` : clipInline(p.name, 80),
+    ),
     ...(input.people ?? []).map((p) => clipInline(p, 80)),
   ];
   const context = joinLines([
@@ -113,7 +155,10 @@ export function suggestedQuestions(input: SuggestedQuestionsInput): PromptSpec<S
       ? `${en ? 'Upcoming events' : 'Yaklaşan etkinlikler'}:\n${bullets(
           input.upcomingEvents
             .slice(0, ITEM_MAX)
-            .map((e) => `${clipInline(e.title, perItem)} (${formatPromptTime(e.at, tz)})${e.with ? ` · ${clipInline(e.with, 60)}` : ''}`),
+            .map(
+              (e) =>
+                `${clipInline(e.title, perItem)} (${formatPromptTime(e.at, tz)})${e.with ? ` · ${clipInline(e.with, 60)}` : ''}`,
+            ),
         )}`
       : null,
     list(en ? 'People' : 'Kişiler', people.length ? people : undefined),

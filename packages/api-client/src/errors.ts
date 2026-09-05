@@ -23,7 +23,10 @@ export class ClientApiError extends Error {
     if (typeof e === 'object' && e !== null && 'code' in e && 'message' in e) {
       const err = e as { code: unknown; message: unknown; status?: number };
       if (typeof err.code === 'string' && typeof err.message === 'string') {
-        return new ClientApiError({ code: normalizeCode(err.code), message: err.message }, err.status);
+        return new ClientApiError(
+          { code: normalizeCode(err.code), message: err.message },
+          err.status,
+        );
       }
     }
     if (e instanceof TypeError && /network|fetch/i.test(e.message)) {

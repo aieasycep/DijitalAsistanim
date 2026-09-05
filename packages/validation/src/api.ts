@@ -45,7 +45,9 @@ export const calendarCreatePayloadSchema = z
     attendees: z.array(participantSchema).max(50).optional(),
     allDay: z.boolean().optional(),
   })
-  .refine((v) => Date.parse(v.endAt) > Date.parse(v.startAt), { message: 'Bitiş, başlangıçtan sonra olmalı' });
+  .refine((v) => Date.parse(v.endAt) > Date.parse(v.startAt), {
+    message: 'Bitiş, başlangıçtan sonra olmalı',
+  });
 export const calendarUpdatePayloadSchema = z.object({
   accountId: uuidSchema,
   eventId: uuidSchema,
@@ -75,7 +77,15 @@ export const reminderCreatePayloadSchema = z.object({
   remindAt: isoDateTimeSchema,
   option: reminderOptionSchema,
   targetType: z
-    .enum(['email_thread', 'calendar_event', 'task', 'commitment', 'life_event', 'insight', 'follow_up'])
+    .enum([
+      'email_thread',
+      'calendar_event',
+      'task',
+      'commitment',
+      'life_event',
+      'insight',
+      'follow_up',
+    ])
     .nullish(),
   targetId: uuidSchema.nullish(),
   smartReason: z.string().max(200).nullish(),
@@ -101,7 +111,14 @@ export const approvalPayloadSchemas = {
 
 export const createApprovalRequestSchema = z
   .object({
-    type: z.enum(['email_send', 'calendar_create', 'calendar_update', 'task_create', 'reminder_create', 'commitment_create']),
+    type: z.enum([
+      'email_send',
+      'calendar_create',
+      'calendar_update',
+      'task_create',
+      'reminder_create',
+      'commitment_create',
+    ]),
     what: z.string().min(1).max(200),
     why: z.string().min(1).max(300),
     changeSummary: z.array(z.string().max(200)).max(8),
@@ -127,7 +144,10 @@ export const createApprovalRequestSchema = z
     const schema = approvalPayloadSchemas[v.type];
     const r = schema.safeParse(v.payload);
     if (!r.success) {
-      ctx.addIssue({ code: 'custom', message: `payload geçersiz: ${r.error.issues.map((i) => i.message).join(', ')}` });
+      ctx.addIssue({
+        code: 'custom',
+        message: `payload geçersiz: ${r.error.issues.map((i) => i.message).join(', ')}`,
+      });
     }
   });
 
@@ -147,7 +167,9 @@ export const oauthStartRequestSchema = z.object({
 });
 
 // --- Sync / analysis ------------------------------------------------------------
-export const initialAnalysisStartSchema = z.object({ windowHours: z.number().int().min(24).max(168).optional() });
+export const initialAnalysisStartSchema = z.object({
+  windowHours: z.number().int().min(24).max(168).optional(),
+});
 export const syncNowSchema = z.object({
   accountId: uuidSchema.optional(),
   resource: z.enum(['mail', 'calendar', 'tasks']).optional(),
@@ -170,13 +192,24 @@ export const draftReplyRequestSchema = z.object({
 
 // --- Reminders ------------------------------------------------------------------------
 export const smartReminderSuggestSchema = z.object({
-  targetType: z.enum(['email_thread', 'calendar_event', 'task', 'commitment', 'life_event', 'insight', 'follow_up']),
+  targetType: z.enum([
+    'email_thread',
+    'calendar_event',
+    'task',
+    'commitment',
+    'life_event',
+    'insight',
+    'follow_up',
+  ]),
   targetId: uuidSchema,
   dueAt: isoDateTimeSchema.nullish(),
 });
 
 // --- Plan -------------------------------------------------------------------------------
-export const planRequestSchema = z.object({ date: isoDateSchema, range: z.enum(['day', 'week']).default('day') });
+export const planRequestSchema = z.object({
+  date: isoDateSchema,
+  range: z.enum(['day', 'week']).default('day'),
+});
 
 // --- Meetings ---------------------------------------------------------------------------
 export const postMeetingRequestSchema = z.object({
@@ -197,7 +230,9 @@ export const assistantAskRequestSchema = z.object({
 export const searchRequestSchema = z.object({
   query: z.string().min(1).max(200),
   limit: z.number().int().min(1).max(50).default(20),
-  kinds: z.array(z.enum(['email', 'event', 'person', 'life_event', 'commitment', 'task', 'memory'])).optional(),
+  kinds: z
+    .array(z.enum(['email', 'event', 'person', 'life_event', 'commitment', 'task', 'memory']))
+    .optional(),
 });
 
 // --- Capture -----------------------------------------------------------------------------
@@ -208,13 +243,21 @@ export const captureCreateRequestSchema = z
     url: z.string().url().max(2048).optional(),
     storagePath: z.string().max(400).optional(),
     mimeType: z.string().max(120).optional(),
-    sizeBytes: z.number().int().nonnegative().max(25 * 1024 * 1024).optional(),
+    sizeBytes: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(25 * 1024 * 1024)
+      .optional(),
     origin: z.enum(['in_app', 'share_extension', 'android_intent']).default('in_app'),
   })
   .superRefine((v, ctx) => {
     if (v.kind === 'text' && !v.text) ctx.addIssue({ code: 'custom', message: 'text gerekli' });
     if (v.kind === 'link' && !v.url) ctx.addIssue({ code: 'custom', message: 'url gerekli' });
-    if ((v.kind === 'image' || v.kind === 'pdf' || v.kind === 'file' || v.kind === 'audio') && !v.storagePath)
+    if (
+      (v.kind === 'image' || v.kind === 'pdf' || v.kind === 'file' || v.kind === 'audio') &&
+      !v.storagePath
+    )
       ctx.addIssue({ code: 'custom', message: 'storagePath gerekli' });
   });
 
@@ -298,7 +341,9 @@ export const vipUpsertSchema = z.object({
 
 // --- Account / privacy ------------------------------------------------------------------------------
 export const deleteAccountRequestSchema = z.object({ confirmation: z.enum(['SİL', 'DELETE']) });
-export const deleteHistoryRequestSchema = z.object({ olderThanDays: z.number().int().min(0).max(3650).optional() });
+export const deleteHistoryRequestSchema = z.object({
+  olderThanDays: z.number().int().min(0).max(3650).optional(),
+});
 
 // --- Referral / subscription ------------------------------------------------------------------------
 export const referralRedeemSchema = z.object({
@@ -358,7 +403,16 @@ export const androidNotificationIngestSchema = z.object({
 
 // --- Feedback / personalization --------------------------------------------------------------------------
 export const aiFeedbackSchema = z.object({
-  kind: z.enum(['not_important', 'important', 'show_more', 'show_less', 'make_vip', 'stop_following', 'correct', 'wrong']),
+  kind: z.enum([
+    'not_important',
+    'important',
+    'show_more',
+    'show_less',
+    'make_vip',
+    'stop_following',
+    'correct',
+    'wrong',
+  ]),
   entityType: z.enum([
     'email_thread',
     'calendar_event',

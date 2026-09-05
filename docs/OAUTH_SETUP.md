@@ -10,8 +10,8 @@ Two separate things use OAuth:
 
 ## Google Cloud Console
 
-1. Create a project → **APIs & Services → Library**: enable *Gmail API*, *Google Calendar API*, *Google Tasks API*,
-   (optional) *Pub/Sub API*, (optional) *Routes API*.
+1. Create a project → **APIs & Services → Library**: enable _Gmail API_, _Google Calendar API_, _Google Tasks API_,
+   (optional) _Pub/Sub API_, (optional) _Routes API_.
 2. **OAuth consent screen**: External, app name "Dijital Asistan", support email, privacy policy
    `https://dijitalasistan.app/privacy`, terms `https://dijitalasistan.app/terms`, homepage `https://dijitalasistan.app`,
    authorized domain `dijitalasistan.app`.
@@ -22,11 +22,11 @@ Two separate things use OAuth:
    - Progressive write (requested on first use): `https://www.googleapis.com/auth/gmail.send`,
      `https://www.googleapis.com/auth/calendar.events`, `https://www.googleapis.com/auth/tasks`
 4. **Credentials**:
-   - *Web application* client → `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`; authorized redirect URI
+   - _Web application_ client → `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`; authorized redirect URI
      `https://<project-ref>.supabase.co/functions/v1/oauth-google-callback` (= `GOOGLE_OAUTH_REDIRECT_URI`). The same
      web client is used by Supabase Auth Google sign-in (add `https://<project-ref>.supabase.co/auth/v1/callback`).
-   - *iOS* client (bundle `com.dijitalasistan.app`) → `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`
-   - *Android* client (package + SHA-1 of the EAS signing key) → `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`
+   - _iOS_ client (bundle `com.dijitalasistan.app`) → `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`
+   - _Android_ client (package + SHA-1 of the EAS signing key) → `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`
    - `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` = the web client id (for id-token sign-in).
 5. Gmail push (optional): create a Pub/Sub topic, grant `gmail-api-push@system.gserviceaccount.com` the Publisher role,
    add a push subscription pointing at `https://<project-ref>.supabase.co/functions/v1/webhook-gmail?token=<GOOGLE_PUBSUB_VERIFICATION_TOKEN>`,
@@ -35,8 +35,8 @@ Two separate things use OAuth:
 
 ## Microsoft Entra (Azure AD)
 
-1. **App registrations → New**: name "Dijital Asistan", supported account types *Accounts in any organizational
-   directory and personal Microsoft accounts* (`MICROSOFT_OAUTH_TENANT=common`).
+1. **App registrations → New**: name "Dijital Asistan", supported account types _Accounts in any organizational
+   directory and personal Microsoft accounts_ (`MICROSOFT_OAUTH_TENANT=common`).
 2. **Authentication → Web** redirect URIs: `https://<project-ref>.supabase.co/functions/v1/oauth-microsoft-callback`
    and (for Supabase Auth Azure sign-in) `https://<project-ref>.supabase.co/auth/v1/callback`.
 3. **Certificates & secrets**: client secret → `MICROSOFT_OAUTH_CLIENT_SECRET`; Application (client) ID → `MICROSOFT_OAUTH_CLIENT_ID`.
@@ -56,7 +56,7 @@ Two separate things use OAuth:
 
 ## Supabase Auth redirect URLs
 
-Add to *Authentication → URL configuration*:
+Add to _Authentication → URL configuration_:
 `dijitalasistan://auth/callback`, `https://dijitalasistan.app/app/auth/callback`, `exp://127.0.0.1:8081/--/auth/callback` (dev).
 
 ## Flow (data-source connect)
@@ -76,10 +76,10 @@ flow for the same account; missing write scope surfaces as `scope_required` with
 
 ## Environment summary
 
-| Variable | Where |
-| --- | --- |
-| `GOOGLE_OAUTH_CLIENT_ID/SECRET/REDIRECT_URI` | Supabase Edge Function secrets |
-| `MICROSOFT_OAUTH_CLIENT_ID/SECRET/TENANT/REDIRECT_URI` | Supabase Edge Function secrets |
-| `TOKEN_ENCRYPTION_KEY` | Supabase Edge Function secrets (`openssl rand -base64 32`) |
-| `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` | EAS environment / `.env` (public) |
-| `APPLE_*` | Supabase Auth provider config |
+| Variable                                               | Where                                                      |
+| ------------------------------------------------------ | ---------------------------------------------------------- |
+| `GOOGLE_OAUTH_CLIENT_ID/SECRET/REDIRECT_URI`           | Supabase Edge Function secrets                             |
+| `MICROSOFT_OAUTH_CLIENT_ID/SECRET/TENANT/REDIRECT_URI` | Supabase Edge Function secrets                             |
+| `TOKEN_ENCRYPTION_KEY`                                 | Supabase Edge Function secrets (`openssl rand -base64 32`) |
+| `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID`                       | EAS environment / `.env` (public)                          |
+| `APPLE_*`                                              | Supabase Auth provider config                              |

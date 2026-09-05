@@ -1,7 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
-export type HapticKind = 'selection' | 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error';
+export type HapticKind =
+  'selection' | 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error';
 
 /**
  * Restrained haptics per the design's annotated moments. Silently no-ops on unsupported platforms

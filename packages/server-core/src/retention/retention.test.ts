@@ -40,20 +40,32 @@ describe('retention · buildCleanupPlan', () => {
   it('covers every retention-limited table with the right column and op', () => {
     const steps = plans[0]?.steps ?? [];
     const byTable = Object.fromEntries(steps.map((s) => [s.table, s]));
-    expect(byTable['email_messages']).toMatchObject({ column: 'sent_at', op: 'delete', cutoff: '2026-08-06T08:00:00.000Z' });
+    expect(byTable['email_messages']).toMatchObject({
+      column: 'sent_at',
+      op: 'delete',
+      cutoff: '2026-08-06T08:00:00.000Z',
+    });
     expect(byTable['email_threads']).toMatchObject({ column: 'last_message_at', op: 'delete' });
     expect(byTable['memory_chunks']).toMatchObject({ column: 'occurred_at', op: 'delete' });
-    expect(byTable['captures']).toMatchObject({ column: 'created_at', op: 'soft_delete', storagePathColumn: 'storage_path' });
+    expect(byTable['captures']).toMatchObject({
+      column: 'created_at',
+      op: 'soft_delete',
+      storagePathColumn: 'storage_path',
+    });
     expect(byTable['android_notifications']).toMatchObject({ column: 'posted_at', op: 'delete' });
     expect(byTable['assistant_messages']).toMatchObject({ column: 'created_at', op: 'delete' });
     expect(byTable['briefings']).toMatchObject({ column: 'generated_at', op: 'delete' });
-    expect(byTable['insights']).toMatchObject({ column: 'for_date', excludeStatuses: { column: 'status', values: ['active'] } });
+    expect(byTable['insights']).toMatchObject({
+      column: 'for_date',
+      excludeStatuses: { column: 'status', values: ['active'] },
+    });
     expect(steps).toHaveLength(8);
   });
 
   it('never touches credentials, approvals or subscriptions', () => {
     const touched = new Set(plans.flatMap((p) => p.steps.map((s) => String(s.table))));
-    for (const protectedTable of RETENTION_PROTECTED_TABLES) expect(touched.has(protectedTable)).toBe(false);
+    for (const protectedTable of RETENTION_PROTECTED_TABLES)
+      expect(touched.has(protectedTable)).toBe(false);
   });
 });
 
@@ -74,7 +86,13 @@ describe('retention · deleteHistoryPlan', () => {
 describe('retention · accountDeletionPlan', () => {
   it('orders steps: revoke → storage → revenuecat → audit → auth user, with user-scoped prefixes', () => {
     const plan = accountDeletionPlan('u-42');
-    expect(plan.steps.map((s) => s.step)).toEqual(['revoke_tokens', 'delete_storage_prefixes', 'unlink_revenuecat', 'anonymize_audit', 'delete_auth_user']);
+    expect(plan.steps.map((s) => s.step)).toEqual([
+      'revoke_tokens',
+      'delete_storage_prefixes',
+      'unlink_revenuecat',
+      'anonymize_audit',
+      'delete_auth_user',
+    ]);
     const storage = plan.steps[1];
     expect(storage?.step === 'delete_storage_prefixes' && storage.prefixes).toEqual([
       'captures/u-42',
@@ -91,7 +109,15 @@ describe('retention · export', () => {
   });
 
   it('manifest excludes secrets and infra tables, dedupes and sorts', () => {
-    const m = exportBundleManifest(['email_threads', 'oauth_credentials', 'captures', 'rate_limits', 'oauth_states', 'captures', ' profiles ']);
+    const m = exportBundleManifest([
+      'email_threads',
+      'oauth_credentials',
+      'captures',
+      'rate_limits',
+      'oauth_states',
+      'captures',
+      ' profiles ',
+    ]);
     expect(m.version).toBe(1);
     expect(m.tables.map((t) => t.name)).toEqual(['captures', 'email_threads', 'profiles']);
     expect(m.tables[0]).toEqual({ name: 'captures', file: 'captures.json' });

@@ -60,18 +60,18 @@ pnpm web                                  # http://localhost:3000
 
 ## Komutlar
 
-| Komut | Ne yapar |
-| --- | --- |
-| `pnpm check:all` | format + lint + typecheck + unit/integration testleri + web build + Expo config doğrulama + migration doğrulama + ölü kod + gizli anahtar taraması |
-| `pnpm lint` / `pnpm format:check` | ESLint 9 (flat config) / Prettier 3 |
-| `pnpm typecheck` | Tüm paketler (`tsc --noEmit`) |
-| `pnpm typecheck:functions` | Edge Function'lar için `deno check` |
-| `pnpm test:unit` | Vitest (design-tokens, domain, validation, i18n, api-client, server-core) |
-| `pnpm test:mobile` | jest-expo + React Native Testing Library |
-| `pnpm test:db` | pgTAP RLS/politika testleri (yerel Postgres gerekir) |
-| `pnpm validate:migrations` | Migration'ları temiz bir veritabanına uygular, tüm tablolarda RLS'i doğrular |
-| `pnpm --filter @da/mobile e2e` | Maestro akışları A–L (`apps/mobile/maestro/flows`) |
-| `pnpm build:web` | Next.js production build |
+| Komut                             | Ne yapar                                                                                                                                           |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check:all`                  | format + lint + typecheck + unit/integration testleri + web build + Expo config doğrulama + migration doğrulama + ölü kod + gizli anahtar taraması |
+| `pnpm lint` / `pnpm format:check` | ESLint 9 (flat config) / Prettier 3                                                                                                                |
+| `pnpm typecheck`                  | Tüm paketler (`tsc --noEmit`)                                                                                                                      |
+| `pnpm typecheck:functions`        | Edge Function'lar için `deno check`                                                                                                                |
+| `pnpm test:unit`                  | Vitest (design-tokens, domain, validation, i18n, api-client, server-core)                                                                          |
+| `pnpm test:mobile`                | jest-expo + React Native Testing Library                                                                                                           |
+| `pnpm test:db`                    | pgTAP RLS/politika testleri (yerel Postgres gerekir)                                                                                               |
+| `pnpm validate:migrations`        | Migration'ları temiz bir veritabanına uygular, tüm tablolarda RLS'i doğrular                                                                       |
+| `pnpm --filter @da/mobile e2e`    | Maestro akışları A–L (`apps/mobile/maestro/flows`)                                                                                                 |
+| `pnpm build:web`                  | Next.js production build                                                                                                                           |
 
 ## Ürün ilkeleri (koda gömülü)
 

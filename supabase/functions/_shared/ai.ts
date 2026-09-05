@@ -85,17 +85,15 @@ async function recordUsage(admin: Db, timezone: string, r: AiUsageRecord): Promi
       .eq('day', day)
       .maybeSingle();
     const current = (data as { ai_tokens: number } | null)?.ai_tokens ?? 0;
-    await admin
-      .from('usage_counters')
-      .upsert(
-        {
-          user_id: r.userId,
-          day,
-          ai_tokens: current + tokens,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id,day' },
-      );
+    await admin.from('usage_counters').upsert(
+      {
+        user_id: r.userId,
+        day,
+        ai_tokens: current + tokens,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,day' },
+    );
   }
 }
 

@@ -51,7 +51,9 @@ export const lifeEventDetailsSchema = z.object({
   trackingNumber: z.string().max(80).nullish(),
   trackingUrl: z.string().url().nullish(),
   merchant: z.string().max(120).nullish(),
-  deliveryWindow: z.object({ start: isoDateTimeSchema.nullish(), end: isoDateTimeSchema.nullish() }).nullish(),
+  deliveryWindow: z
+    .object({ start: isoDateTimeSchema.nullish(), end: isoDateTimeSchema.nullish() })
+    .nullish(),
   flightNumber: z.string().max(12).nullish(),
   airline: z.string().max(80).nullish(),
   from: z.string().max(80).nullish(),
@@ -180,8 +182,14 @@ export const meetingPrepAiSchema = z.object({
     .min(1)
     .max(3),
   twoMinuteSummary: z.string().min(1).max(1200),
-  relevantEmailIds: z.array(z.object({ id: z.string(), why: z.string().max(120) })).max(6).default([]),
-  openLoops: z.array(z.object({ text: z.string().max(160), sourceId: z.string().nullish() })).max(6).default([]),
+  relevantEmailIds: z
+    .array(z.object({ id: z.string(), why: z.string().max(120) }))
+    .max(6)
+    .default([]),
+  openLoops: z
+    .array(z.object({ text: z.string().max(160), sourceId: z.string().nullish() }))
+    .max(6)
+    .default([]),
   uncertainties: z.array(z.string().max(160)).max(5).default([]),
   confidence: confidenceSchema,
 });
@@ -216,7 +224,9 @@ export const captureAnalysisAiSchema = z.object({
     })
     .nullish(),
   task: z.object({ title: z.string().max(120), due: evidencedDateSchema.default(null) }).nullish(),
-  deadline: z.object({ title: z.string().max(120), due: evidencedDateSchema.default(null) }).nullish(),
+  deadline: z
+    .object({ title: z.string().max(120), due: evidencedDateSchema.default(null) })
+    .nullish(),
   person: z
     .object({
       name: z.string().max(120),
@@ -235,7 +245,10 @@ export const captureAnalysisAiSchema = z.object({
     })
     .nullish(),
   keyPoints: z.array(z.string().max(160)).max(6).default([]),
-  dates: z.array(z.object({ text: z.string().max(80), iso: isoDateTimeSchema.nullish() })).max(6).default([]),
+  dates: z
+    .array(z.object({ text: z.string().max(80), iso: isoDateTimeSchema.nullish() }))
+    .max(6)
+    .default([]),
   suggestedActions: z.array(suggestedActionSchema).max(4).default([]),
   uncertainties: z.array(z.string().max(160)).max(5).default([]),
   confidence: confidenceSchema,
@@ -247,14 +260,26 @@ export const assistantAnswerAiSchema = z.object({
   /** Ids of retrieved chunks that ground the answer. Empty ⇒ answer must be generic. */
   citedSourceIds: z.array(z.string()).max(8).default([]),
   cards: z
-    .array(z.object({ kind: z.enum(['email', 'event', 'person', 'commitment', 'life_event', 'plan_block']), id: z.string() }))
+    .array(
+      z.object({
+        kind: z.enum(['email', 'event', 'person', 'commitment', 'life_event', 'plan_block']),
+        id: z.string(),
+      }),
+    )
     .max(5)
     .default([]),
   /** Write intents → converted to approval actions by the server, never executed directly. */
   writeIntents: z
     .array(
       z.object({
-        type: z.enum(['email_send', 'calendar_create', 'calendar_update', 'task_create', 'reminder_create', 'commitment_create']),
+        type: z.enum([
+          'email_send',
+          'calendar_create',
+          'calendar_update',
+          'task_create',
+          'reminder_create',
+          'commitment_create',
+        ]),
         what: z.string().max(160),
         why: z.string().max(200),
         draft: z.record(z.string(), z.unknown()),
@@ -282,7 +307,14 @@ export const voiceIntentAiSchema = z.object({
   question: z.string().max(500).nullish(),
   writeAction: z
     .object({
-      type: z.enum(['email_send', 'calendar_create', 'calendar_update', 'task_create', 'reminder_create', 'commitment_create']),
+      type: z.enum([
+        'email_send',
+        'calendar_create',
+        'calendar_update',
+        'task_create',
+        'reminder_create',
+        'commitment_create',
+      ]),
       what: z.string().max(160),
       why: z.string().max(200),
       draft: z.record(z.string(), z.unknown()),
@@ -311,5 +343,8 @@ export const scheduleSuggestionAiSchema = z.object({
 export type ScheduleSuggestionAi = z.infer<typeof scheduleSuggestionAiSchema>;
 
 export const suggestedQuestionsAiSchema = z.object({
-  questions: z.array(z.object({ text: z.string().max(80), reason: z.string().max(120).nullish() })).min(3).max(6),
+  questions: z
+    .array(z.object({ text: z.string().max(80), reason: z.string().max(120).nullish() }))
+    .min(3)
+    .max(6),
 });

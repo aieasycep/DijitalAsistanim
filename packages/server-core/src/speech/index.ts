@@ -72,7 +72,11 @@ export type OpenAiTtsModel = (typeof OPENAI_TTS_MODELS)[number];
 export const DEFAULT_OPENAI_TTS_MODEL: OpenAiTtsModel = 'gpt-4o-mini-tts';
 export const DEFAULT_OPENAI_TTS_VOICE = 'alloy';
 
-export const OPENAI_STT_MODELS = ['gpt-4o-mini-transcribe', 'gpt-4o-transcribe', 'whisper-1'] as const;
+export const OPENAI_STT_MODELS = [
+  'gpt-4o-mini-transcribe',
+  'gpt-4o-transcribe',
+  'whisper-1',
+] as const;
 export type OpenAiSttModel = (typeof OPENAI_STT_MODELS)[number];
 export const DEFAULT_OPENAI_STT_MODEL: OpenAiSttModel = 'gpt-4o-mini-transcribe';
 
@@ -89,9 +93,21 @@ const DEFAULT_STT_TIMEOUT_MS = 60_000;
 
 type SpeechProviderName = TtsProviderName | SttProviderName;
 
-function speechError(provider: SpeechProviderName, kind: 'http' | 'network' | 'timeout' | 'parse', status: number | null, retryAfterSec?: number | null, cause?: unknown): AppError {
+function speechError(
+  provider: SpeechProviderName,
+  kind: 'http' | 'network' | 'timeout' | 'parse',
+  status: number | null,
+  retryAfterSec?: number | null,
+  cause?: unknown,
+): AppError {
   const message =
-    kind === 'timeout' ? 'Ses sağlayıcısı zaman aşımına uğradı.' : kind === 'network' ? 'Ses sağlayıcısına ulaşılamadı.' : kind === 'parse' ? 'Ses sağlayıcısının yanıtı çözümlenemedi.' : `Ses sağlayıcısı hata döndürdü (HTTP ${status}).`;
+    kind === 'timeout'
+      ? 'Ses sağlayıcısı zaman aşımına uğradı.'
+      : kind === 'network'
+        ? 'Ses sağlayıcısına ulaşılamadı.'
+        : kind === 'parse'
+          ? 'Ses sağlayıcısının yanıtı çözümlenemedi.'
+          : `Ses sağlayıcısı hata döndürdü (HTTP ${status}).`;
   return new AppError('ai_unavailable', message, {
     details: { provider, kind, ...(status !== null ? { status } : {}) },
     ...(retryAfterSec ? { retryAfterSec } : {}),
@@ -114,14 +130,30 @@ async function postRaw(input: RawPostInput): Promise<Response> {
   const timer = setTimeout(() => controller.abort(), input.timeoutMs);
   let response: Response;
   try {
-    response = await input.fetch(input.url, { method: 'POST', headers: input.headers, body: input.body, signal: controller.signal });
+    response = await input.fetch(input.url, {
+      method: 'POST',
+      headers: input.headers,
+      body: input.body,
+      signal: controller.signal,
+    });
   } catch (cause) {
     clearTimeout(timer);
-    throw speechError(input.provider, controller.signal.aborted ? 'timeout' : 'network', null, null, cause);
+    throw speechError(
+      input.provider,
+      controller.signal.aborted ? 'timeout' : 'network',
+      null,
+      null,
+      cause,
+    );
   }
   if (!response.ok) {
     clearTimeout(timer);
-    throw speechError(input.provider, 'http', response.status, parseRetryAfterSec(response.headers.get('retry-after')));
+    throw speechError(
+      input.provider,
+      'http',
+      response.status,
+      parseRetryAfterSec(response.headers.get('retry-after')),
+    );
   }
   clearTimeout(timer);
   return response;
@@ -287,8 +319,17 @@ export class OpenAiTts implements TtsProvider {
     if (openAiTtsSupportsSpeed(this.model)) {
       body.speed = speed;
     } else {
-      const pace = speed > 1.1 ? 'Biraz hızlı ama anlaşılır konuş.' : speed < 0.9 ? 'Yavaş ve net konuş.' : 'Doğal bir hızda konuş.';
-      body.instructions = [this.config.instructions ?? 'Sakin, sıcak ve doğal bir Türkçe anlatım; radyo sunucusu gibi değil, bir arkadaş gibi.', pace].join(' ');
+      const pace =
+        speed > 1.1
+          ? 'Biraz hızlı ama anlaşılır konuş.'
+          : speed < 0.9
+            ? 'Yavaş ve net konuş.'
+            : 'Doğal bir hızda konuş.';
+      body.instructions = [
+        this.config.instructions ??
+          'Sakin, sıcak ve doğal bir Türkçe anlatım; radyo sunucusu gibi değil, bir arkadaş gibi.',
+        pace,
+      ].join(' ');
     }
     return body;
   }
@@ -301,13 +342,21 @@ export class OpenAiTts implements TtsProvider {
         provider: this.name,
         fetch: this.config.fetch,
         url: this.config.url ?? OPENAI_SPEECH_URL,
-        headers: { authorization: `Bearer ${this.config.apiKey}`, 'content-type': 'application/json', accept: 'audio/mpeg' },
+        headers: {
+          authorization: `Bearer ${this.config.apiKey}`,
+          'content-type': 'application/json',
+          accept: 'audio/mpeg',
+        },
         body: JSON.stringify(this.buildBody(segment, opts)),
         timeoutMs: this.config.timeoutMs ?? DEFAULT_TTS_TIMEOUT_MS,
       });
       parts.push(await readBytes(this.name, response));
     }
-    return { audio: concatBytes(parts), mimeType: 'audio/mpeg', durationSecEstimate: estimateSpeechSeconds(clean, { speed: opts.speed ?? 1 }) };
+    return {
+      audio: concatBytes(parts),
+      mimeType: 'audio/mpeg',
+      durationSecEstimate: estimateSpeechSeconds(clean, { speed: opts.speed ?? 1 }),
+    };
   }
 }
 
@@ -328,7 +377,8 @@ export class ElevenLabsTts implements TtsProvider {
 
   constructor(config: ElevenLabsTtsConfig) {
     if (!config.apiKey) throw new AppError('internal', 'ElevenLabs için API anahtarı eksik.');
-    if (!config.voiceId) throw new AppError('internal', 'ElevenLabs için ses kimliği (voice id) eksik.');
+    if (!config.voiceId)
+      throw new AppError('internal', 'ElevenLabs için ses kimliği (voice id) eksik.');
     this.config = config;
   }
 
@@ -341,7 +391,11 @@ export class ElevenLabsTts implements TtsProvider {
     return {
       text: segment,
       model_id: this.config.modelId ?? DEFAULT_ELEVENLABS_MODEL,
-      voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: clamp(opts.speed ?? 1, 0.7, 1.2) },
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+        speed: clamp(opts.speed ?? 1, 0.7, 1.2),
+      },
     };
   }
 
@@ -354,13 +408,21 @@ export class ElevenLabsTts implements TtsProvider {
         provider: this.name,
         fetch: this.config.fetch,
         url: this.urlFor(voiceId),
-        headers: { 'xi-api-key': this.config.apiKey, 'content-type': 'application/json', accept: 'audio/mpeg' },
+        headers: {
+          'xi-api-key': this.config.apiKey,
+          'content-type': 'application/json',
+          accept: 'audio/mpeg',
+        },
         body: JSON.stringify(this.buildBody(segment, opts)),
         timeoutMs: this.config.timeoutMs ?? DEFAULT_TTS_TIMEOUT_MS,
       });
       parts.push(await readBytes(this.name, response));
     }
-    return { audio: concatBytes(parts), mimeType: 'audio/mpeg', durationSecEstimate: estimateSpeechSeconds(clean, { speed: opts.speed ?? 1 }) };
+    return {
+      audio: concatBytes(parts),
+      mimeType: 'audio/mpeg',
+      durationSecEstimate: estimateSpeechSeconds(clean, { speed: opts.speed ?? 1 }),
+    };
   }
 }
 
@@ -381,16 +443,29 @@ export interface TtsConfig {
 /** `null` means "use device TTS" — when disabled or when the chosen provider lacks credentials. */
 export function resolveTtsProvider(config: TtsConfig): TtsProvider | null {
   if (config.provider === 'none') return null;
-  const common = { fetch: config.fetch, ...(config.logger ? { logger: config.logger } : {}), ...(config.timeoutMs ? { timeoutMs: config.timeoutMs } : {}) };
+  const common = {
+    fetch: config.fetch,
+    ...(config.logger ? { logger: config.logger } : {}),
+    ...(config.timeoutMs ? { timeoutMs: config.timeoutMs } : {}),
+  };
   if (config.provider === 'openai') {
     if (!config.openaiApiKey) {
-      config.logger?.warn('tts provider configured without api key; using device tts', { provider: config.provider });
+      config.logger?.warn('tts provider configured without api key; using device tts', {
+        provider: config.provider,
+      });
       return null;
     }
-    return new OpenAiTts({ ...common, apiKey: config.openaiApiKey, ...(config.openaiModel ? { model: config.openaiModel } : {}), ...(config.voice ? { voice: config.voice } : {}) });
+    return new OpenAiTts({
+      ...common,
+      apiKey: config.openaiApiKey,
+      ...(config.openaiModel ? { model: config.openaiModel } : {}),
+      ...(config.voice ? { voice: config.voice } : {}),
+    });
   }
   if (!config.elevenLabsApiKey || !config.elevenLabsVoiceId) {
-    config.logger?.warn('tts provider configured without credentials; using device tts', { provider: config.provider });
+    config.logger?.warn('tts provider configured without credentials; using device tts', {
+      provider: config.provider,
+    });
     return null;
   }
   return new ElevenLabsTts({
@@ -410,9 +485,11 @@ export interface PlainSpeechOptions {
 }
 
 const TIME_RE = /(?<![\d:])([01]?\d|2[0-3]):([0-5]\d)(?![\d:])/g;
-const TIME_RANGE_RE = /(?<![\d:])([01]?\d|2[0-3]):([0-5]\d)\s*[-–—]\s*([01]?\d|2[0-3]):([0-5]\d)(?![\d:])/g;
+const TIME_RANGE_RE =
+  /(?<![\d:])([01]?\d|2[0-3]):([0-5]\d)\s*[-–—]\s*([01]?\d|2[0-3]):([0-5]\d)(?![\d:])/g;
 // Pictographs, flags, skin-tone modifiers, variation selector (U+FE0F) and zero-width joiner (U+200D).
-const EMOJI_RE = /\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]|[\u{1F3FB}-\u{1F3FF}]|\uFE0F|\u200D/gu;
+const EMOJI_RE =
+  /\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]|[\u{1F3FB}-\u{1F3FF}]|\uFE0F|\u200D/gu;
 
 /**
  * Turn narration into text a device TTS engine reads naturally: no markdown, emoji, URLs or
@@ -441,16 +518,30 @@ export function toPlainSpeech(text: string, opts: PlainSpeechOptions = {}): stri
     .replace(/\s*(→|->|➜)\s*/g, tr ? ' - ' : ' to ')
     .replace(/\s*[|]\s*/g, ', ');
   if (tr) {
-    out = out.replace(TIME_RANGE_RE, (match: string, h1: string, m1: string, h2: string, m2: string, offset: number, whole: string) => {
-      // "14:00–18:00 arasında" already carries the word; avoid "arası arasında".
-      const followedByArasi = /^\s*aras[ıi]/i.test(whole.slice(offset + match.length));
-      return `saat ${h1}:${m1} ile ${h2}:${m2}${followedByArasi ? '' : ' arası'}`;
-    });
-    out = out.replace(TIME_RE, (match: string, _h: string, _m: string, offset: number, whole: string) => {
-      const before = whole.slice(Math.max(0, offset - 12), offset).toLocaleLowerCase('tr-TR');
-      if (/(^|\s)saat\s$/.test(before) || /\sile\s$/.test(before)) return match;
-      return `saat ${match}`;
-    });
+    out = out.replace(
+      TIME_RANGE_RE,
+      (
+        match: string,
+        h1: string,
+        m1: string,
+        h2: string,
+        m2: string,
+        offset: number,
+        whole: string,
+      ) => {
+        // "14:00–18:00 arasında" already carries the word; avoid "arası arasında".
+        const followedByArasi = /^\s*aras[ıi]/i.test(whole.slice(offset + match.length));
+        return `saat ${h1}:${m1} ile ${h2}:${m2}${followedByArasi ? '' : ' arası'}`;
+      },
+    );
+    out = out.replace(
+      TIME_RE,
+      (match: string, _h: string, _m: string, offset: number, whole: string) => {
+        const before = whole.slice(Math.max(0, offset - 12), offset).toLocaleLowerCase('tr-TR');
+        if (/(^|\s)saat\s$/.test(before) || /\sile\s$/.test(before)) return match;
+        return `saat ${match}`;
+      },
+    );
     out = out.replace(/(\d)\s*dk\b/g, '$1 dakika').replace(/(\d)\s*sn\b/g, '$1 saniye');
   }
   out = out
@@ -497,7 +588,10 @@ function ensureSentenceEnd(text: string): string {
 }
 
 /** Chapter timeline (startSec / durationSec) for the player plus the device-readable script. */
-export function buildAudioChapters(chapters: readonly AudioChapterInput[], opts: AudioChaptersOptions = {}): AudioChaptersResult {
+export function buildAudioChapters(
+  chapters: readonly AudioChapterInput[],
+  opts: AudioChaptersOptions = {},
+): AudioChaptersResult {
   const language = opts.language ?? 'tr';
   const pause = Math.max(0, opts.chapterPauseSec ?? 0);
   const out: AudioChapter[] = [];
@@ -507,15 +601,32 @@ export function buildAudioChapters(chapters: readonly AudioChapterInput[], opts:
     const text = toPlainSpeech(chapter.text, { language });
     if (!text) continue;
     const title = toPlainSpeech(chapter.title, { language });
-    const spoken = title ? `${ensureSentenceEnd(title)} ${ensureSentenceEnd(text)}` : ensureSentenceEnd(text);
-    const durationSec = Math.max(1, Math.round(estimateSpeechSeconds(spoken, { wordsPerMinute: opts.wordsPerMinute, speed: opts.speed })));
+    const spoken = title
+      ? `${ensureSentenceEnd(title)} ${ensureSentenceEnd(text)}`
+      : ensureSentenceEnd(text);
+    const durationSec = Math.max(
+      1,
+      Math.round(
+        estimateSpeechSeconds(spoken, { wordsPerMinute: opts.wordsPerMinute, speed: opts.speed }),
+      ),
+    );
     const startSec = Math.round(cursor);
-    out.push({ index: out.length, title: title || chapter.title.trim(), startSec, durationSec, text });
+    out.push({
+      index: out.length,
+      title: title || chapter.title.trim(),
+      startSec,
+      durationSec,
+      text,
+    });
     scriptParts.push(spoken);
     cursor += durationSec + pause;
   }
   const last = out[out.length - 1];
-  return { chapters: out, totalDurationSec: last ? last.startSec + last.durationSec : 0, plainScript: scriptParts.join('\n\n') };
+  return {
+    chapters: out,
+    totalDurationSec: last ? last.startSec + last.durationSec : 0,
+    plainScript: scriptParts.join('\n\n'),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -531,7 +642,10 @@ export interface OpenAiSttConfig {
   url?: string;
 }
 
-const openAiTranscriptionSchema = z.object({ text: z.string(), duration: z.number().nonnegative().optional() });
+const openAiTranscriptionSchema = z.object({
+  text: z.string(),
+  duration: z.number().nonnegative().optional(),
+});
 
 export class OpenAiStt implements SttProvider {
   readonly name = 'openai' as const;
@@ -548,7 +662,11 @@ export class OpenAiStt implements SttProvider {
 
   buildForm(audio: Uint8Array, opts: SttTranscribeOptions): FormData {
     const form = new FormData();
-    form.append('file', new Blob([toArrayBuffer(audio)], { type: opts.mimeType }), `audio.${audioExtensionFor(opts.mimeType)}`);
+    form.append(
+      'file',
+      new Blob([toArrayBuffer(audio)], { type: opts.mimeType }),
+      `audio.${audioExtensionFor(opts.mimeType)}`,
+    );
     form.append('model', this.model);
     form.append('language', opts.language);
     // whisper-1 reports duration through verbose_json; the gpt-4o transcribe models only support json/text.
@@ -568,7 +686,10 @@ export class OpenAiStt implements SttProvider {
     });
     const parsed = openAiTranscriptionSchema.safeParse(await readJson(this.name, response));
     if (!parsed.success) throw speechError(this.name, 'parse', response.status);
-    return { text: parsed.data.text.trim(), ...(parsed.data.duration !== undefined ? { durationSec: parsed.data.duration } : {}) };
+    return {
+      text: parsed.data.text.trim(),
+      ...(parsed.data.duration !== undefined ? { durationSec: parsed.data.duration } : {}),
+    };
   }
 }
 
@@ -615,7 +736,11 @@ export class DeepgramStt implements SttProvider {
       provider: this.name,
       fetch: this.config.fetch,
       url: this.urlFor(opts.language),
-      headers: { authorization: `Token ${this.config.apiKey}`, 'content-type': opts.mimeType, accept: 'application/json' },
+      headers: {
+        authorization: `Token ${this.config.apiKey}`,
+        'content-type': opts.mimeType,
+        accept: 'application/json',
+      },
       body: toArrayBuffer(audio),
       timeoutMs: this.config.timeoutMs ?? DEFAULT_STT_TIMEOUT_MS,
     });
@@ -623,7 +748,10 @@ export class DeepgramStt implements SttProvider {
     if (!parsed.success) throw speechError(this.name, 'parse', response.status);
     const transcript = parsed.data.results.channels[0]?.alternatives[0]?.transcript ?? '';
     const duration = parsed.data.metadata?.duration;
-    return { text: transcript.trim(), ...(duration !== undefined ? { durationSec: duration } : {}) };
+    return {
+      text: transcript.trim(),
+      ...(duration !== undefined ? { durationSec: duration } : {}),
+    };
   }
 }
 
@@ -641,17 +769,33 @@ export interface SttConfig {
 /** `null` means "use device speech recognition" — when disabled or when credentials are missing. */
 export function resolveSttProvider(config: SttConfig): SttProvider | null {
   if (config.provider === 'none') return null;
-  const common = { fetch: config.fetch, ...(config.logger ? { logger: config.logger } : {}), ...(config.timeoutMs ? { timeoutMs: config.timeoutMs } : {}) };
+  const common = {
+    fetch: config.fetch,
+    ...(config.logger ? { logger: config.logger } : {}),
+    ...(config.timeoutMs ? { timeoutMs: config.timeoutMs } : {}),
+  };
   if (config.provider === 'openai') {
     if (!config.openaiApiKey) {
-      config.logger?.warn('stt provider configured without api key; using device recognition', { provider: config.provider });
+      config.logger?.warn('stt provider configured without api key; using device recognition', {
+        provider: config.provider,
+      });
       return null;
     }
-    return new OpenAiStt({ ...common, apiKey: config.openaiApiKey, ...(config.openaiModel ? { model: config.openaiModel } : {}) });
+    return new OpenAiStt({
+      ...common,
+      apiKey: config.openaiApiKey,
+      ...(config.openaiModel ? { model: config.openaiModel } : {}),
+    });
   }
   if (!config.deepgramApiKey) {
-    config.logger?.warn('stt provider configured without api key; using device recognition', { provider: config.provider });
+    config.logger?.warn('stt provider configured without api key; using device recognition', {
+      provider: config.provider,
+    });
     return null;
   }
-  return new DeepgramStt({ ...common, apiKey: config.deepgramApiKey, ...(config.deepgramModel ? { model: config.deepgramModel } : {}) });
+  return new DeepgramStt({
+    ...common,
+    apiKey: config.deepgramApiKey,
+    ...(config.deepgramModel ? { model: config.deepgramModel } : {}),
+  });
 }

@@ -1,6 +1,11 @@
 /** Email prompts: deep analysis and batch classification (reply drafts and commitments live in reply.ts / commitment.ts). */
 import type { Locale } from '@da/domain';
-import { emailAnalysisAiSchema, emailBatchClassificationSchema, type EmailAnalysisAi, type EmailBatchClassification } from '@da/validation';
+import {
+  emailAnalysisAiSchema,
+  emailBatchClassificationSchema,
+  type EmailAnalysisAi,
+  type EmailBatchClassification,
+} from '@da/validation';
 import { AppError } from '../../errors';
 import { PROMPT_CHAR_LIMITS, redactForPrompt } from '../redact';
 import type { PromptSpec } from '../types';
@@ -44,11 +49,18 @@ export interface UserSignals {
 function userSignalLines(signals: UserSignals, locale: Locale): string[] {
   const en = locale === 'en';
   const lines: string[] = [];
-  if (signals.userEmails?.length) lines.push(`${en ? 'User addresses' : 'Kullanıcının adresleri'}: ${signals.userEmails.join(', ')}`);
-  if (signals.vipEmails?.length) lines.push(`${en ? 'VIP senders' : 'VIP göndericiler'}: ${signals.vipEmails.join(', ')}`);
-  if (signals.interests?.length) lines.push(`${en ? 'Interests' : 'İlgi alanları'}: ${signals.interests.join(', ')}`);
+  if (signals.userEmails?.length)
+    lines.push(
+      `${en ? 'User addresses' : 'Kullanıcının adresleri'}: ${signals.userEmails.join(', ')}`,
+    );
+  if (signals.vipEmails?.length)
+    lines.push(`${en ? 'VIP senders' : 'VIP göndericiler'}: ${signals.vipEmails.join(', ')}`);
+  if (signals.interests?.length)
+    lines.push(`${en ? 'Interests' : 'İlgi alanları'}: ${signals.interests.join(', ')}`);
   if (signals.userRules?.length) {
-    lines.push(`${en ? 'Explicit user rules (override everything else)' : 'Kullanıcının açık kuralları (her şeyin üstünde)'}:\n${bullets(signals.userRules.slice(0, 12))}`);
+    lines.push(
+      `${en ? 'Explicit user rules (override everything else)' : 'Kullanıcının açık kuralları (her şeyin üstünde)'}:\n${bullets(signals.userRules.slice(0, 12))}`,
+    );
   }
   return lines;
 }
@@ -62,7 +74,9 @@ function messageHeader(m: PromptEmailMessage, tz: string, locale: Locale): strin
     labelled(en ? 'Cc' : 'Cc', m.cc?.map(personLabel).join(', ')),
     labelled(en ? 'Date' : 'Tarih', formatPromptDateTime(m.sentAt, tz, locale)),
     labelled(en ? 'Subject' : 'Konu', clipInline(m.subject, 200)),
-    m.attachments?.length ? `${en ? 'Attachments' : 'Ekler'}: ${m.attachments.map((a) => clipInline(a.filename, 80)).join(', ')}` : null,
+    m.attachments?.length
+      ? `${en ? 'Attachments' : 'Ekler'}: ${m.attachments.map((a) => clipInline(a.filename, 80)).join(', ')}`
+      : null,
     m.isFromUser ? (en ? 'Sent by the user.' : 'Bu iletiyi kullanıcı göndermiş.') : null,
   ]);
 }
@@ -108,11 +122,17 @@ export function emailDeepAnalysis(input: EmailDeepAnalysisInput): PromptSpec<Ema
           'followUp.expected, kullanıcı karşı taraftan yanıt bekliyorsa true.',
           'suggestedActions: en fazla 4, kısa ve doğal etiketler ("Yanıtla", "Takvime ekle").',
           'lifeEvent yalnızca kargo, uçuş, rezervasyon, ödeme, abonelik ve güvenlik uyarıları için; kanıtla birlikte.',
-          "Kullanıcının açık kuralları her şeyin üstündedir; öğrenilmiş tercihlerden de önce gelir.",
+          'Kullanıcının açık kuralları her şeyin üstündedir; öğrenilmiş tercihlerden de önce gelir.',
           'summary 1-2 sakin cümle; keyPoints kısa parçalar, markdown yok.',
         ],
     sections: [
-      { title: en ? 'Context' : 'Bağlam', body: joinLines([temporalContext({ now: input.now, locale, timezone: tz }), ...userSignalLines(input, locale)]) },
+      {
+        title: en ? 'Context' : 'Bağlam',
+        body: joinLines([
+          temporalContext({ now: input.now, locale, timezone: tz }),
+          ...userSignalLines(input, locale),
+        ]),
+      },
     ],
   });
   const previous = capList(input.previousMessages ?? [], 3, locale);
@@ -120,7 +140,8 @@ export function emailDeepAnalysis(input: EmailDeepAnalysisInput): PromptSpec<Ema
     ? joinLines([
         en ? 'Earlier in this thread:' : 'Bu yazışmada daha önce:',
         ...previous.items.map(
-          (p) => `- ${personLabel(p.from)} · ${formatPromptDateTime(p.sentAt, tz, locale)}: ${redactForPrompt(p.excerpt, { maxChars: 500, locale })}`,
+          (p) =>
+            `- ${personLabel(p.from)} · ${formatPromptDateTime(p.sentAt, tz, locale)}: ${redactForPrompt(p.excerpt, { maxChars: 500, locale })}`,
         ),
         previous.note,
       ])
@@ -136,7 +157,9 @@ export function emailDeepAnalysis(input: EmailDeepAnalysisInput): PromptSpec<Ema
     tier: 'large',
     locale,
     system,
-    user: en ? 'Analyse the email below and return the structured result.' : 'Aşağıdaki e-postayı analiz et ve yapılandırılmış sonucu döndür.',
+    user: en
+      ? 'Analyse the email below and return the structured result.'
+      : 'Aşağıdaki e-postayı analiz et ve yapılandırılmış sonucu döndür.',
     context,
     schema: emailAnalysisAiSchema,
     maxOutputTokens: 1500,
@@ -162,14 +185,22 @@ export interface EmailBatchClassifyInput extends PromptBase, UserSignals {
   }[];
 }
 
-export function emailBatchClassify(input: EmailBatchClassifyInput): PromptSpec<EmailBatchClassification> {
+export function emailBatchClassify(
+  input: EmailBatchClassifyInput,
+): PromptSpec<EmailBatchClassification> {
   const locale = input.locale ?? 'tr';
   const tz = input.timezone ?? DEFAULT_PROMPT_TIMEZONE;
   const en = locale === 'en';
   if (input.emails.length === 0 || input.emails.length > EMAIL_BATCH_MAX) {
-    throw new AppError('validation', en ? `Batch must contain 1-${EMAIL_BATCH_MAX} emails.` : `Toplu sınıflandırma 1-${EMAIL_BATCH_MAX} e-posta almalı.`, {
-      details: { count: input.emails.length, max: EMAIL_BATCH_MAX },
-    });
+    throw new AppError(
+      'validation',
+      en
+        ? `Batch must contain 1-${EMAIL_BATCH_MAX} emails.`
+        : `Toplu sınıflandırma 1-${EMAIL_BATCH_MAX} e-posta almalı.`,
+      {
+        details: { count: input.emails.length, max: EMAIL_BATCH_MAX },
+      },
+    );
   }
   const system = composeSystem({
     locale,
@@ -191,7 +222,15 @@ export function emailBatchClassify(input: EmailBatchClassifyInput): PromptSpec<E
           'oneLine: sakin, tek cümlelik öz; en fazla 160 karakter, markdown yok.',
           'Kullanıcının açık kuralları ve VIP göndericiler kendi yargından önce gelir.',
         ],
-    sections: [{ title: en ? 'Context' : 'Bağlam', body: joinLines([temporalContext({ now: input.now, locale, timezone: tz }), ...userSignalLines(input, locale)]) }],
+    sections: [
+      {
+        title: en ? 'Context' : 'Bağlam',
+        body: joinLines([
+          temporalContext({ now: input.now, locale, timezone: tz }),
+          ...userSignalLines(input, locale),
+        ]),
+      },
+    ],
   });
   const perItem = PROMPT_CHAR_LIMITS.email_batch_classify;
   const lines = input.emails.map((e) =>
@@ -212,7 +251,9 @@ export function emailBatchClassify(input: EmailBatchClassifyInput): PromptSpec<E
     tier: 'small',
     locale,
     system,
-    user: en ? `Classify the ${input.emails.length} emails below.` : `Aşağıdaki ${input.emails.length} e-postayı sınıflandır.`,
+    user: en
+      ? `Classify the ${input.emails.length} emails below.`
+      : `Aşağıdaki ${input.emails.length} e-postayı sınıflandır.`,
     context: lines.join('\n'),
     schema: emailBatchClassificationSchema,
     maxOutputTokens: Math.min(4000, 120 * input.emails.length + 200),

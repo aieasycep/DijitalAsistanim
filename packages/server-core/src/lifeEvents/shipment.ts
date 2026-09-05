@@ -20,20 +20,57 @@ const CARRIERS: [RegExp, string][] = [
   [/(?<![\p{L}])amazon lojistik(?![\p{L}])/u, 'Amazon Lojistik'],
   [/(?<![\p{L}])getir(?![\p{L}])/u, 'Getir'],
 ];
-const MERCHANTS = ['Trendyol', 'Hepsiburada', 'Amazon', 'n11', 'Getir', 'Çiçeksepeti', 'LC Waikiki', 'Boyner', 'Zara', 'Decathlon', 'IKEA', 'MediaMarkt', 'Teknosa', 'Vatan', 'Migros', 'CarrefourSA', 'A101', 'Koçtaş', 'Defacto', 'Mavi', 'Beymen', 'Morhipo', 'Pazarama', 'Temu', 'AliExpress', 'Shein', 'eBay', 'Apple'];
-const CARRIER_DOMAINS = /(?:yurticikargo|araskargo|mngkargo|suratkargo|ptt\.gov|gonderitakip|ups\.com|dhl\.|fedex\.|hepsijet|tex\.com|trendyol-express|kolaygelsin|sendeo)/iu;
-const RE_STATUS = /(?<![\p{L}])(?:yola çıktı|kargoya verildi|kargoya teslim edildi|kargoya teslim|dağıtıma çıktı|dağıtımda|teslim edildi|teslim edilecek|teslim edilecektir|tahmini teslimat|teslimat tarihi|teslimat|kargoda|kargonuz|kargon|kuryemiz|kurye|şubeye|şubede|has shipped|shipped|out for delivery|on its way|delivered|dispatched|in transit|arriving|arrives|estimated delivery|delivery date)(?![\p{L}])/u;
-const RE_DELIVERED = /(?<![\p{L}])(?:teslim edildi|teslim edilmiştir|delivered|has been delivered|was delivered)(?![\p{L}])/u;
-const RE_TRACKING_LABEL = /(?<![\p{L}])(?:takip (?:no|numarası|numaranız|kodu|kodunuz)|kargo takip(?: no| numarası| kodu)?|gönderi (?:no|numarası|kodu|takip no)|tracking (?:number|no|id|code)|takip|tracking)\s*[:#.]?\s*(?<tn>[A-Z0-9]{8,30})(?![A-Z0-9])/iu;
-const RE_ORDER_LABEL = /(?:sipariş (?:no|numarası|numaranız|kodu)|order (?:number|no|id)|order)\s*[:#.]?\s*$/iu;
+const MERCHANTS = [
+  'Trendyol',
+  'Hepsiburada',
+  'Amazon',
+  'n11',
+  'Getir',
+  'Çiçeksepeti',
+  'LC Waikiki',
+  'Boyner',
+  'Zara',
+  'Decathlon',
+  'IKEA',
+  'MediaMarkt',
+  'Teknosa',
+  'Vatan',
+  'Migros',
+  'CarrefourSA',
+  'A101',
+  'Koçtaş',
+  'Defacto',
+  'Mavi',
+  'Beymen',
+  'Morhipo',
+  'Pazarama',
+  'Temu',
+  'AliExpress',
+  'Shein',
+  'eBay',
+  'Apple',
+];
+const CARRIER_DOMAINS =
+  /(?:yurticikargo|araskargo|mngkargo|suratkargo|ptt\.gov|gonderitakip|ups\.com|dhl\.|fedex\.|hepsijet|tex\.com|trendyol-express|kolaygelsin|sendeo)/iu;
+const RE_STATUS =
+  /(?<![\p{L}])(?:yola çıktı|kargoya verildi|kargoya teslim edildi|kargoya teslim|dağıtıma çıktı|dağıtımda|teslim edildi|teslim edilecek|teslim edilecektir|tahmini teslimat|teslimat tarihi|teslimat|kargoda|kargonuz|kargon|kuryemiz|kurye|şubeye|şubede|has shipped|shipped|out for delivery|on its way|delivered|dispatched|in transit|arriving|arrives|estimated delivery|delivery date)(?![\p{L}])/u;
+const RE_DELIVERED =
+  /(?<![\p{L}])(?:teslim edildi|teslim edilmiştir|delivered|has been delivered|was delivered)(?![\p{L}])/u;
+const RE_TRACKING_LABEL =
+  /(?<![\p{L}])(?:takip (?:no|numarası|numaranız|kodu|kodunuz)|kargo takip(?: no| numarası| kodu)?|gönderi (?:no|numarası|kodu|takip no)|tracking (?:number|no|id|code)|takip|tracking)\s*[:#.]?\s*(?<tn>[A-Z0-9]{8,30})(?![A-Z0-9])/iu;
+const RE_ORDER_LABEL =
+  /(?:sipariş (?:no|numarası|numaranız|kodu)|order (?:number|no|id)|order)\s*[:#.]?\s*$/iu;
 const RE_DIGITS = /(?<![\d+])(?<tn>\d{10,20})(?!\d)/gu;
 const RE_UPS = /(?<![A-Z0-9])(1Z[0-9A-Z]{16})(?![A-Z0-9])/u;
 const RE_PTT = /(?<![A-Z0-9])([A-Z]{2}\d{9}TR)(?![A-Z0-9])/u;
-const RE_DELIVERY_SENTENCE = /(?<![\p{L}])(?:teslim|teslimat|delivery|deliver|arriv|geliyor|gelecek|ulaşacak|ulaşır|bugün|yarın|today|tomorrow)(?![\p{L}])/u;
+const RE_DELIVERY_SENTENCE =
+  /(?<![\p{L}])(?:teslim|teslimat|delivery|deliver|arriv|geliyor|gelecek|ulaşacak|ulaşır|bugün|yarın|today|tomorrow)(?![\p{L}])/u;
 
 function findCarrier(ctx: Ctx): string | null {
   for (const [re, name] of CARRIERS) if (re.test(ctx.lower)) return name;
-  if (ctx.senderOrg) for (const [re, name] of CARRIERS) if (re.test(ctx.senderOrg.toLocaleLowerCase('tr-TR'))) return name;
+  if (ctx.senderOrg)
+    for (const [re, name] of CARRIERS)
+      if (re.test(ctx.senderOrg.toLocaleLowerCase('tr-TR'))) return name;
   return null;
 }
 
@@ -41,7 +78,12 @@ function findMerchant(ctx: Ctx, carrier: string | null): string | null {
   const org = ctx.senderOrg;
   if (org) {
     const hit = brandInText(org.toLocaleLowerCase('tr-TR'), MERCHANTS);
-    if (hit && hit !== carrier && !(hit === 'Trendyol' && carrier === 'Trendyol Express' && /express/iu.test(org))) return hit;
+    if (
+      hit &&
+      hit !== carrier &&
+      !(hit === 'Trendyol' && carrier === 'Trendyol Express' && /express/iu.test(org))
+    )
+      return hit;
   }
   const inText = brandInText(ctx.lower.replace(/trendyol express/gu, ' '), MERCHANTS);
   if (inText && inText !== carrier) return inText;
@@ -52,7 +94,11 @@ function findTracking(ctx: Ctx): { value: string; start: number; end: number } |
   const labelled = RE_TRACKING_LABEL.exec(ctx.text);
   if (labelled?.groups?.tn) {
     const start = labelled.index + labelled[0].length - labelled.groups.tn.length;
-    return { value: labelled.groups.tn.toUpperCase(), start, end: start + labelled.groups.tn.length };
+    return {
+      value: labelled.groups.tn.toUpperCase(),
+      start,
+      end: start + labelled.groups.tn.length,
+    };
   }
   const ups = RE_UPS.exec(ctx.text);
   if (ups?.[1]) return { value: ups[1], start: ups.index, end: ups.index + ups[1].length };
@@ -65,20 +111,31 @@ function findTracking(ctx: Ctx): { value: string; start: number; end: number } |
     const before = ctx.lower.slice(Math.max(0, m.index - 30), m.index);
     if (RE_ORDER_LABEL.test(before)) continue;
     if (/^0|^90\d{10}$/.test(tn)) continue; // phone numbers
-    if (ctx.dates.some((d) => m !== null && m.index < d.end && m.index + tn.length > d.start)) continue;
+    if (ctx.dates.some((d) => m !== null && m.index < d.end && m.index + tn.length > d.start))
+      continue;
     return { value: tn, start: m.index, end: m.index + tn.length };
   }
-  const fromUrl = ctx.urls.map((u) => /[?&](?:code|kod|takip|tracking|track|no|number|id)=([A-Za-z0-9]{8,30})/iu.exec(u.url)).find((x) => x !== null);
+  const fromUrl = ctx.urls
+    .map((u) =>
+      /[?&](?:code|kod|takip|tracking|track|no|number|id)=([A-Za-z0-9]{8,30})/iu.exec(u.url),
+    )
+    .find((x) => x !== null);
   if (fromUrl?.[1]) return { value: fromUrl[1].toUpperCase(), start: -1, end: -1 };
   return null;
 }
 
 function findTrackingUrl(ctx: Ctx): string | null {
-  const hit = ctx.urls.find((u) => CARRIER_DOMAINS.test(u.url) || /(?:takip|track|tracking|gonderi-sorgula|shipment|kargotakip|siparis-takip)/iu.test(u.url));
+  const hit = ctx.urls.find(
+    (u) =>
+      CARRIER_DOMAINS.test(u.url) ||
+      /(?:takip|track|tracking|gonderi-sorgula|shipment|kargotakip|siparis-takip)/iu.test(u.url),
+  );
   return hit?.url ?? null;
 }
 
-function findWindow(ctx: Ctx): { start: string; end: string | null; from: number; to: number; hasTime: boolean } | null {
+function findWindow(
+  ctx: Ctx,
+): { start: string; end: string | null; from: number; to: number; hasTime: boolean } | null {
   for (const d of ctx.dates) {
     if (d.kind === 'time' && !d.hasTime) continue;
     const s = sentenceAround(ctx.lower, d.start);
@@ -86,12 +143,17 @@ function findWindow(ctx: Ctx): { start: string; end: string | null; from: number
     if (!RE_DELIVERY_SENTENCE.test(sentence)) continue;
     if (d.kind === 'time') continue; // a bare clock needs a day
     // "bugün 14:00–18:00": the next clock-only span in the same sentence closes the window.
-    const closing = ctx.dates.find((x) => x.start > d.end && x.start < s.end && x.kind === 'time' && x.hasTime);
+    const closing = ctx.dates.find(
+      (x) => x.start > d.end && x.start < s.end && x.kind === 'time' && x.hasTime,
+    );
     if (closing && d.hasTime) {
       const startLocal = localDateTimeOf(d.iso, ctx.timezone);
       const endLocal = localDateTimeOf(closing.iso, ctx.timezone);
       if (endLocal.hh * 60 + endLocal.mm > startLocal.hh * 60 + startLocal.mm) {
-        const endIso = new Date(Date.parse(d.iso) + ((endLocal.hh - startLocal.hh) * 60 + (endLocal.mm - startLocal.mm)) * 60_000).toISOString();
+        const endIso = new Date(
+          Date.parse(d.iso) +
+            ((endLocal.hh - startLocal.hh) * 60 + (endLocal.mm - startLocal.mm)) * 60_000,
+        ).toISOString();
         return { start: d.iso, end: endIso, from: d.start, to: closing.end, hasTime: true };
       }
     }

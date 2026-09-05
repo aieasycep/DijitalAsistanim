@@ -11,7 +11,13 @@ export class AppError extends Error {
   constructor(
     code: ApiError['code'],
     message: string,
-    opts: { status?: number; details?: Record<string, unknown>; retryAfterSec?: number; requiredScope?: string; cause?: unknown } = {},
+    opts: {
+      status?: number;
+      details?: Record<string, unknown>;
+      retryAfterSec?: number;
+      requiredScope?: string;
+      cause?: unknown;
+    } = {},
   ) {
     super(message, { cause: opts.cause });
     this.name = 'AppError';

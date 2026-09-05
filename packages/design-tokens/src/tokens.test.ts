@@ -3,7 +3,11 @@ import { badgeColors, darkColors, lightColors, palette, toCssVariables, typeScal
 
 function luminance(hex: string): number {
   const c = hex.replace('#', '');
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16) / 255) as [number, number, number];
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16) / 255) as [
+    number,
+    number,
+    number,
+  ];
   const lin = (v: number) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 }

@@ -14,7 +14,11 @@ export interface FormatCtx {
 }
 
 const dtf = (ctx: FormatCtx, opts: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat(LOCALE_TAG[ctx.locale], { timeZone: ctx.timezone, hourCycle: 'h23', ...opts });
+  new Intl.DateTimeFormat(LOCALE_TAG[ctx.locale], {
+    timeZone: ctx.timezone,
+    hourCycle: 'h23',
+    ...opts,
+  });
 
 export function formatTime(iso: string | Date, ctx: FormatCtx): string {
   return dtf(ctx, { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
@@ -42,7 +46,8 @@ export function formatShortDate(iso: string | Date, ctx: FormatCtx): string {
 export function formatDateRange(startIso: string, endIso: string, ctx: FormatCtx): string {
   const s = new Date(startIso);
   const e = new Date(endIso);
-  const sameMonth = dtf(ctx, { month: 'numeric' }).format(s) === dtf(ctx, { month: 'numeric' }).format(e);
+  const sameMonth =
+    dtf(ctx, { month: 'numeric' }).format(s) === dtf(ctx, { month: 'numeric' }).format(e);
   if (sameMonth) {
     const sd = dtf(ctx, { day: 'numeric' }).format(s);
     const ed = dtf(ctx, { day: 'numeric', month: 'long' }).format(e);
@@ -52,7 +57,12 @@ export function formatDateRange(startIso: string, endIso: string, ctx: FormatCtx
 }
 
 function localDateKey(d: Date, ctx: FormatCtx): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: ctx.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: ctx.timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
 }
 
 /** YYYY-MM-DD in the user's timezone */
@@ -80,7 +90,8 @@ export function formatRelativeLabel(iso: string | Date, ctx: FormatCtx): string 
   if (isToday(d, ctx)) return formatTime(d, ctx);
   if (isTomorrow(d, ctx)) return `${tr ? 'Yarın' : 'Tomorrow'} ${formatTime(d, ctx)}`;
   const yesterday = new Date(now.getTime() - 24 * 3600 * 1000);
-  if (localDateKey(d, ctx) === localDateKey(yesterday, ctx)) return `${tr ? 'Dün' : 'Yesterday'} ${formatTime(d, ctx)}`;
+  if (localDateKey(d, ctx) === localDateKey(yesterday, ctx))
+    return `${tr ? 'Dün' : 'Yesterday'} ${formatTime(d, ctx)}`;
   return formatShortDate(d, ctx);
 }
 
@@ -103,7 +114,12 @@ export function formatWaiting(sinceIso: string, ctx: FormatCtx): string {
   const now = ctx.now ?? new Date();
   const minutes = (now.getTime() - new Date(sinceIso).getTime()) / 60000;
   const dur = formatDuration(minutes, ctx.locale);
-  return ctx.locale === 'tr' ? `${dur}dür bekliyor`.replace('gündür', 'gündür').replace('sadür', 'saattir').replace('dkdür', 'dakikadır') : `waiting for ${dur}`;
+  return ctx.locale === 'tr'
+    ? `${dur}dür bekliyor`
+        .replace('gündür', 'gündür')
+        .replace('sadür', 'saattir')
+        .replace('dkdür', 'dakikadır')
+    : `waiting for ${dur}`;
 }
 
 /** "4 sa kaldı" / "4h left" */
@@ -111,7 +127,9 @@ export function formatRemaining(untilIso: string, ctx: FormatCtx): string {
   const now = ctx.now ?? new Date();
   const minutes = (new Date(untilIso).getTime() - now.getTime()) / 60000;
   if (minutes <= 0) return ctx.locale === 'tr' ? 'süresi doldu' : 'overdue';
-  return ctx.locale === 'tr' ? `${formatDuration(minutes, 'tr')} kaldı` : `${formatDuration(minutes, 'en')} left`;
+  return ctx.locale === 'tr'
+    ? `${formatDuration(minutes, 'tr')} kaldı`
+    : `${formatDuration(minutes, 'en')} left`;
 }
 
 /** "2 saat 48 dakika" long form */
@@ -140,7 +158,13 @@ export function formatNumber(n: number, locale: Locale): string {
 /** Greeting by local hour: Günaydın / İyi günler / İyi akşamlar */
 export function greetingFor(ctx: FormatCtx): 'morning' | 'day' | 'evening' | 'night' {
   const now = ctx.now ?? new Date();
-  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: ctx.timezone, hour: 'numeric', hourCycle: 'h23' }).format(now));
+  const hour = Number(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: ctx.timezone,
+      hour: 'numeric',
+      hourCycle: 'h23',
+    }).format(now),
+  );
   if (hour >= 5 && hour < 12) return 'morning';
   if (hour >= 12 && hour < 18) return 'day';
   if (hour >= 18 && hour < 23) return 'evening';
@@ -150,7 +174,8 @@ export function greetingFor(ctx: FormatCtx): 'morning' | 'day' | 'evening' | 'ni
 /** Turkish vowel-harmony aware possessive for names in "Mehmet'e", "Ayşe'ye", "Ahmet'in" is out of scope;
  *  we only need dative ("-e/-a") for "X'e gönder". */
 export function dativeSuffix(name: string): string {
-  const last = [...name.toLocaleLowerCase('tr-TR')].reverse().find((c) => 'aeıioöuü'.includes(c)) ?? 'e';
+  const last =
+    [...name.toLocaleLowerCase('tr-TR')].reverse().find((c) => 'aeıioöuü'.includes(c)) ?? 'e';
   const back = 'aıou'.includes(last);
   const endsWithVowel = 'aeıioöuü'.includes(name.toLocaleLowerCase('tr-TR').slice(-1));
   return `${name}'${endsWithVowel ? 'y' : ''}${back ? 'a' : 'e'}`;

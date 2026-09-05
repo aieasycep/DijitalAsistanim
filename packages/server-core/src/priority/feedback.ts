@@ -4,7 +4,12 @@
  * VIP and follow-up changes are explicit actions and are always returned.
  */
 import type { AiFeedbackKind, Locale } from '@da/domain';
-import type { FeedbackContext, FeedbackPlan, LearnedPreferenceUpsert, RuleSuggestion } from './types';
+import type {
+  FeedbackContext,
+  FeedbackPlan,
+  LearnedPreferenceUpsert,
+  RuleSuggestion,
+} from './types';
 
 const ACK: Record<Locale, Record<AiFeedbackKind, string>> = {
   tr: {
@@ -30,23 +35,41 @@ const ACK: Record<Locale, Record<AiFeedbackKind, string>> = {
 };
 
 function personLabel(ctx: FeedbackContext): string {
-  return ctx.entity.senderName?.trim() || ctx.entity.senderEmail?.trim() || (ctx.locale === 'en' ? 'this person' : 'bu kişi');
+  return (
+    ctx.entity.senderName?.trim() ||
+    ctx.entity.senderEmail?.trim() ||
+    (ctx.locale === 'en' ? 'this person' : 'bu kişi')
+  );
 }
 
 function personKey(ctx: FeedbackContext): string | null {
   return ctx.entity.contactId ?? ctx.entity.senderEmail?.toLowerCase() ?? null;
 }
 
-function statement(locale: Locale, kind: 'person' | 'category' | 'dismiss' | 'focus', subject: string, direction: 'up' | 'down'): string {
+function statement(
+  locale: Locale,
+  kind: 'person' | 'category' | 'dismiss' | 'focus',
+  subject: string,
+  direction: 'up' | 'down',
+): string {
   const tr: Record<typeof kind, Record<typeof direction, string>> = {
     person: { up: `${subject} yüksek öncelikli.`, down: `${subject} daha az öncelikli.` },
-    category: { up: `${subject} kategorisi daha önemli.`, down: `${subject} kategorisi daha az önemli.` },
+    category: {
+      up: `${subject} kategorisi daha önemli.`,
+      down: `${subject} kategorisi daha az önemli.`,
+    },
     dismiss: { up: `${subject} takip edilsin.`, down: `${subject} için takip istemiyor.` },
-    focus: { up: `Brifingde ${subject} daha çok yer alsın.`, down: `Brifingde ${subject} daha az yer alsın.` },
+    focus: {
+      up: `Brifingde ${subject} daha çok yer alsın.`,
+      down: `Brifingde ${subject} daha az yer alsın.`,
+    },
   };
   const en: Record<typeof kind, Record<typeof direction, string>> = {
     person: { up: `${subject} is high priority.`, down: `${subject} is lower priority.` },
-    category: { up: `${subject} category matters more.`, down: `${subject} category matters less.` },
+    category: {
+      up: `${subject} category matters more.`,
+      down: `${subject} category matters less.`,
+    },
     dismiss: { up: `Keep following ${subject}.`, down: `No follow-ups for ${subject}.` },
     focus: { up: `More ${subject} in briefings.`, down: `Less ${subject} in briefings.` },
   };
@@ -74,7 +97,13 @@ function categoryLabel(locale: Locale, category: string): string {
 
 export function applyFeedback(kind: AiFeedbackKind, ctx: FeedbackContext): FeedbackPlan {
   const locale: Locale = ctx.locale ?? 'tr';
-  const plan: FeedbackPlan = { learnedUpserts: [], vipUpserts: [], ruleSuggestions: [], followUpUpdates: [], ack: ACK[locale][kind] };
+  const plan: FeedbackPlan = {
+    learnedUpserts: [],
+    vipUpserts: [],
+    ruleSuggestions: [],
+    followUpUpdates: [],
+    ack: ACK[locale][kind],
+  };
   const pKey = personKey(ctx);
   const pLabel = personLabel(ctx);
   const category = ctx.entity.category ?? null;
@@ -88,15 +117,28 @@ export function applyFeedback(kind: AiFeedbackKind, ctx: FeedbackContext): Feedb
   };
   const person = (delta: number): void => {
     if (!pKey) return;
-    learned({ kind: 'person_priority', subjectKey: pKey, weightDelta: delta, statement: statement(locale, 'person', pLabel, delta > 0 ? 'up' : 'down') });
+    learned({
+      kind: 'person_priority',
+      subjectKey: pKey,
+      weightDelta: delta,
+      statement: statement(locale, 'person', pLabel, delta > 0 ? 'up' : 'down'),
+    });
   };
-  const cat = (delta: number, prefKind: 'category_priority' | 'briefing_focus' = 'category_priority'): void => {
+  const cat = (
+    delta: number,
+    prefKind: 'category_priority' | 'briefing_focus' = 'category_priority',
+  ): void => {
     if (!category) return;
     learned({
       kind: prefKind,
       subjectKey: category,
       weightDelta: delta,
-      statement: statement(locale, prefKind === 'briefing_focus' ? 'focus' : 'category', categoryLabel(locale, category), delta > 0 ? 'up' : 'down'),
+      statement: statement(
+        locale,
+        prefKind === 'briefing_focus' ? 'focus' : 'category',
+        categoryLabel(locale, category),
+        delta > 0 ? 'up' : 'down',
+      ),
     });
   };
   const senderImportantSuggestion = (): void => {
@@ -104,8 +146,12 @@ export function applyFeedback(kind: AiFeedbackKind, ctx: FeedbackContext): Feedb
       suggest({
         type: 'sender_important',
         value: ctx.entity.senderEmail.toLowerCase(),
-        label: locale === 'en' ? `Mail from ${pLabel} is important` : `${pLabel} gönderdiğinde önemli`,
-        reason: locale === 'en' ? 'Learning is off; add a rule so this sticks.' : 'Öğrenme kapalı; kalıcı olması için kural ekleyebilirsin.',
+        label:
+          locale === 'en' ? `Mail from ${pLabel} is important` : `${pLabel} gönderdiğinde önemli`,
+        reason:
+          locale === 'en'
+            ? 'Learning is off; add a rule so this sticks.'
+            : 'Öğrenme kapalı; kalıcı olması için kural ekleyebilirsin.',
       });
     }
   };
@@ -119,7 +165,10 @@ export function applyFeedback(kind: AiFeedbackKind, ctx: FeedbackContext): Feedb
           type: 'promotions_low',
           value: 'promotions',
           label: locale === 'en' ? 'Promotions are low priority' : 'Kampanyalar düşük öncelikli',
-          reason: locale === 'en' ? 'Learning is off; add a rule so this sticks.' : 'Öğrenme kapalı; kalıcı olması için kural ekleyebilirsin.',
+          reason:
+            locale === 'en'
+              ? 'Learning is off; add a rule so this sticks.'
+              : 'Öğrenme kapalı; kalıcı olması için kural ekleyebilirsin.',
         });
       }
       break;
@@ -141,26 +190,44 @@ export function applyFeedback(kind: AiFeedbackKind, ctx: FeedbackContext): Feedb
           type: 'mute_sender',
           value: ctx.entity.senderEmail.toLowerCase(),
           label: locale === 'en' ? `Mute ${pLabel}` : `${pLabel} sessize alınsın`,
-          reason: locale === 'en' ? 'Learning is off; muting is the explicit alternative.' : 'Öğrenme kapalı; kalıcı olması için sessize alabilirsin.',
+          reason:
+            locale === 'en'
+              ? 'Learning is off; muting is the explicit alternative.'
+              : 'Öğrenme kapalı; kalıcı olması için sessize alabilirsin.',
         });
       }
       break;
     case 'make_vip': {
       const name = ctx.entity.senderName?.trim() || ctx.entity.senderEmail?.trim() || '';
       if (name) {
-        plan.vipUpserts.push({ displayName: name, email: ctx.entity.senderEmail?.toLowerCase() ?? null, contactId: ctx.entity.contactId ?? null, notifyAlways: true });
+        plan.vipUpserts.push({
+          displayName: name,
+          email: ctx.entity.senderEmail?.toLowerCase() ?? null,
+          contactId: ctx.entity.contactId ?? null,
+          notifyAlways: true,
+        });
         person(0.5);
         plan.ack = ACK[locale].make_vip.replace('{name}', name);
       } else {
-        plan.ack = locale === 'en' ? 'This item has no person to mark as VIP.' : 'Bu kartta VIP yapılacak bir kişi yok.';
+        plan.ack =
+          locale === 'en'
+            ? 'This item has no person to mark as VIP.'
+            : 'Bu kartta VIP yapılacak bir kişi yok.';
       }
       break;
     }
     case 'stop_following': {
-      const followUpId = ctx.entity.followUpId ?? (ctx.entity.entityType === 'follow_up' ? ctx.entity.entityId : null);
+      const followUpId =
+        ctx.entity.followUpId ??
+        (ctx.entity.entityType === 'follow_up' ? ctx.entity.entityId : null);
       if (followUpId) plan.followUpUpdates.push({ followUpId, status: 'closed' });
       const subjectKey = pKey ?? ctx.entity.threadId ?? ctx.entity.entityId;
-      learned({ kind: 'dismiss_pattern', subjectKey, weightDelta: 0.5, statement: statement(locale, 'dismiss', pLabel, 'down') });
+      learned({
+        kind: 'dismiss_pattern',
+        subjectKey,
+        weightDelta: 0.5,
+        statement: statement(locale, 'dismiss', pLabel, 'down'),
+      });
       break;
     }
     case 'correct':

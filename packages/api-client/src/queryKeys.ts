@@ -30,10 +30,12 @@ export const qk = {
   approval: (id: string) => ['approval', id] as const,
   approvalsPending: ['approvals', 'pendingCount'] as const,
   reminders: ['reminders'] as const,
-  reminderSuggest: (targetType: string, targetId: string) => ['reminderSuggest', targetType, targetId] as const,
+  reminderSuggest: (targetType: string, targetId: string) =>
+    ['reminderSuggest', targetType, targetId] as const,
   assistantThreads: ['assistantThreads'] as const,
   assistantMessages: (threadId: string) => ['assistantMessages', threadId] as const,
-  suggestedQuestions: (contactId?: string | null) => ['suggestedQuestions', contactId ?? 'global'] as const,
+  suggestedQuestions: (contactId?: string | null) =>
+    ['suggestedQuestions', contactId ?? 'global'] as const,
   search: (q: string) => ['search', q] as const,
   recentQueries: ['recentQueries'] as const,
   captures: ['captures'] as const,

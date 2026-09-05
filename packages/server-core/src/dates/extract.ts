@@ -58,7 +58,10 @@ function cueAlternation(words: string[]): string {
     .join('|');
 }
 
-const RE_CUE_BEFORE = new RegExp(`${B}(?<cue>${cueAlternation([...STRONG_CUES, ...WEAK_CUES])})\\s*[:\\-–—]?\\s*(?:olan\\s+|olarak\\s+|ise\\s+|is\\s+|the\\s+)?$`, 'u');
+const RE_CUE_BEFORE = new RegExp(
+  `${B}(?<cue>${cueAlternation([...STRONG_CUES, ...WEAK_CUES])})\\s*[:\\-–—]?\\s*(?:olan\\s+|olarak\\s+|ise\\s+|is\\s+|the\\s+)?$`,
+  'u',
+);
 const CUE_AFTER_WORDS = flexI(
   "(?:'?(?:ya|ye|a|e|na|ne|ına|ine|sına|sine))?\\s*(?:kadar|dek|değin)|(?:'?(?:dan|den|tan|ten|ndan|nden))?\\s*(?:önce|öncesinde)|at the latest|or earlier|or before|or sooner|son gün(?:ü)?",
 );
@@ -88,7 +91,9 @@ function detectCue(lower: string, start: number, end: number): Cue | null {
 
 /** Longest span wins; ties go to the higher-priority producer. */
 function resolveOverlaps(cands: Candidate[]): Candidate[] {
-  const sorted = [...cands].sort((a, b) => a.start - b.start || b.end - b.start - (a.end - a.start) || b.priority - a.priority);
+  const sorted = [...cands].sort(
+    (a, b) => a.start - b.start || b.end - b.start - (a.end - a.start) || b.priority - a.priority,
+  );
   const out: Candidate[] = [];
   let lastEnd = -1;
   for (const c of sorted) {
@@ -108,7 +113,11 @@ function isClockOnly(c: Candidate): boolean {
 }
 
 function tryMerge(a: Candidate, b: Candidate): Candidate | null {
-  const merged = (date: LocalDate | null, time: ClockTime | null, extra: Partial<Candidate>): Candidate => ({
+  const merged = (
+    date: LocalDate | null,
+    time: ClockTime | null,
+    extra: Partial<Candidate>,
+  ): Candidate => ({
     ...a,
     start: a.start,
     end: b.end,
@@ -243,7 +252,11 @@ export function deadlineFromText(input: ExtractDatesInput): ExtractedDate | null
   if (dates.length === 0) return null;
   const strength = (d: ExtractedDate): number => (d.cue && RE_STRONG_CUE.test(d.cue) ? 2 : 1);
   const sorted = [...dates].sort(
-    (a, b) => strength(b) - strength(a) || b.confidence - a.confidence || Number(b.hasTime) - Number(a.hasTime) || Date.parse(a.iso) - Date.parse(b.iso),
+    (a, b) =>
+      strength(b) - strength(a) ||
+      b.confidence - a.confidence ||
+      Number(b.hasTime) - Number(a.hasTime) ||
+      Date.parse(a.iso) - Date.parse(b.iso),
   );
   return sorted[0] ?? null;
 }

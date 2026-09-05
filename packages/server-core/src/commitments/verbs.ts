@@ -10,8 +10,10 @@
 import { escapeRegex, flexI } from '../dates';
 
 export type CounterpartCase = 'dat' | 'acc' | 'ile' | 'none';
-export type FirstPersonKind = 'future1' | 'future1pl' | 'aorist1' | 'aorist1pl' | 'prog1' | 'prog1pl' | 'abil1' | 'abil1pl';
-export type RequestKind = 'question' | 'conditional' | 'verbal_noun_request' | 'verbal_noun_need' | 'imperative';
+export type FirstPersonKind =
+  'future1' | 'future1pl' | 'aorist1' | 'aorist1pl' | 'prog1' | 'prog1pl' | 'abil1' | 'abil1pl';
+export type RequestKind =
+  'question' | 'conditional' | 'verbal_noun_request' | 'verbal_noun_need' | 'imperative';
 
 interface VerbSpec {
   lemma: string;
@@ -87,10 +89,66 @@ const SPECS: VerbSpec[] = [
 
 /** Nouns that combine with "et-" into an actionable verb ("kontrol et", "teyit et"). "Teşekkür ederim" is not a commitment. */
 export const ET_COMPOUNDS = new Set([
-  'kontrol', 'teyit', 'takip', 'organize', 'iptal', 'teslim', 'rapor', 'tamir', 'temin', 'tedarik', 'transfer', 'test', 'analiz', 'revize', 'telefon',
-  'ziyaret', 'yardım', 'sevk', 'tahsil', 'iade', 'tespit', 'devam', 'talep', 'tarif', 'sipariş', 'müzakere', 'not', 'koordine', 'ayarlama', 'planlama',
-  'finalize', 'onay', 'kabul', 'ikmal', 'ilave', 'imza', 'tanzim', 'tebliğ', 'temas', 'terk', 'ıspat', 'ispat', 'hesap', 'entegre', 'aktif', 'deaktif',
-  'çözüm', 'kayıt', 'güncelleme', 'gözden geçirme', 'sunum', 'ödeme', 'hazır', 'ikram', 'davet', 'ilan', 'iletişim', 'inşa', 'monte', 'paylaşım',
+  'kontrol',
+  'teyit',
+  'takip',
+  'organize',
+  'iptal',
+  'teslim',
+  'rapor',
+  'tamir',
+  'temin',
+  'tedarik',
+  'transfer',
+  'test',
+  'analiz',
+  'revize',
+  'telefon',
+  'ziyaret',
+  'yardım',
+  'sevk',
+  'tahsil',
+  'iade',
+  'tespit',
+  'devam',
+  'talep',
+  'tarif',
+  'sipariş',
+  'müzakere',
+  'not',
+  'koordine',
+  'ayarlama',
+  'planlama',
+  'finalize',
+  'onay',
+  'kabul',
+  'ikmal',
+  'ilave',
+  'imza',
+  'tanzim',
+  'tebliğ',
+  'temas',
+  'terk',
+  'ıspat',
+  'ispat',
+  'hesap',
+  'entegre',
+  'aktif',
+  'deaktif',
+  'çözüm',
+  'kayıt',
+  'güncelleme',
+  'gözden geçirme',
+  'sunum',
+  'ödeme',
+  'hazır',
+  'ikram',
+  'davet',
+  'ilan',
+  'iletişim',
+  'inşa',
+  'monte',
+  'paylaşım',
 ]);
 
 /** Nouns that combine with "yap-", "ver-", "al-", "geç-" into an actionable compound; used to name the deliverable in "… bekliyorum" expectations. */
@@ -113,7 +171,21 @@ const FRONT = new Set(['e', 'i', 'ö', 'ü']);
 const ROUNDED = new Set(['o', 'ö', 'u', 'ü']);
 const VOWELS = 'aeıioöuü';
 /** Monosyllabic stems whose aorist takes -ir instead of -er. */
-const AORIST_IR_MONO = new Set(['al', 'bil', 'bul', 'dur', 'gel', 'gör', 'kal', 'ol', 'öl', 'san', 'var', 'ver', 'vur']);
+const AORIST_IR_MONO = new Set([
+  'al',
+  'bil',
+  'bul',
+  'dur',
+  'gel',
+  'gör',
+  'kal',
+  'ol',
+  'öl',
+  'san',
+  'var',
+  'ver',
+  'vur',
+]);
 
 function lastVowel(w: string): string {
   for (let i = w.length - 1; i >= 0; i--) {
@@ -178,7 +250,11 @@ function inflect(head: string, soften: boolean): Omit<VerbForms, 'lemma' | 'coun
   const buffer = vowelEnd ? 'y' : '';
   const future3 = `${base}${buffer}${w}c${w}k`;
   const futureStem = `${base}${buffer}${w}c${w}ğ`;
-  const aorist3 = vowelEnd ? `${head}r` : vowelCount(head) === 1 && !AORIST_IR_MONO.has(head) ? `${soft}${w}r` : `${soft}${n}r`;
+  const aorist3 = vowelEnd
+    ? `${head}r`
+    : vowelCount(head) === 1 && !AORIST_IR_MONO.has(head)
+      ? `${soft}${w}r`
+      : `${soft}${n}r`;
   const aoristNarrow = narrowFor(lastVowel(aorist3));
   let prog3: string;
   if (vowelEnd) {
@@ -221,7 +297,12 @@ function inflect(head: string, soften: boolean): Omit<VerbForms, 'lemma' | 'coun
 export function conjugate(spec: VerbSpec): VerbForms {
   const parts = spec.lemma.split(' ');
   const head = parts[parts.length - 1] ?? spec.lemma;
-  return { lemma: spec.lemma, head, counterpart: spec.counterpart, ...inflect(head, spec.soften ?? false) };
+  return {
+    lemma: spec.lemma,
+    head,
+    counterpart: spec.counterpart,
+    ...inflect(head, spec.soften ?? false),
+  };
 }
 
 export const VERBS: VerbForms[] = SPECS.map(conjugate);
@@ -279,32 +360,47 @@ const NB = '(?<![\\p{L}])';
 const NE = '(?![\\p{L}])';
 
 /** All first-person commitment forms of the lexicon ("göndereceğim", "gönderirim", "gönderiyoruz" …). */
-export const RE_FIRST_PERSON_FORMS = new RegExp(`${NB}(?<form>${alternation(FIRST_PERSON_INDEX.keys())})${NE}`, 'gu');
+export const RE_FIRST_PERSON_FORMS = new RegExp(
+  `${NB}(?<form>${alternation(FIRST_PERSON_INDEX.keys())})${NE}`,
+  'gu',
+);
 
 /** Unknown verbs with the unambiguous future suffix; the optional negation group catches "göndermeyeceğim". */
-export const RE_GENERIC_FUTURE = /(?<![\p{L}])(?<stem>\p{L}{2,}?)(?<neg>m[ae]y)?(?<suffix>eceğim|acağım|eceğiz|acağız)(?![\p{L}])/gu;
+export const RE_GENERIC_FUTURE =
+  /(?<![\p{L}])(?<stem>\p{L}{2,}?)(?<neg>m[ae]y)?(?<suffix>eceğim|acağım|eceğiz|acağız)(?![\p{L}])/gu;
 
 const REQUEST_STEMS = alternation(REQUEST_STEM_INDEX.keys());
 const VERBAL_NOUNS = alternation(VERBAL_NOUN_INDEX.keys());
 const IMPERATIVES = alternation(IMPERATIVE_INDEX.keys());
 
 /** "gönderir misin", "iletebilir misiniz", "bakar mısın". */
-export const RE_REQUEST_QUESTION = new RegExp(`${NB}(?<form>${REQUEST_STEMS})\\s+m[iıuü]s[iı]n(?:[iı]z)?${NE}`, 'u');
+export const RE_REQUEST_QUESTION = new RegExp(
+  `${NB}(?<form>${REQUEST_STEMS})\\s+m[iıuü]s[iı]n(?:[iı]z)?${NE}`,
+  'u',
+);
 /** "gönderirsen(iz)", "gönderebilirseniz" — a request only when followed by "sevinirim" & co. */
-export const RE_REQUEST_CONDITIONAL = new RegExp(`${NB}(?<form>${REQUEST_STEMS})n(?:[iı]z)?${NE}`, 'u');
-export const RE_PLEASED = /(?<![\p{L}])(?:sevinir(?:im|iz)|memnun olur(?:um|uz)|(?:çok\s+)?iyi olur|süper olur|harika olur|minnettar (?:olur|kal)(?:um|ız|ırım|ırız)|makbule geçer)(?![\p{L}])/u;
+export const RE_REQUEST_CONDITIONAL = new RegExp(
+  `${NB}(?<form>${REQUEST_STEMS})n(?:[iı]z)?${NE}`,
+  'u',
+);
+export const RE_PLEASED =
+  /(?<![\p{L}])(?:sevinir(?:im|iz)|memnun olur(?:um|uz)|(?:çok\s+)?iyi olur|süper olur|harika olur|minnettar (?:olur|kal)(?:um|ız|ırım|ırız)|makbule geçer)(?![\p{L}])/u;
 /** "göndermenizi rica ederim", "iletmeni bekliyorum". */
 export const RE_REQUEST_VERBAL_NOUN = new RegExp(
   `${NB}(?<form>${VERBAL_NOUNS})n(?:[iı]z)?[iı]\\s+(?:rica ed(?:erim|iyorum|eriz|iyoruz|ecek)|bekliyor(?:um|uz)|istiyor(?:um|uz)|bekler(?:im|iz)|ister(?:im|iz))${NE}`,
   'u',
 );
 /** "göndermen gerekiyor", "iletmeniz lazım". */
-export const RE_REQUEST_NEED = new RegExp(`${NB}(?<form>${VERBAL_NOUNS})n(?:[iı]z)?\\s+(?:gerek(?:iyor|ir|li|mekte)?|lazım|lâzım|şart)${NE}`, 'u');
+export const RE_REQUEST_NEED = new RegExp(
+  `${NB}(?<form>${VERBAL_NOUNS})n(?:[iı]z)?\\s+(?:gerek(?:iyor|ir|li|mekte)?|lazım|lâzım|şart)${NE}`,
+  'u',
+);
 /** Bare imperative ("gönder", "gönderin", "gönderiniz") — accepted only with "lütfen"/"rica" in the clause. */
 export const RE_REQUEST_IMPERATIVE = new RegExp(`${NB}(?<form>${IMPERATIVES})${NE}`, 'gu');
 export const RE_POLITE = /(?<![\p{L}])(?:lütfen|rica)(?![\p{L}])/u;
 /** "cevabınızı bekliyorum", "senden dönüş bekliyorum". */
-export const RE_EXPECTATION = /^(?<obj>.+?)\s+(?<verb>bekliyorum|bekliyoruz|beklerim|bekleriz|bekliyor olacağım|bekliyor olacağız|bekleyeceğim|bekleyeceğiz)(?![\p{L}])/u;
+export const RE_EXPECTATION =
+  /^(?<obj>.+?)\s+(?<verb>bekliyorum|bekliyoruz|beklerim|bekleriz|bekliyor olacağım|bekliyor olacağız|bekleyeceğim|bekleyeceğiz)(?![\p{L}])/u;
 /** Generic optative ("göndereyim", "yapalım") checked on the clause's last word. */
 export const RE_OPTATIVE_WORD = /^\p{L}{2,}(?:[ae]y[iı]m|[ae]l[iı]m)$/u;
 
@@ -342,7 +438,10 @@ export function imperativeFromStem(stem: string): string {
 /** "gönder" → "gönderecek"; unknown lemmas are inflected with the same harmony rules. */
 export function futureThird(lemma: string): string {
   const known = BY_LEMMA.get(lemma);
-  if (known) return known.lemma.includes(' ') ? `${known.lemma.slice(0, -known.head.length)}${known.future3}` : known.future3;
+  if (known)
+    return known.lemma.includes(' ')
+      ? `${known.lemma.slice(0, -known.head.length)}${known.future3}`
+      : known.future3;
   const parts = lemma.split(' ');
   const head = parts[parts.length - 1] ?? lemma;
   const forms = inflect(head, head === 'et' || head === 'git' || head.endsWith('et'));

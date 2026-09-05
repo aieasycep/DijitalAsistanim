@@ -50,15 +50,26 @@ export function looksLikeEmail(value: string): boolean {
   return EMAIL_PATTERN.test(value);
 }
 
-export type SanitizeDropReason = 'forbidden_key' | 'email' | 'too_long' | 'unsupported_value' | 'too_many';
+export type SanitizeDropReason =
+  'forbidden_key' | 'email' | 'too_long' | 'unsupported_value' | 'too_many';
 
 export type SanitizeResult =
-  | { ok: true; name: AnalyticsEventName; props: AnalyticsProps; dropped: { key: string; reason: SanitizeDropReason }[] }
+  | {
+      ok: true;
+      name: AnalyticsEventName;
+      props: AnalyticsProps;
+      dropped: { key: string; reason: SanitizeDropReason }[];
+    }
   | { ok: false; reason: 'unknown_event' | 'invalid_props' };
 
-function sanitizeValue(value: unknown): { ok: true; value: AnalyticsPropValue } | { ok: false; reason: SanitizeDropReason } {
+function sanitizeValue(
+  value: unknown,
+): { ok: true; value: AnalyticsPropValue } | { ok: false; reason: SanitizeDropReason } {
   if (typeof value === 'boolean') return { ok: true, value };
-  if (typeof value === 'number') return Number.isFinite(value) ? { ok: true, value } : { ok: false, reason: 'unsupported_value' };
+  if (typeof value === 'number')
+    return Number.isFinite(value)
+      ? { ok: true, value }
+      : { ok: false, reason: 'unsupported_value' };
   if (typeof value === 'string') {
     const trimmed = value.trim();
     if (looksLikeEmail(trimmed)) return { ok: false, reason: 'email' };
@@ -75,7 +86,8 @@ function sanitizeValue(value: unknown): { ok: true; value: AnalyticsPropValue } 
 export function sanitizeAnalyticsEvent(name: string, props: unknown): SanitizeResult {
   if (!isAnalyticsEventName(name)) return { ok: false, reason: 'unknown_event' };
   if (props === undefined || props === null) return { ok: true, name, props: {}, dropped: [] };
-  if (typeof props !== 'object' || Array.isArray(props)) return { ok: false, reason: 'invalid_props' };
+  if (typeof props !== 'object' || Array.isArray(props))
+    return { ok: false, reason: 'invalid_props' };
 
   const out: AnalyticsProps = {};
   const dropped: { key: string; reason: SanitizeDropReason }[] = [];
@@ -134,7 +146,12 @@ export class NoopSink implements AnalyticsSink {
 
 /** Keeps sanitized events in memory — for tests and local development. */
 export class MemorySink implements AnalyticsSink {
-  readonly events: { name: AnalyticsEventName; props: AnalyticsProps; distinctId: string; timestamp?: string }[] = [];
+  readonly events: {
+    name: AnalyticsEventName;
+    props: AnalyticsProps;
+    distinctId: string;
+    timestamp?: string;
+  }[] = [];
   readonly rejected: { name: string; reason: 'unknown_event' | 'invalid_props' }[] = [];
 
   async capture(event: AnalyticsEvent): Promise<void> {
@@ -143,7 +160,12 @@ export class MemorySink implements AnalyticsSink {
       this.rejected.push({ name: event.name, reason: s.reason });
       return;
     }
-    this.events.push({ name: s.name, props: s.props, distinctId: await hashDistinctId(event.userId), timestamp: event.timestamp });
+    this.events.push({
+      name: s.name,
+      props: s.props,
+      distinctId: await hashDistinctId(event.userId),
+      timestamp: event.timestamp,
+    });
   }
 }
 

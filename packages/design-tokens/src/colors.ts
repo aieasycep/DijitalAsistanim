@@ -317,11 +317,23 @@ export const darkColors: SemanticColors = {
 /** Gradient definitions — identical in light and dark (brand moments). */
 export const gradients = {
   /** Morning briefing, brand moments — 160deg */
-  dawn: { angle: 160, stops: [palette.dawn0, palette.dawn1, palette.dawn2], locations: [0, 0.58, 1] },
+  dawn: {
+    angle: 160,
+    stops: [palette.dawn0, palette.dawn1, palette.dawn2],
+    locations: [0, 0.58, 1],
+  },
   /** Voice / audio briefing / analysis — 180deg */
-  night: { angle: 180, stops: [palette.night0, palette.night1, palette.night2], locations: [0, 0.6, 1] },
+  night: {
+    angle: 180,
+    stops: [palette.night0, palette.night1, palette.night2],
+    locations: [0, 0.6, 1],
+  },
   /** Evening close — 160deg */
-  dusk: { angle: 160, stops: [palette.dusk0, palette.dusk1, palette.dusk2], locations: [0, 0.55, 1] },
+  dusk: {
+    angle: 160,
+    stops: [palette.dusk0, palette.dusk1, palette.dusk2],
+    locations: [0, 0.55, 1],
+  },
 } as const;
 
 export type GradientName = keyof typeof gradients;
@@ -335,14 +347,7 @@ export const gradientCss: Record<GradientName, string> = {
 
 /** Badge tone → background/foreground mapping (semantic only). */
 export type BadgeTone =
-  | 'critical'
-  | 'deadline'
-  | 'neutral'
-  | 'calendar'
-  | 'approved'
-  | 'waiting'
-  | 'pro'
-  | 'security';
+  'critical' | 'deadline' | 'neutral' | 'calendar' | 'approved' | 'waiting' | 'pro' | 'security';
 
 export function badgeColors(colors: SemanticColors, tone: BadgeTone): { bg: string; fg: string } {
   switch (tone) {

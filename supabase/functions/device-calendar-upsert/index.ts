@@ -119,19 +119,17 @@ Deno.serve(
       .from('connected_accounts')
       .update({ last_sync_at: new Date().toISOString(), status: 'active', last_error: null })
       .eq('id', input.accountId);
-    await admin
-      .from('sync_states')
-      .upsert(
-        {
-          user_id: user.id,
-          account_id: input.accountId,
-          resource: 'calendar',
-          mode: 'polling',
-          last_success_at: new Date().toISOString(),
-          last_run_at: null,
-        },
-        { onConflict: 'account_id,resource' },
-      );
+    await admin.from('sync_states').upsert(
+      {
+        user_id: user.id,
+        account_id: input.accountId,
+        resource: 'calendar',
+        mode: 'polling',
+        last_success_at: new Date().toISOString(),
+        last_run_at: null,
+      },
+      { onConflict: 'account_id,resource' },
+    );
 
     if (input.approvalResult) {
       const r = input.approvalResult;

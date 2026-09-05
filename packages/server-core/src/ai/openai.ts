@@ -7,7 +7,15 @@ import { z } from 'zod';
 import { httpError, postJson } from './http';
 import { AiProviderError } from './providerError';
 import { extractJson, isOpenAiStrictCompatible, stripSchemaMeta } from './schema';
-import type { AiFetch, AiLogger, AiProvider, AiRequest, AiResponse, AiStopReason, AiTier } from './types';
+import type {
+  AiFetch,
+  AiLogger,
+  AiProvider,
+  AiRequest,
+  AiResponse,
+  AiStopReason,
+  AiTier,
+} from './types';
 
 export const OPENAI_CHAT_COMPLETIONS_URL = 'https://api.openai.com/v1/chat/completions';
 export const OPENAI_STRUCTURED_OUTPUT_NAME = 'emit';
@@ -84,15 +92,23 @@ export class OpenAIProvider implements AiProvider {
     const model = this.modelFor(req.tier);
     const body: Record<string, unknown> = {
       model,
-      messages: [{ role: 'system', content: req.system }, ...req.messages.map((m) => ({ role: m.role, content: m.content }))],
+      messages: [
+        { role: 'system', content: req.system },
+        ...req.messages.map((m) => ({ role: m.role, content: m.content })),
+      ],
       max_completion_tokens: req.maxOutputTokens,
     };
-    if (req.temperature !== undefined && openAiSupportsTemperature(model)) body.temperature = req.temperature;
+    if (req.temperature !== undefined && openAiSupportsTemperature(model))
+      body.temperature = req.temperature;
     if (req.jsonSchema) {
       const schema = stripSchemaMeta(req.jsonSchema);
       body.response_format = {
         type: 'json_schema',
-        json_schema: { name: OPENAI_STRUCTURED_OUTPUT_NAME, schema, strict: isOpenAiStrictCompatible(schema) },
+        json_schema: {
+          name: OPENAI_STRUCTURED_OUTPUT_NAME,
+          schema,
+          strict: isOpenAiStrictCompatible(schema),
+        },
       };
     }
     return body;
@@ -114,21 +130,34 @@ export class OpenAIProvider implements AiProvider {
     });
     const latencyMs = Math.max(0, now() - started);
     if (result.status < 200 || result.status >= 300) {
-      this.config.logger?.warn('openai request failed', { status: result.status, purpose: req.metadata.purpose });
+      this.config.logger?.warn('openai request failed', {
+        status: result.status,
+        purpose: req.metadata.purpose,
+      });
       throw httpError(this.name, result, now());
     }
     const parsed = responseSchema.safeParse(result.json);
     if (!parsed.success) {
-      throw new AiProviderError(this.name, 'parse', 'OpenAI yanıtı çözümlenemedi.', { status: result.status });
+      throw new AiProviderError(this.name, 'parse', 'OpenAI yanıtı çözümlenemedi.', {
+        status: result.status,
+      });
     }
     const choice = parsed.data.choices[0];
-    if (!choice) throw new AiProviderError(this.name, 'empty', 'Model boş yanıt döndürdü.', { status: result.status });
+    if (!choice)
+      throw new AiProviderError(this.name, 'empty', 'Model boş yanıt döndürdü.', {
+        status: result.status,
+      });
     const stopReason = mapFinishReason(choice.finish_reason);
     if (stopReason === 'refusal' || (choice.message.refusal && !choice.message.content)) {
-      throw new AiProviderError(this.name, 'refusal', 'Model bu isteği reddetti.', { status: result.status });
+      throw new AiProviderError(this.name, 'refusal', 'Model bu isteği reddetti.', {
+        status: result.status,
+      });
     }
     const text = (choice.message.content ?? '').trim();
-    if (!text) throw new AiProviderError(this.name, 'empty', 'Model boş yanıt döndürdü.', { status: result.status });
+    if (!text)
+      throw new AiProviderError(this.name, 'empty', 'Model boş yanıt döndürdü.', {
+        status: result.status,
+      });
     const json = req.jsonSchema ? extractJson(text) : undefined;
     const usage = parsed.data.usage;
     const cached = usage?.prompt_tokens_details?.cached_tokens;

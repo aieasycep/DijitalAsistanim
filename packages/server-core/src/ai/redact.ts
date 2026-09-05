@@ -116,7 +116,9 @@ export function redactForPrompt(text: string, opts: RedactOptions = {}): string 
   if (!opts.keepQuotedHistory) out = stripQuotedHistory(out);
   out = stripDisclaimers(out);
   if (!opts.keepSignature) out = stripSignature(out);
-  out = shortenUrls(out).replace(/\n{3,}/g, '\n\n').trim();
+  out = shortenUrls(out)
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   if (out.length <= limit) return out;
   const marker = opts.locale === 'en' ? '[… shortened]' : '[… kısaltıldı]';
   const room = Math.max(0, limit - marker.length - 1);

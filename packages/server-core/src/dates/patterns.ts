@@ -89,7 +89,12 @@ function base(start: number, end: number, partial: Partial<Candidate>): Candidat
   };
 }
 
-function scan(lower: string, re: RegExp, out: Candidate[], build: (m: RegExpExecArray, g: Groups) => Candidate | null): void {
+function scan(
+  lower: string,
+  re: RegExp,
+  out: Candidate[],
+  build: (m: RegExpExecArray, g: Groups) => Candidate | null,
+): void {
   re.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(lower)) !== null) {
@@ -102,7 +107,11 @@ function scan(lower: string, re: RegExp, out: Candidate[], build: (m: RegExpExec
   }
 }
 
-function parseClock(hhRaw: string | undefined, mmRaw: string | undefined, ap: string | undefined): ClockTime | null {
+function parseClock(
+  hhRaw: string | undefined,
+  mmRaw: string | undefined,
+  ap: string | undefined,
+): ClockTime | null {
   if (hhRaw === undefined) return null;
   let hh = Number(hhRaw);
   const mm = mmRaw === undefined ? 0 : Number(mmRaw);
@@ -119,7 +128,12 @@ function parseClock(hhRaw: string | undefined, mmRaw: string | undefined, ap: st
 }
 
 /** A month/day without a year: this year, unless it is more than 60 days in the past. */
-function resolveMonthDay(day: number, month: number, year: number | null, ctx: ResolveContext): LocalDate | null {
+function resolveMonthDay(
+  day: number,
+  month: number,
+  year: number | null,
+  ctx: ResolveContext,
+): LocalDate | null {
   if (year !== null) return isValidDate(year, month, day) ? { y: year, m: month, d: day } : null;
   const y = ctx.today.y;
   if (!isValidDate(y, month, day)) return null;
@@ -138,13 +152,34 @@ const RE_ISO = new RegExp(
   `${B}(?<y>\\d{4})-(?<m>\\d{2})-(?<d>\\d{2})(?:[t ](?<hh>\\d{2}):(?<mm>\\d{2})(?::\\d{2}(?:\\.\\d+)?)?(?<z>z|[+-]\\d{2}:?\\d{2})?)?${E}`,
   'gu',
 );
-const RE_NUMERIC = new RegExp(`${B}(?<a>\\d{1,2})(?<sep>[./])(?<b>\\d{1,2})\\k<sep>(?<y>\\d{4})${E}`, 'gu');
-const RE_DAY_MONTH_TR = new RegExp(`${B}(?<d>\\d{1,2})\\s+(?<mon>${MONTH_TR_FULL_ALT})\\.?${SUF}(?:\\s+(?<y>\\d{4})${SUF})?${E}`, 'gu');
-const RE_DAY_MONTH_TR_ABBR = new RegExp(`${B}(?<d>\\d{1,2})\\s+(?<mon>${MONTH_TR_ABBR_ALT})(?:\\.|(?=\\s+\\d))(?:\\s+(?<y>\\d{4}))?${E}`, 'gu');
-const RE_MONTH_GENITIVE_TR = new RegExp(`${B}(?<mon>${MONTH_TR_FULL_ALT})\\s+${flexI('ayının')}\\s+(?<d>\\d{1,2})${SUF}${E}`, 'gu');
-const RE_THIS_MONTH_DAY_TR = new RegExp(`${B}(?:(?<mod>bu|gelecek|önümüzdeki)\\s+)?${flexI('ayın')}\\s+(?<d>\\d{1,2})${SUF}${E}`, 'gu');
-const RE_MONTH_DAY_EN = new RegExp(`${B}(?<mon>${MONTH_EN_ALT})\\.?\\s+(?<d>\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(?<y>\\d{4}))?${E}`, 'gu');
-const RE_DAY_MONTH_EN = new RegExp(`${B}(?<d>\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?(?<mon>${MONTH_EN_ALT})\\.?(?:,?\\s+(?<y>\\d{4}))?${E}`, 'gu');
+const RE_NUMERIC = new RegExp(
+  `${B}(?<a>\\d{1,2})(?<sep>[./])(?<b>\\d{1,2})\\k<sep>(?<y>\\d{4})${E}`,
+  'gu',
+);
+const RE_DAY_MONTH_TR = new RegExp(
+  `${B}(?<d>\\d{1,2})\\s+(?<mon>${MONTH_TR_FULL_ALT})\\.?${SUF}(?:\\s+(?<y>\\d{4})${SUF})?${E}`,
+  'gu',
+);
+const RE_DAY_MONTH_TR_ABBR = new RegExp(
+  `${B}(?<d>\\d{1,2})\\s+(?<mon>${MONTH_TR_ABBR_ALT})(?:\\.|(?=\\s+\\d))(?:\\s+(?<y>\\d{4}))?${E}`,
+  'gu',
+);
+const RE_MONTH_GENITIVE_TR = new RegExp(
+  `${B}(?<mon>${MONTH_TR_FULL_ALT})\\s+${flexI('ayının')}\\s+(?<d>\\d{1,2})${SUF}${E}`,
+  'gu',
+);
+const RE_THIS_MONTH_DAY_TR = new RegExp(
+  `${B}(?:(?<mod>bu|gelecek|önümüzdeki)\\s+)?${flexI('ayın')}\\s+(?<d>\\d{1,2})${SUF}${E}`,
+  'gu',
+);
+const RE_MONTH_DAY_EN = new RegExp(
+  `${B}(?<mon>${MONTH_EN_ALT})\\.?\\s+(?<d>\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(?<y>\\d{4}))?${E}`,
+  'gu',
+);
+const RE_DAY_MONTH_EN = new RegExp(
+  `${B}(?<d>\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?(?<mon>${MONTH_EN_ALT})\\.?(?:,?\\s+(?<y>\\d{4}))?${E}`,
+  'gu',
+);
 
 function absoluteDates(lower: string, ctx: ResolveContext, out: Candidate[]): void {
   scan(lower, RE_ISO, out, (m, g) => {
@@ -186,7 +221,12 @@ function absoluteDates(lower: string, ctx: ResolveContext, out: Candidate[]): vo
       month = a;
     }
     if (!isValidDate(y, month, day)) return null;
-    return base(m.index, m.index + m[0].length, { date: { y, m: month, d: day }, hasExplicitDate: true, confidence: 0.92, priority: 6 });
+    return base(m.index, m.index + m[0].length, {
+      date: { y, m: month, d: day },
+      hasExplicitDate: true,
+      confidence: 0.92,
+      priority: 6,
+    });
   });
 
   const dayMonth = (m: RegExpExecArray, g: Groups, confidence: number): Candidate | null => {
@@ -194,7 +234,12 @@ function absoluteDates(lower: string, ctx: ResolveContext, out: Candidate[]): vo
     if (month === null) return null;
     const date = resolveMonthDay(Number(g.d), month, g.y ? Number(g.y) : null, ctx);
     if (!date) return null;
-    return base(m.index, m.index + m[0].length, { date, hasExplicitDate: true, confidence: g.y ? 0.95 : confidence, priority: 5 });
+    return base(m.index, m.index + m[0].length, {
+      date,
+      hasExplicitDate: true,
+      confidence: g.y ? 0.95 : confidence,
+      priority: 5,
+    });
   };
   scan(lower, RE_DAY_MONTH_TR, out, (m, g) => dayMonth(m, g, 0.88));
   scan(lower, RE_DAY_MONTH_TR_ABBR, out, (m, g) => dayMonth(m, g, 0.8));
@@ -221,7 +266,10 @@ function absoluteDates(lower: string, ctx: ResolveContext, out: Candidate[]): vo
 // ---------------------------------------------------------------------------
 
 const RE_RELATIVE_TR = new RegExp(`${B}(?<word>bugün|yarın|öbür gün|dün)${SUF}${E}`, 'gu');
-const RE_RELATIVE_EN = new RegExp(`${B}(?<word>today|tomorrow|tonight|(?:the\\s+)?day after tomorrow|yesterday)${E}`, 'gu');
+const RE_RELATIVE_EN = new RegExp(
+  `${B}(?<word>today|tomorrow|tonight|(?:the\\s+)?day after tomorrow|yesterday)${E}`,
+  'gu',
+);
 const RE_TOD = new RegExp(
   `${B}(?:(?<pre>bu|yarın|bugün|dün|öbür gün|this|tomorrow|today)\\s+)?(?<tod>${TIME_OF_DAY_ALT})${SUF}(?:\\s+(?:saat\\s+)?(?<hh>\\d{1,2})(?:[:.](?<mm>\\d{2}))?${SUF})?${E}`,
   'gu',
@@ -282,7 +330,7 @@ function relativeDays(lower: string, ctx: ResolveContext, out: Candidate[]): voi
   scan(lower, RE_TOD, out, (m, g) => {
     const tod = timeOfDay(g.tod ?? '');
     if (!tod) return null;
-    const offset = g.pre ? relativeWord(g.pre) ?? 0 : 0;
+    const offset = g.pre ? (relativeWord(g.pre) ?? 0) : 0;
     let time: ClockTime = { hh: tod.hh, mm: tod.mm };
     let defaultTime = true;
     if (g.hh !== undefined) {
@@ -303,11 +351,18 @@ function relativeDays(lower: string, ctx: ResolveContext, out: Candidate[]): voi
   });
 }
 
-function weekdayCandidate(m: RegExpExecArray, mod: string | undefined, name: string | undefined, ctx: ResolveContext): Candidate | null {
+function weekdayCandidate(
+  m: RegExpExecArray,
+  mod: string | undefined,
+  name: string | undefined,
+  ctx: ResolveContext,
+): Candidate | null {
   const target = weekdayIndex(name ?? '');
   if (target === null) return null;
   const modifier = (mod ?? '').replace(/ı/g, 'i');
-  const nextWeek = ['gelecek hafta', 'önümüzdeki hafta', 'next week', 'haftaya', 'next'].includes(modifier);
+  const nextWeek = ['gelecek hafta', 'önümüzdeki hafta', 'next week', 'haftaya', 'next'].includes(
+    modifier,
+  );
   const skipToday = ['önümüzdeki', 'gelecek', 'coming'].includes(modifier);
   const date = nextWeekday(ctx.today, target, { nextWeek, skipToday });
   return base(m.index, m.index + m[0].length, {
@@ -336,10 +391,22 @@ function periods(lower: string, ctx: ResolveContext, out: Candidate[]): void {
       date = w <= 5 ? addDays(today, 5 - w) : addDays(today, 7 - w);
     } else if (['haftaya', 'gelecek hafta', 'önümüzdeki hafta', 'next week'].includes(word)) {
       date = addDays(today, 7);
-    } else if (['hafta sonuna', 'hafta sonu', 'haftasonu', 'this weekend', 'weekend'].includes(word)) {
+    } else if (
+      ['hafta sonuna', 'hafta sonu', 'haftasonu', 'this weekend', 'weekend'].includes(word)
+    ) {
       date = w >= 6 ? today : addDays(today, 6 - w);
       confidence = 0.65;
-    } else if (['bu ay sonuna', 'ayin sonuna', 'ay sonuna', 'ay sonu', 'end of the month', 'end of month', 'eom'].includes(word)) {
+    } else if (
+      [
+        'bu ay sonuna',
+        'ayin sonuna',
+        'ay sonuna',
+        'ay sonu',
+        'end of the month',
+        'end of month',
+        'eom',
+      ].includes(word)
+    ) {
       date = { y: today.y, m: today.m, d: daysInMonth(today.y, today.m) };
       confidence = 0.7;
     } else if (['yil sonuna', 'yil sonu', 'end of the year', 'end of year'].includes(word)) {
@@ -351,7 +418,13 @@ function periods(lower: string, ctx: ResolveContext, out: Candidate[]): void {
     } else {
       return null;
     }
-    return base(m.index, m.index + m[0].length, { date, hasExplicitDate: true, relative: true, confidence, priority: 3 });
+    return base(m.index, m.index + m[0].length, {
+      date,
+      hasExplicitDate: true,
+      relative: true,
+      confidence,
+      priority: 3,
+    });
   });
 }
 
@@ -377,18 +450,37 @@ function durations(lower: string, ctx: ResolveContext, out: Candidate[]): void {
     const n = parseNumberWord(g.n ?? '');
     if (n === null || n <= 0) return null;
     const unit = (g.unit ?? '').replace(/ı/g, 'i');
-    const span: Partial<Candidate> = { hasExplicitDate: true, relative: true, confidence: 0.72, priority: 4 };
+    const span: Partial<Candidate> = {
+      hasExplicitDate: true,
+      relative: true,
+      confidence: 0.72,
+      priority: 4,
+    };
     if (/^(saat|hours?)$/.test(unit)) {
-      return base(m.index, m.index + m[0].length, { ...span, exactInstant: new Date(ctx.nowMs + n * HOUR).toISOString(), time: { hh: 0, mm: 0 } });
+      return base(m.index, m.index + m[0].length, {
+        ...span,
+        exactInstant: new Date(ctx.nowMs + n * HOUR).toISOString(),
+        time: { hh: 0, mm: 0 },
+      });
     }
     if (/^(dakika|minutes?)$/.test(unit)) {
-      return base(m.index, m.index + m[0].length, { ...span, exactInstant: new Date(ctx.nowMs + n * MINUTE).toISOString(), time: { hh: 0, mm: 0 } });
+      return base(m.index, m.index + m[0].length, {
+        ...span,
+        exactInstant: new Date(ctx.nowMs + n * MINUTE).toISOString(),
+        time: { hh: 0, mm: 0 },
+      });
     }
     if (/^(iş günü|işgünü|iş gününe|business days?|working days?)$/.test(unit)) {
       return base(m.index, m.index + m[0].length, { ...span, date: addBusinessDays(ctx.today, n) });
     }
-    if (/^(hafta|weeks?)$/.test(unit)) return base(m.index, m.index + m[0].length, { ...span, date: addDays(ctx.today, n * 7) });
-    if (/^(ay|months?)$/.test(unit)) return base(m.index, m.index + m[0].length, { ...span, date: addMonths(ctx.today, n), confidence: 0.6 });
+    if (/^(hafta|weeks?)$/.test(unit))
+      return base(m.index, m.index + m[0].length, { ...span, date: addDays(ctx.today, n * 7) });
+    if (/^(ay|months?)$/.test(unit))
+      return base(m.index, m.index + m[0].length, {
+        ...span,
+        date: addMonths(ctx.today, n),
+        confidence: 0.6,
+      });
     return base(m.index, m.index + m[0].length, { ...span, date: addDays(ctx.today, n) });
   };
   scan(lower, RE_DURATION_TR, out, build);
@@ -411,15 +503,34 @@ function durations(lower: string, ctx: ResolveContext, out: Candidate[]): void {
 // Clock times
 // ---------------------------------------------------------------------------
 
-const RE_TIME_COLON = new RegExp(`${B}(?:saat\\s+)?(?<hh>\\d{1,2}):(?<mm>\\d{2})(?:\\s*(?<ap>am|pm|a\\.m\\.|p\\.m\\.))?${SUF}${E}`, 'gu');
-const RE_TIME_SAAT = new RegExp(`${B}saat\\s+(?<hh>\\d{1,2})(?:[.:](?<mm>\\d{2}))?${SUF}${E}`, 'gu');
-const RE_TIME_DOT_SUFFIX = new RegExp(`${B}(?<hh>\\d{1,2})\\.(?<mm>\\d{2})'(?:de|da|te|ta|ye|ya|e|a)${E}`, 'gu');
-const RE_TIME_AMPM = new RegExp(`${B}(?<hh>\\d{1,2})(?::(?<mm>\\d{2}))?\\s*(?<ap>am|pm|a\\.m\\.|p\\.m\\.)${E}`, 'gu');
-const RE_TIME_AT = new RegExp(`${B}at\\s+(?<hh>\\d{1,2})(?::(?<mm>\\d{2}))?(?:\\s*(?<ap>am|pm|a\\.m\\.|p\\.m\\.))?${E}`, 'gu');
+const RE_TIME_COLON = new RegExp(
+  `${B}(?:saat\\s+)?(?<hh>\\d{1,2}):(?<mm>\\d{2})(?:\\s*(?<ap>am|pm|a\\.m\\.|p\\.m\\.))?${SUF}${E}`,
+  'gu',
+);
+const RE_TIME_SAAT = new RegExp(
+  `${B}saat\\s+(?<hh>\\d{1,2})(?:[.:](?<mm>\\d{2}))?${SUF}${E}`,
+  'gu',
+);
+const RE_TIME_DOT_SUFFIX = new RegExp(
+  `${B}(?<hh>\\d{1,2})\\.(?<mm>\\d{2})'(?:de|da|te|ta|ye|ya|e|a)${E}`,
+  'gu',
+);
+const RE_TIME_AMPM = new RegExp(
+  `${B}(?<hh>\\d{1,2})(?::(?<mm>\\d{2}))?\\s*(?<ap>am|pm|a\\.m\\.|p\\.m\\.)${E}`,
+  'gu',
+);
+const RE_TIME_AT = new RegExp(
+  `${B}at\\s+(?<hh>\\d{1,2})(?::(?<mm>\\d{2}))?(?:\\s*(?<ap>am|pm|a\\.m\\.|p\\.m\\.))?${E}`,
+  'gu',
+);
 const RE_HOUR_CTX = new RegExp(`${B}(?<hh>\\d{1,2})'?(?:de|da|te|ta)${E}`, 'gu');
 
 function clockTimes(lower: string, out: Candidate[]): void {
-  const timeCandidate = (m: RegExpExecArray, g: Groups, opts: { confidence: number; needsContext?: boolean; assumeAfternoon?: boolean }): Candidate | null => {
+  const timeCandidate = (
+    m: RegExpExecArray,
+    g: Groups,
+    opts: { confidence: number; needsContext?: boolean; assumeAfternoon?: boolean },
+  ): Candidate | null => {
     const parsed = parseClock(g.hh, g.mm, g.ap);
     if (!parsed) return null;
     let time = parsed;
@@ -428,14 +539,29 @@ function clockTimes(lower: string, out: Candidate[]): void {
       time = { hh: parsed.hh + 12, mm: 0 };
       confidence -= 0.1;
     }
-    return base(m.index, m.index + m[0].length, { time, confidence, needsContext: opts.needsContext ?? false, priority: 2 });
+    return base(m.index, m.index + m[0].length, {
+      time,
+      confidence,
+      needsContext: opts.needsContext ?? false,
+      priority: 2,
+    });
   };
   scan(lower, RE_TIME_COLON, out, (m, g) => timeCandidate(m, g, { confidence: 0.7 }));
-  scan(lower, RE_TIME_SAAT, out, (m, g) => timeCandidate(m, g, { confidence: 0.68, assumeAfternoon: true }));
+  scan(lower, RE_TIME_SAAT, out, (m, g) =>
+    timeCandidate(m, g, { confidence: 0.68, assumeAfternoon: true }),
+  );
   scan(lower, RE_TIME_DOT_SUFFIX, out, (m, g) => timeCandidate(m, g, { confidence: 0.66 }));
   scan(lower, RE_TIME_AMPM, out, (m, g) => timeCandidate(m, g, { confidence: 0.7 }));
-  scan(lower, RE_TIME_AT, out, (m, g) => timeCandidate(m, g, { confidence: 0.6, needsContext: g.mm === undefined && g.ap === undefined, assumeAfternoon: true }));
-  scan(lower, RE_HOUR_CTX, out, (m, g) => timeCandidate(m, g, { confidence: 0.6, needsContext: true, assumeAfternoon: true }));
+  scan(lower, RE_TIME_AT, out, (m, g) =>
+    timeCandidate(m, g, {
+      confidence: 0.6,
+      needsContext: g.mm === undefined && g.ap === undefined,
+      assumeAfternoon: true,
+    }),
+  );
+  scan(lower, RE_HOUR_CTX, out, (m, g) =>
+    timeCandidate(m, g, { confidence: 0.6, needsContext: true, assumeAfternoon: true }),
+  );
 }
 
 export function collectCandidates(lower: string, ctx: ResolveContext): Candidate[] {

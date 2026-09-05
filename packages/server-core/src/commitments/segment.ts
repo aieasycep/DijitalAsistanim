@@ -2,16 +2,81 @@
 import { isNameToken, stripHonorifics } from './shared';
 
 const CLOSINGS = [
-  'saygılarımla', 'saygılarımızla', 'saygılar', 'saygılarımı sunarım', 'sevgiler', 'sevgilerimle', 'sevgilerimizle', 'iyi çalışmalar', 'iyi günler', 'iyi akşamlar',
-  'iyi haftalar', 'iyi hafta sonları', 'iyi tatiller', 'teşekkürler', 'teşekkür ederim', 'teşekkür ederiz', 'çok teşekkürler', 'çok teşekkür ederim', 'kolay gelsin',
-  'hoşça kalın', 'hoşça kal', 'görüşmek üzere', 'görüşürüz', 'esenlikle', 'esenlikler', 'selamlar', 'best regards', 'kind regards', 'warm regards', 'warmest regards',
-  'regards', 'best', 'all the best', 'best wishes', 'thanks', 'thank you', 'many thanks', 'thanks again', 'cheers', 'sincerely', 'yours sincerely', 'yours truly',
-  'yours', 'take care', 'talk soon', 'speak soon', 'thanks in advance', 'thx', 'ty',
+  'saygılarımla',
+  'saygılarımızla',
+  'saygılar',
+  'saygılarımı sunarım',
+  'sevgiler',
+  'sevgilerimle',
+  'sevgilerimizle',
+  'iyi çalışmalar',
+  'iyi günler',
+  'iyi akşamlar',
+  'iyi haftalar',
+  'iyi hafta sonları',
+  'iyi tatiller',
+  'teşekkürler',
+  'teşekkür ederim',
+  'teşekkür ederiz',
+  'çok teşekkürler',
+  'çok teşekkür ederim',
+  'kolay gelsin',
+  'hoşça kalın',
+  'hoşça kal',
+  'görüşmek üzere',
+  'görüşürüz',
+  'esenlikle',
+  'esenlikler',
+  'selamlar',
+  'best regards',
+  'kind regards',
+  'warm regards',
+  'warmest regards',
+  'regards',
+  'best',
+  'all the best',
+  'best wishes',
+  'thanks',
+  'thank you',
+  'many thanks',
+  'thanks again',
+  'cheers',
+  'sincerely',
+  'yours sincerely',
+  'yours truly',
+  'yours',
+  'take care',
+  'talk soon',
+  'speak soon',
+  'thanks in advance',
+  'thx',
+  'ty',
 ];
-const RE_MOBILE = /^(?:sent from my|sent via|iphone'?umdan gönderildi|android'?imden gönderildi|ipad'?imden gönderildi|outlook for|get outlook for)/iu;
+const RE_MOBILE =
+  /^(?:sent from my|sent via|iphone'?umdan gönderildi|android'?imden gönderildi|ipad'?imden gönderildi|outlook for|get outlook for)/iu;
 const RE_SEPARATOR = /^(?:--+|—+|__+|\*\*+)\s*$/u;
 const GREETINGS = new Set(
-  ['merhaba', 'merhabalar', 'selam', 'selamlar', 'sayın', 'sevgili', 'değerli', 'kıymetli', 'sn', 'sn.', 'hi', 'hello', 'hey', 'dear', 'good', 'morning', 'afternoon', 'evening', 'hola'].map((g) => g.replace(/ı/g, 'i')),
+  [
+    'merhaba',
+    'merhabalar',
+    'selam',
+    'selamlar',
+    'sayın',
+    'sevgili',
+    'değerli',
+    'kıymetli',
+    'sn',
+    'sn.',
+    'hi',
+    'hello',
+    'hey',
+    'dear',
+    'good',
+    'morning',
+    'afternoon',
+    'evening',
+    'hola',
+  ].map((g) => g.replace(/ı/g, 'i')),
 );
 const RE_TRAILING_PUNCT = /[,;:!.]+$/u;
 
@@ -29,9 +94,14 @@ function closingMatch(line: string): { closing: string; rest: string } | null {
   const l = lower(line.trim().replace(/[’']/g, "'"));
   for (const c of CLOSINGS) {
     const key = lower(c);
-    if (l === key || l === `${key},` || l === `${key}.` || l === `${key}!`) return { closing: c, rest: '' };
+    if (l === key || l === `${key},` || l === `${key}.` || l === `${key}!`)
+      return { closing: c, rest: '' };
     if (l.startsWith(`${key},`) || l.startsWith(`${key} -`) || l.startsWith(`${key} –`)) {
-      const rest = line.trim().slice(c.length).replace(/^[,\s\-–]+/u, '').trim();
+      const rest = line
+        .trim()
+        .slice(c.length)
+        .replace(/^[,\s\-–]+/u, '')
+        .trim();
       if (rest.length <= 40) return { closing: c, rest };
     }
   }
@@ -62,12 +132,14 @@ export function stripSignature(text: string): StrippedMessage {
     const c = closingMatch(t);
     if (!c) continue;
     cut = i;
-    if (c.rest && looksLikeName(c.rest)) signatureName = stripHonorifics(c.rest.replace(RE_TRAILING_PUNCT, ''));
+    if (c.rest && looksLikeName(c.rest))
+      signatureName = stripHonorifics(c.rest.replace(RE_TRAILING_PUNCT, ''));
     if (!signatureName) {
       for (let j = i + 1; j < Math.min(lines.length, i + 4); j++) {
         const next = (lines[j] ?? '').trim();
         if (!next) continue;
-        if (looksLikeName(next)) signatureName = stripHonorifics(next.replace(RE_TRAILING_PUNCT, ''));
+        if (looksLikeName(next))
+          signatureName = stripHonorifics(next.replace(RE_TRAILING_PUNCT, ''));
         break;
       }
     }
@@ -91,13 +163,18 @@ export function stripSignature(text: string): StrippedMessage {
 
 /** Name addressed at the very start: "Merhaba Mehmet Bey," / "Yunus merhaba," / "Sayın Selin Kaya," / "Hi Selin,". */
 export function detectVocative(text: string): string | null {
-  const firstLine = text.split('\n').map((l) => l.trim()).find((l) => l.length > 0) ?? '';
+  const firstLine =
+    text
+      .split('\n')
+      .map((l) => l.trim())
+      .find((l) => l.length > 0) ?? '';
   if (!firstLine || firstLine.length > 80) return null;
   const head = firstLine.split(/[,;:!.]/u)[0] ?? '';
   const tokens = head.split(/\s+/u).filter(Boolean);
   if (tokens.length === 0 || tokens.length > 6) return null;
   const isGreeting = (t: string): boolean => GREETINGS.has(lower(t).replace(/[,.!]/g, ''));
-  const honor = (t: string): boolean => /^(?:bey|hanım|abi|abla|hocam|hoca|mr\.?|mrs\.?|ms\.?|dr\.?)$/iu.test(t);
+  const honor = (t: string): boolean =>
+    /^(?:bey|hanım|abi|abla|hocam|hoca|mr\.?|mrs\.?|ms\.?|dr\.?)$/iu.test(t);
   let nameTokens: string[] = [];
   if (isGreeting(tokens[0] ?? '')) {
     let i = 1;
@@ -123,8 +200,10 @@ export interface Span {
   analysisText?: string;
 }
 
-const RE_EN_SUBJECT_AUX = /(?<![\p{L}])(?<subj>(?:i|we)\s*(?:'ll|will|shall|'m going to|am going to|'re going to|are going to|can|could|promise to|plan to))\s+/iu;
-const RE_EN_BARE_VERB_START = /^(?!(?:i|we|you|they|he|she|it|please|kindly|if|then|also|the|a|an|my|our|your)\b)[a-z]+(?:\s|$)/iu;
+const RE_EN_SUBJECT_AUX =
+  /(?<![\p{L}])(?<subj>(?:i|we)\s*(?:'ll|will|shall|'m going to|am going to|'re going to|are going to|can|could|promise to|plan to))\s+/iu;
+const RE_EN_BARE_VERB_START =
+  /^(?!(?:i|we|you|they|he|she|it|please|kindly|if|then|also|the|a|an|my|our|your)\b)[a-z]+(?:\s|$)/iu;
 
 /** "We'll review the draft and let you know" → the right clause inherits "we'll". */
 function inheritSubject(left: string, right: string): string | null {
@@ -133,7 +212,36 @@ function inheritSubject(left: string, right: string): string | null {
   return `${m.groups.subj} ${right}`;
 }
 
-const ABBREVIATIONS = new Set(['vb', 'vs', 'dr', 'sn', 'prof', 'av', 'bkz', 'örn', 'mr', 'mrs', 'ms', 'no', 'st', 'e.g', 'i.e', 'etc', 'inc', 'ltd', 'a.ş', 'ltd.şti', 'tel', 'yak', 'yakl', 'md', 'sok', 'cad', 'mah', 'apt']);
+const ABBREVIATIONS = new Set([
+  'vb',
+  'vs',
+  'dr',
+  'sn',
+  'prof',
+  'av',
+  'bkz',
+  'örn',
+  'mr',
+  'mrs',
+  'ms',
+  'no',
+  'st',
+  'e.g',
+  'i.e',
+  'etc',
+  'inc',
+  'ltd',
+  'a.ş',
+  'ltd.şti',
+  'tel',
+  'yak',
+  'yakl',
+  'md',
+  'sok',
+  'cad',
+  'mah',
+  'apt',
+]);
 
 /** Sentences with their offsets: boundaries at ./!/? followed by whitespace (not inside numbers or abbreviations) and at line breaks. */
 export function splitSentences(text: string): Span[] {
@@ -183,7 +291,11 @@ export function splitClauses(sentence: Span, hasVerb: (s: string) => boolean): S
     const leading = raw.length - raw.trimStart().length;
     const t = raw.trim();
     if (!t) return;
-    const span: Span = { text: t, start: sentence.start + cursor + leading, end: sentence.start + cursor + leading + t.length };
+    const span: Span = {
+      text: t,
+      start: sentence.start + cursor + leading,
+      end: sentence.start + cursor + leading + t.length,
+    };
     if (analysisText) span.analysisText = analysisText;
     parts.push(span);
   };
@@ -192,11 +304,16 @@ export function splitClauses(sentence: Span, hasVerb: (s: string) => boolean): S
     const right = text.slice(m.index + m[0].length);
     const leftAnalysis: string = pendingAnalysis ?? left;
     const rightSeparated: string = right.split(separators)[0] ?? right;
-    const inherited: string | null = /\s(?:and|then)\s/iu.test(m[0]) ? inheritSubject(leftAnalysis, rightSeparated) : null;
-    if (!hasVerb(leftAnalysis) || !(hasVerb(right) || (inherited !== null && hasVerb(inherited)))) continue;
+    const inherited: string | null = /\s(?:and|then)\s/iu.test(m[0])
+      ? inheritSubject(leftAnalysis, rightSeparated)
+      : null;
+    if (!hasVerb(leftAnalysis) || !(hasVerb(right) || (inherited !== null && hasVerb(inherited))))
+      continue;
     flush(m.index, pendingAnalysis);
     cursor = m.index + m[0].length;
-    pendingAnalysis = inherited ? `${inherited.slice(0, inherited.length - rightSeparated.length)}${text.slice(cursor)}` : null;
+    pendingAnalysis = inherited
+      ? `${inherited.slice(0, inherited.length - rightSeparated.length)}${text.slice(cursor)}`
+      : null;
   }
   flush(text.length, pendingAnalysis);
   return parts.length > 0 ? parts : [sentence];

@@ -63,7 +63,9 @@ export interface EmbeddingProviderConfig {
 }
 
 const embeddingsResponseSchema = z.object({
-  data: z.array(z.object({ index: z.number().int().nonnegative().optional(), embedding: z.array(z.number()) })),
+  data: z.array(
+    z.object({ index: z.number().int().nonnegative().optional(), embedding: z.array(z.number()) }),
+  ),
   model: z.string().optional(),
 });
 
@@ -75,9 +77,21 @@ function backoffMs(attempt: number): number {
   return Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** (attempt - 1));
 }
 
-function providerError(provider: EmbeddingProviderName, status: number | null, kind: 'http' | 'network' | 'timeout' | 'parse', retryAfterSec?: number | null, cause?: unknown): AppError {
+function providerError(
+  provider: EmbeddingProviderName,
+  status: number | null,
+  kind: 'http' | 'network' | 'timeout' | 'parse',
+  retryAfterSec?: number | null,
+  cause?: unknown,
+): AppError {
   const message =
-    kind === 'timeout' ? 'Gömme sağlayıcısı zaman aşımına uğradı.' : kind === 'network' ? 'Gömme sağlayıcısına ulaşılamadı.' : kind === 'parse' ? 'Gömme sağlayıcısının yanıtı çözümlenemedi.' : `Gömme sağlayıcısı hata döndürdü (HTTP ${status}).`;
+    kind === 'timeout'
+      ? 'Gömme sağlayıcısı zaman aşımına uğradı.'
+      : kind === 'network'
+        ? 'Gömme sağlayıcısına ulaşılamadı.'
+        : kind === 'parse'
+          ? 'Gömme sağlayıcısının yanıtı çözümlenemedi.'
+          : `Gömme sağlayıcısı hata döndürdü (HTTP ${status}).`;
   return new AppError('ai_unavailable', message, {
     details: { provider, kind, ...(status !== null ? { status } : {}) },
     ...(retryAfterSec ? { retryAfterSec } : {}),
@@ -117,8 +131,18 @@ async function postJsonWithRetry(
       });
     } catch (cause) {
       clearTimeout(timer);
-      lastError = providerError(provider, null, controller.signal.aborted ? 'timeout' : 'network', null, cause);
-      config.logger?.warn('embedding request failed', { provider, attempt, kind: controller.signal.aborted ? 'timeout' : 'network' });
+      lastError = providerError(
+        provider,
+        null,
+        controller.signal.aborted ? 'timeout' : 'network',
+        null,
+        cause,
+      );
+      config.logger?.warn('embedding request failed', {
+        provider,
+        attempt,
+        kind: controller.signal.aborted ? 'timeout' : 'network',
+      });
       if (attempt < maxAttempts) await sleep(backoffMs(attempt));
       continue;
     }
@@ -137,17 +161,30 @@ async function postJsonWithRetry(
     }
     const retryAfterSec = parseRetryAfterSec(response.headers.get('retry-after'));
     lastError = providerError(provider, response.status, 'http', retryAfterSec);
-    config.logger?.warn('embedding request rejected', { provider, attempt, status: response.status });
+    config.logger?.warn('embedding request rejected', {
+      provider,
+      attempt,
+      status: response.status,
+    });
     if (!isRetryableStatus(response.status) || attempt >= maxAttempts) break;
-    await sleep(retryAfterSec ? Math.min(BACKOFF_MAX_MS, retryAfterSec * 1000) : backoffMs(attempt));
+    await sleep(
+      retryAfterSec ? Math.min(BACKOFF_MAX_MS, retryAfterSec * 1000) : backoffMs(attempt),
+    );
   }
   throw lastError ?? providerError(provider, null, 'network');
 }
 
-function parseVectors(provider: EmbeddingProviderName, json: unknown, expectedCount: number, dimensions: number): number[][] {
+function parseVectors(
+  provider: EmbeddingProviderName,
+  json: unknown,
+  expectedCount: number,
+  dimensions: number,
+): number[][] {
   const parsed = embeddingsResponseSchema.safeParse(json);
   if (!parsed.success) throw providerError(provider, null, 'parse');
-  const rows = parsed.data.data.map((row, position) => ({ index: row.index ?? position, embedding: row.embedding })).sort((a, b) => a.index - b.index);
+  const rows = parsed.data.data
+    .map((row, position) => ({ index: row.index ?? position, embedding: row.embedding }))
+    .sort((a, b) => a.index - b.index);
   if (rows.length !== expectedCount) {
     throw new AppError('ai_unavailable', 'Gömme sağlayıcısı eksik sonuç döndürdü.', {
       details: { provider, expected: expectedCount, received: rows.length },
@@ -172,10 +209,14 @@ function assertTexts(texts: string[]): void {
 
 function assertConfig(provider: EmbeddingProviderName, config: EmbeddingProviderConfig): void {
   if (!Number.isInteger(config.dimensions) || config.dimensions <= 0) {
-    throw new AppError('internal', 'Gömme boyutu pozitif bir tam sayı olmalı.', { details: { provider, dimensions: config.dimensions } });
+    throw new AppError('internal', 'Gömme boyutu pozitif bir tam sayı olmalı.', {
+      details: { provider, dimensions: config.dimensions },
+    });
   }
   if (!config.apiKey) {
-    throw new AppError('internal', 'Gömme sağlayıcısı için API anahtarı eksik.', { details: { provider } });
+    throw new AppError('internal', 'Gömme sağlayıcısı için API anahtarı eksik.', {
+      details: { provider },
+    });
   }
 }
 
@@ -202,7 +243,11 @@ export class OpenAIEmbeddings implements EmbeddingProvider {
   }
 
   buildBody(texts: string[]): Record<string, unknown> {
-    const body: Record<string, unknown> = { model: this.model, input: texts, encoding_format: 'float' };
+    const body: Record<string, unknown> = {
+      model: this.model,
+      input: texts,
+      encoding_format: 'float',
+    };
     if (openAiSupportsDimensions(this.model)) body.dimensions = this.dimensions;
     return body;
   }
@@ -212,7 +257,13 @@ export class OpenAIEmbeddings implements EmbeddingProvider {
     assertTexts(texts);
     const out: number[][] = [];
     for (const batch of chunk(texts, EMBEDDING_BATCH_MAX)) {
-      const json = await postJsonWithRetry(this.name, this.config, this.config.url ?? OPENAI_EMBEDDINGS_URL, { authorization: `Bearer ${this.config.apiKey}` }, this.buildBody(batch));
+      const json = await postJsonWithRetry(
+        this.name,
+        this.config,
+        this.config.url ?? OPENAI_EMBEDDINGS_URL,
+        { authorization: `Bearer ${this.config.apiKey}` },
+        this.buildBody(batch),
+      );
       out.push(...parseVectors(this.name, json, batch.length, this.dimensions));
     }
     return out;
@@ -253,7 +304,13 @@ export class VoyageEmbeddings implements EmbeddingProvider {
     assertTexts(texts);
     const out: number[][] = [];
     for (const batch of chunk(texts, EMBEDDING_BATCH_MAX)) {
-      const json = await postJsonWithRetry(this.name, this.config, this.config.url ?? VOYAGE_EMBEDDINGS_URL, { authorization: `Bearer ${this.config.apiKey}` }, this.buildBody(batch, opts));
+      const json = await postJsonWithRetry(
+        this.name,
+        this.config,
+        this.config.url ?? VOYAGE_EMBEDDINGS_URL,
+        { authorization: `Bearer ${this.config.apiKey}` },
+        this.buildBody(batch, opts),
+      );
       out.push(...parseVectors(this.name, json, batch.length, this.dimensions));
     }
     return out;
@@ -283,7 +340,10 @@ export interface EmbeddingConfig {
 export function createEmbeddingProvider(config: EmbeddingConfig): EmbeddingProvider | null {
   if (config.provider === 'none') return null;
   if (!config.apiKey) {
-    config.logger?.warn('embedding provider configured without api key; falling back to full-text search', { provider: config.provider });
+    config.logger?.warn(
+      'embedding provider configured without api key; falling back to full-text search',
+      { provider: config.provider },
+    );
     return null;
   }
   const base: EmbeddingProviderConfig = {
@@ -315,7 +375,8 @@ export type EmbedSkipReason = 'too_short' | 'promotion' | 'newsletter' | 'low_im
 
 /** Why a chunk is not embedded, or `null` when it should be. */
 export function embedSkipReason(candidate: EmbedCandidate): EmbedSkipReason | null {
-  if (!Number.isFinite(candidate.tokenCount) || candidate.tokenCount < EMBEDDING_MIN_TOKENS) return 'too_short';
+  if (!Number.isFinite(candidate.tokenCount) || candidate.tokenCount < EMBEDDING_MIN_TOKENS)
+    return 'too_short';
   if (candidate.category === 'promotion') return 'promotion';
   if (candidate.isNewsletter) return 'newsletter';
   if (candidate.importance === 'low') return 'low_importance';
@@ -328,7 +389,10 @@ export function shouldEmbed(candidate: EmbedCandidate): boolean {
 }
 
 /** Strip HTML / whitespace noise and cap the text to the provider's input limit. */
-export function prepareEmbeddingText(text: string, maxTokens: number = EMBEDDING_MAX_INPUT_TOKENS): string {
+export function prepareEmbeddingText(
+  text: string,
+  maxTokens: number = EMBEDDING_MAX_INPUT_TOKENS,
+): string {
   const clean = normalizeText(text ?? '').replace(/\s*\n\s*/g, '\n');
   if (estimateTokens(clean) <= maxTokens) return clean;
   const room = Math.max(0, maxTokens * 4);
@@ -344,7 +408,9 @@ export function prepareEmbeddingText(text: string, maxTokens: number = EMBEDDING
 
 export function cosineSimilarity(a: readonly number[], b: readonly number[]): number {
   if (a.length !== b.length) {
-    throw new AppError('validation', 'Vektör boyutları eşleşmiyor.', { details: { a: a.length, b: b.length } });
+    throw new AppError('validation', 'Vektör boyutları eşleşmiyor.', {
+      details: { a: a.length, b: b.length },
+    });
   }
   let dot = 0;
   let normA = 0;
@@ -367,7 +433,9 @@ export function toPgVectorLiteral(vector: readonly number[]): string {
   for (let i = 0; i < vector.length; i++) {
     const v = vector[i];
     if (typeof v !== 'number' || !Number.isFinite(v)) {
-      throw new AppError('validation', 'Vektör yalnızca sonlu sayılar içermeli.', { details: { index: i } });
+      throw new AppError('validation', 'Vektör yalnızca sonlu sayılar içermeli.', {
+        details: { index: i },
+      });
     }
     parts[i] = String(v);
   }
@@ -384,7 +452,8 @@ export function fromPgVectorLiteral(literal: string): number[] {
   if (!inner) return [];
   return inner.split(',').map((part, index) => {
     const n = Number(part.trim());
-    if (!Number.isFinite(n)) throw new AppError('validation', 'Geçersiz pgvector değeri.', { details: { index } });
+    if (!Number.isFinite(n))
+      throw new AppError('validation', 'Geçersiz pgvector değeri.', { details: { index } });
     return n;
   });
 }

@@ -129,7 +129,10 @@ function hasLabel(set: Set<string>, ...names: string[]): boolean {
   return names.some((n) => set.has(n));
 }
 
-export function detectSignals(email: TriageEmailInput, ctx: TriageContext = {}): { signals: TriageSignals; textLower: string; subjectLower: string } {
+export function detectSignals(
+  email: TriageEmailInput,
+  ctx: TriageContext = {},
+): { signals: TriageSignals; textLower: string; subjectLower: string } {
   const labels = labelSet(email.labels);
   const body = email.bodyText ? stripQuotedHistory(email.bodyText).slice(0, BODY_LIMIT) : '';
   const subjectLower = normalizeForSignals(email.subject);
@@ -146,11 +149,19 @@ export function detectSignals(email: TriageEmailInput, ctx: TriageContext = {}):
     precedence === 'bulk' ||
     precedence === 'list' ||
     precedence === 'junk' ||
-    /(?<![\p{L}])(?:unsubscribe|abonelikten çık|listeden çık|newsletter|bülten)(?![\p{L}])/u.test(headLower);
-  const securityStrong = RE_SECURITY_STRONG.test(headLower) || (isSecuritySender(sender) && RE_SECURITY_STRONG.test(textLower));
+    /(?<![\p{L}])(?:unsubscribe|abonelikten çık|listeden çık|newsletter|bülten)(?![\p{L}])/u.test(
+      headLower,
+    );
+  const securityStrong =
+    RE_SECURITY_STRONG.test(headLower) ||
+    (isSecuritySender(sender) && RE_SECURITY_STRONG.test(textLower));
   const securityWeak = RE_SECURITY_WEAK.test(headLower);
   const otp = RE_OTP.test(headLower) && /(?<!\d)\d{4,8}(?!\d)/u.test(textLower);
-  const ruleMatches = matchRules(ctx.rules, { senderEmail: sender, textLower: headLower, isPromotion: promotion || promoSubject });
+  const ruleMatches = matchRules(ctx.rules, {
+    senderEmail: sender,
+    textLower: headLower,
+    isPromotion: promotion || promoSubject,
+  });
   const vip = matchVip(ctx.vips, sender, email.from.name);
   const deadline = hasDeadlineVocabulary(headLower) || hasDeadlineVocabulary(textLower);
 
@@ -174,11 +185,15 @@ export function detectSignals(email: TriageEmailInput, ctx: TriageContext = {}):
     ruleLow: ruleMatches.some((m) => m.effect === 'low'),
     ruleMuted: ruleMatches.some((m) => m.effect === 'mute'),
     deadline,
-    meeting: RE_MEETING.test(headLower) || /(?:zoom\.us|meet\.google\.com|teams\.microsoft\.com)/u.test(textLower),
+    meeting:
+      RE_MEETING.test(headLower) ||
+      /(?:zoom\.us|meet\.google\.com|teams\.microsoft\.com)/u.test(textLower),
     security: securityStrong || securityWeak,
     securityStrong,
     otp,
-    finance: RE_FINANCE.test(headLower) && (RE_AMOUNT.test(textLower) || RE_FINANCE.test(subjectLower) || deadline),
+    finance:
+      RE_FINANCE.test(headLower) &&
+      (RE_AMOUNT.test(textLower) || RE_FINANCE.test(subjectLower) || deadline),
     travel: RE_TRAVEL.test(headLower),
     shipment: RE_SHIPMENT.test(headLower),
     subscription: RE_SUBSCRIPTION.test(headLower),
@@ -217,10 +232,21 @@ export function triageEmail(email: TriageEmailInput, ctx: TriageContext = {}): T
 
   // Evidence-backed deadline (used by several branches below).
   const deadlineSource = `${email.subject}\n${email.snippet}\n${email.bodyText ? stripQuotedHistory(email.bodyText).slice(0, BODY_LIMIT) : ''}`;
-  const deadlineHit = signals.deadline ? deadlineFromText({ text: deadlineSource, now: email.sentAt ?? now, timezone, locale }) : null;
-  const deadline = deadlineHit ? { iso: deadlineHit.iso, text: deadlineHit.text, evidence: deadlineHit.evidence } : null;
+  const deadlineHit = signals.deadline
+    ? deadlineFromText({ text: deadlineSource, now: email.sentAt ?? now, timezone, locale })
+    : null;
+  const deadline = deadlineHit
+    ? { iso: deadlineHit.iso, text: deadlineHit.text, evidence: deadlineHit.evidence }
+    : null;
   const deadlineReason = deadline
-    ? reason(locale, 'deadline', { phrase: formatDeadlinePhrase(deadline.iso, { now, timezone, locale, hasTime: deadlineHit?.hasTime ?? false }) })
+    ? reason(locale, 'deadline', {
+        phrase: formatDeadlinePhrase(deadline.iso, {
+          now,
+          timezone,
+          locale,
+          hasTime: deadlineHit?.hasTime ?? false,
+        }),
+      })
     : null;
 
   // --- Stage 1: hard skips ---------------------------------------------------------------
@@ -244,10 +270,20 @@ export function triageEmail(email: TriageEmailInput, ctx: TriageContext = {}): T
     const critical = RE_SECURITY_EVENT_CRITICAL.test(head);
     if (signals.otp && !critical) {
       reasons.push(reason(locale, 'otp'));
-      return base({ bucket: 'rules', preCategory: 'security', preImportance: 'low', fastPath: 'security' });
+      return base({
+        bucket: 'rules',
+        preCategory: 'security',
+        preImportance: 'low',
+        fastPath: 'security',
+      });
     }
     reasons.push(reason(locale, critical ? 'securityCritical' : 'security'));
-    return base({ bucket: 'rules', preCategory: 'security', preImportance: critical ? 'critical' : 'high', fastPath: 'security' });
+    return base({
+      bucket: 'rules',
+      preCategory: 'security',
+      preImportance: critical ? 'critical' : 'high',
+      fastPath: 'security',
+    });
   }
 
   if (signals.autoReply) {
@@ -259,7 +295,11 @@ export function triageEmail(email: TriageEmailInput, ctx: TriageContext = {}): T
   if (email.isFromUser) {
     reasons.push(reason(locale, signals.asksUser ? 'fromUserAsks' : 'fromUser'));
     if (deadlineReason) reasons.push(deadlineReason);
-    return base({ bucket: 'rules', preCategory: signals.asksUser ? 'waiting_for_other' : 'information', deadline });
+    return base({
+      bucket: 'rules',
+      preCategory: signals.asksUser ? 'waiting_for_other' : 'information',
+      deadline,
+    });
   }
 
   // --- Stage 2: explicit rules and VIP beat every heuristic ------------------------------
@@ -267,30 +307,59 @@ export function triageEmail(email: TriageEmailInput, ctx: TriageContext = {}): T
   if (importantRule) {
     reasons.push(reason(locale, 'ruleImportant', { label: importantRule.rule.label }));
     if (deadlineReason) reasons.push(deadlineReason);
-    return base({ bucket: 'ai', preImportance: 'high', preCategory: deadline ? 'deadline' : undefined, deadline });
+    return base({
+      bucket: 'ai',
+      preImportance: 'high',
+      preCategory: deadline ? 'deadline' : undefined,
+      deadline,
+    });
   }
   if (vip) {
     reasons.push(reason(locale, 'vip', { name: vip.displayName }));
     if (deadlineReason) reasons.push(deadlineReason);
-    return base({ bucket: 'ai', preImportance: 'high', preCategory: deadline ? 'deadline' : undefined, deadline });
+    return base({
+      bucket: 'ai',
+      preImportance: 'high',
+      preCategory: deadline ? 'deadline' : undefined,
+      deadline,
+    });
   }
   const lowRule = ruleMatches.find((m) => m.effect === 'low');
   if (lowRule) {
     reasons.push(reason(locale, 'ruleLow', { label: lowRule.rule.label }));
-    return base({ bucket: 'low', preCategory: signals.promotion || signals.promoSubject ? 'promotion' : 'information', preImportance: 'low' });
+    return base({
+      bucket: 'low',
+      preCategory: signals.promotion || signals.promoSubject ? 'promotion' : 'information',
+      preImportance: 'low',
+    });
   }
 
   // --- Automated / bulk context -----------------------------------------------------------
   const lowContext =
-    signals.promotion || signals.social || signals.updates || signals.forum || signals.otherInbox || signals.newsletter || signals.noReply || signals.bulkSender || signals.automatedSender || signals.promoSubject;
-  const marketing = signals.promotion || signals.promoSubject || (signals.newsletter && !signals.noReply);
+    signals.promotion ||
+    signals.social ||
+    signals.updates ||
+    signals.forum ||
+    signals.otherInbox ||
+    signals.newsletter ||
+    signals.noReply ||
+    signals.bulkSender ||
+    signals.automatedSender ||
+    signals.promoSubject;
+  const marketing =
+    signals.promotion || signals.promoSubject || (signals.newsletter && !signals.noReply);
 
   if (lowContext) {
     const transactional = pickTransactional(signals);
     if (transactional && !(marketing && !signals.noReply && !signals.automatedSender)) {
       reasons.push(reason(locale, transactional.key));
       if (deadlineReason) reasons.push(deadlineReason);
-      return base({ bucket: 'rules', preCategory: transactional.category, preImportance: 'normal', deadline });
+      return base({
+        bucket: 'rules',
+        preCategory: transactional.category,
+        preImportance: 'normal',
+        deadline,
+      });
     }
     if (signals.meeting && !marketing) {
       reasons.push(reason(locale, 'meeting'));
@@ -304,11 +373,25 @@ export function triageEmail(email: TriageEmailInput, ctx: TriageContext = {}): T
       reasons.push(reason(locale, 'providerImportant'));
       return base({ bucket: 'ai', deadline });
     }
-    const key = signals.promotion || signals.promoSubject ? 'promotion' : signals.newsletter ? 'newsletter' : signals.social ? 'social' : signals.updates ? 'updates' : signals.noReply ? 'noReply' : 'automated';
+    const key =
+      signals.promotion || signals.promoSubject
+        ? 'promotion'
+        : signals.newsletter
+          ? 'newsletter'
+          : signals.social
+            ? 'social'
+            : signals.updates
+              ? 'updates'
+              : signals.noReply
+                ? 'noReply'
+                : 'automated';
     reasons.push(reason(locale, key));
     return base({
       bucket: 'low',
-      preCategory: signals.promotion || signals.promoSubject || signals.newsletter ? 'promotion' : 'information',
+      preCategory:
+        signals.promotion || signals.promoSubject || signals.newsletter
+          ? 'promotion'
+          : 'information',
       preImportance: 'low',
     });
   }
@@ -335,7 +418,9 @@ export function triageEmail(email: TriageEmailInput, ctx: TriageContext = {}): T
   return base({ bucket: 'ai', preCategory, preImportance, deadline });
 }
 
-function pickTransactional(signals: TriageSignals): { key: ReasonKey; category: EmailCategory } | null {
+function pickTransactional(
+  signals: TriageSignals,
+): { key: ReasonKey; category: EmailCategory } | null {
   if (signals.shipment && !signals.travel) return { key: 'shipment', category: 'shipment' };
   if (signals.travel) return { key: 'travel', category: 'travel' };
   if (signals.subscription) return { key: 'subscription', category: 'subscription' };
@@ -345,6 +430,9 @@ function pickTransactional(signals: TriageSignals): { key: ReasonKey; category: 
 }
 
 /** Content fingerprints already analyzed never hit the model twice. */
-export function shouldSendToAi(triage: Pick<TriageResult, 'needsAi' | 'bucket'>, alreadyAnalyzedFingerprint: boolean): boolean {
+export function shouldSendToAi(
+  triage: Pick<TriageResult, 'needsAi' | 'bucket'>,
+  alreadyAnalyzedFingerprint: boolean,
+): boolean {
   return triage.needsAi && triage.bucket === 'ai' && !alreadyAnalyzedFingerprint;
 }

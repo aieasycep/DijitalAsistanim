@@ -42,7 +42,10 @@ export interface ValidateRedemptionInput {
   locale?: Locale;
 }
 
-export type ReferralCreditDraft = Pick<ReferralCredit, 'userId' | 'role' | 'days' | 'startsAt' | 'expiresAt'>;
+export type ReferralCreditDraft = Pick<
+  ReferralCredit,
+  'userId' | 'role' | 'days' | 'startsAt' | 'expiresAt'
+>;
 
 export type RedemptionResult =
   | { ok: true; code: string; referrerUserId: string; credits: ReferralCreditDraft[] }
@@ -100,14 +103,19 @@ export function validateRedemption(input: ValidateRedemptionInput): RedemptionRe
   if (nowMs - createdMs > REFERRAL_MAX_ACCOUNT_AGE_DAYS * DAY) return reject('account_too_old');
 
   const device = input.deviceFingerprintHash?.trim();
-  if (device && input.referrerDeviceHashes.some((h) => h.trim() === device)) return reject('device_reuse');
-  if (input.referrerRedemptionsLast30d >= REFERRAL_REFERRER_LIMIT_PER_30D) return reject('referrer_limit');
+  if (device && input.referrerDeviceHashes.some((h) => h.trim() === device))
+    return reject('device_reuse');
+  if (input.referrerRedemptionsLast30d >= REFERRAL_REFERRER_LIMIT_PER_30D)
+    return reject('referrer_limit');
 
   const referredWindow = creditWindow(input.now, REFERRAL_CREDIT_DAYS);
-  const referrerRunningUntil = input.referrerCreditExpiresAt ? Date.parse(input.referrerCreditExpiresAt) : Number.NaN;
-  const referrerStart = !Number.isNaN(referrerRunningUntil) && referrerRunningUntil > nowMs
-    ? new Date(referrerRunningUntil).toISOString()
-    : input.now;
+  const referrerRunningUntil = input.referrerCreditExpiresAt
+    ? Date.parse(input.referrerCreditExpiresAt)
+    : Number.NaN;
+  const referrerStart =
+    !Number.isNaN(referrerRunningUntil) && referrerRunningUntil > nowMs
+      ? new Date(referrerRunningUntil).toISOString()
+      : input.now;
   const referrerWindow = creditWindow(referrerStart, REFERRAL_CREDIT_DAYS);
 
   return {
@@ -115,8 +123,18 @@ export function validateRedemption(input: ValidateRedemptionInput): RedemptionRe
     code,
     referrerUserId: input.referrerUserId,
     credits: [
-      { userId: input.referrerUserId, role: 'referrer', days: REFERRAL_CREDIT_DAYS, ...referrerWindow },
-      { userId: input.redeemerUserId, role: 'referred', days: REFERRAL_CREDIT_DAYS, ...referredWindow },
+      {
+        userId: input.referrerUserId,
+        role: 'referrer',
+        days: REFERRAL_CREDIT_DAYS,
+        ...referrerWindow,
+      },
+      {
+        userId: input.redeemerUserId,
+        role: 'referred',
+        days: REFERRAL_CREDIT_DAYS,
+        ...referredWindow,
+      },
     ],
   };
 }

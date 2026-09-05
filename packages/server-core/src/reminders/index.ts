@@ -138,21 +138,40 @@ function floorToStep(ms: number, stepMs: number): number {
 }
 
 function localMinutesOfDay(ms: number, timezone: string): number {
-  const [hh, mm] = localHHmm(new Date(ms).toISOString(), timezone).split(':').map(Number) as [number, number];
+  const [hh, mm] = localHHmm(new Date(ms).toISOString(), timezone).split(':').map(Number) as [
+    number,
+    number,
+  ];
   return hh * 60 + mm;
 }
 
 function smartReason(atIso: string, kind: 'meeting' | 'deadline' | 'none', ctx: Ctx): string {
   const clock = localHHmm(atIso, ctx.timezone);
   const sameDay = localDateKey(atIso, ctx.timezone) === localDateKey(ctx.now, ctx.timezone);
-  const day = sameDay ? '' : formatDayLabel(atIso, { now: ctx.now, timezone: ctx.timezone, locale: ctx.locale });
+  const day = sameDay
+    ? ''
+    : formatDayLabel(atIso, { now: ctx.now, timezone: ctx.timezone, locale: ctx.locale });
   if (ctx.locale === 'en') {
-    const where = !day ? `at ${clock}` : day === 'tomorrow' ? `tomorrow at ${clock}` : `on ${day} at ${clock}`;
-    const suffix = kind === 'meeting' ? '; before the meeting.' : kind === 'deadline' ? '; before the deadline.' : '.';
+    const where = !day
+      ? `at ${clock}`
+      : day === 'tomorrow'
+        ? `tomorrow at ${clock}`
+        : `on ${day} at ${clock}`;
+    const suffix =
+      kind === 'meeting'
+        ? '; before the meeting.'
+        : kind === 'deadline'
+          ? '; before the deadline.'
+          : '.';
     return `Your calendar is free ${where}${suffix}`;
   }
   const where = day ? `${day} ${clock}` : clock;
-  const suffix = kind === 'meeting' ? '; toplantından önce.' : kind === 'deadline' ? '; son tarihten önce.' : '.';
+  const suffix =
+    kind === 'meeting'
+      ? '; toplantından önce.'
+      : kind === 'deadline'
+        ? '; son tarihten önce.'
+        : '.';
   return `Takviminde ${where} boş${suffix}`;
 }
 
@@ -164,7 +183,9 @@ function smartReason(atIso: string, kind: 'meeting' | 'deadline' | 'none', ctx: 
  *  - for deadlines: the earliest slot, starting 24 h before the deadline when it is further away;
  *  - without a deadline: the earliest slot within the next 48 h.
  */
-export function computeSmartReminder(input: SmartReminderInput): SmartReminderSuggestResponse['smart'] {
+export function computeSmartReminder(
+  input: SmartReminderInput,
+): SmartReminderSuggestResponse['smart'] {
   const ctx: Ctx = { locale: input.locale ?? 'tr', timezone: input.timezone, now: input.now };
   const d = REMINDER_DEFAULTS;
   const stepMs = d.stepMinutes * MINUTE;
@@ -180,13 +201,19 @@ export function computeSmartReminder(input: SmartReminderInput): SmartReminderSu
   const latest = floorToStep(deadlineMs - slotMs, stepMs);
   if (latest < earliest) return null;
   // A far-away deadline is best served the day before; without a real deadline start right away.
-  const searchStart = hasAnchor ? Math.max(earliest, ceilToStep(deadlineMs - d.lookbackHours * HOUR, stepMs)) : earliest;
+  const searchStart = hasAnchor
+    ? Math.max(earliest, ceilToStep(deadlineMs - d.lookbackHours * HOUR, stepMs))
+    : earliest;
 
   const usable = (t: number): boolean => {
     if (t < searchStart || t > latest) return false;
     const m = localMinutesOfDay(t, input.timezone);
     if (m < d.workStartMinutes || m + d.minFreeSlotMinutes > d.workEndMinutes) return false;
-    if (input.quietHours && isQuietHours(new Date(t).toISOString(), input.quietHours, input.timezone)) return false;
+    if (
+      input.quietHours &&
+      isQuietHours(new Date(t).toISOString(), input.quietHours, input.timezone)
+    )
+      return false;
     return !busy.some((b) => b.start < t + slotMs && b.end > t);
   };
 
@@ -195,8 +222,14 @@ export function computeSmartReminder(input: SmartReminderInput): SmartReminderSu
     const lead = Math.max(d.minFreeSlotMinutes, input.meetingLeadMinutes ?? d.meetingLeadMinutes);
     const candidate = floorToStep(anchorMs - lead * MINUTE, stepMs);
     if (usable(candidate)) found = candidate;
-    for (let t = Math.min(candidate, latest); found === null && t >= searchStart; t -= stepMs) if (usable(t)) found = t;
-    for (let t = Math.max(candidate + stepMs, searchStart); found === null && t <= latest; t += stepMs) if (usable(t)) found = t;
+    for (let t = Math.min(candidate, latest); found === null && t >= searchStart; t -= stepMs)
+      if (usable(t)) found = t;
+    for (
+      let t = Math.max(candidate + stepMs, searchStart);
+      found === null && t <= latest;
+      t += stepMs
+    )
+      if (usable(t)) found = t;
   } else {
     for (let t = searchStart; found === null && t <= latest; t += stepMs) if (usable(t)) found = t;
   }
@@ -209,7 +242,11 @@ export function computeSmartReminder(input: SmartReminderInput): SmartReminderSu
 
 // --- Fixed options ------------------------------------------------------------------------------------
 
-function shiftOutOfQuietHours(iso: string, quiet: QuietHoursConfig | null | undefined, timezone: string): { at: string; shifted: boolean } {
+function shiftOutOfQuietHours(
+  iso: string,
+  quiet: QuietHoursConfig | null | undefined,
+  timezone: string,
+): { at: string; shifted: boolean } {
   if (!quiet || !isQuietHours(iso, quiet, timezone)) return { at: iso, shifted: false };
   return { at: nextQuietHoursEnd(iso, quiet, timezone), shifted: true };
 }
@@ -219,7 +256,9 @@ function shiftOutOfQuietHours(iso: string, quiet: QuietHoursConfig | null | unde
  * target's own time, are omitted. "This evening" and "tomorrow morning" move to the end of quiet
  * hours when they fall inside them (and are dropped if that pushes them to another day).
  */
-export function computeReminderOptions(input: ComputeReminderOptionsInput): SmartReminderSuggestResponse {
+export function computeReminderOptions(
+  input: ComputeReminderOptionsInput,
+): SmartReminderSuggestResponse {
   const ctx: Ctx = { locale: input.locale ?? 'tr', timezone: input.timezone, now: input.now };
   const t = LABELS[ctx.locale];
   const d = REMINDER_DEFAULTS;
@@ -228,7 +267,12 @@ export function computeReminderOptions(input: ComputeReminderOptionsInput): Smar
   const futureAnchor = anchorMs !== null && anchorMs > nowMs;
   const options: ReminderSuggestion[] = [];
 
-  const push = (option: ReminderOption, atMs: number, label: string, reason: string | null = null): void => {
+  const push = (
+    option: ReminderOption,
+    atMs: number,
+    label: string,
+    reason: string | null = null,
+  ): void => {
     options.push({ option, at: new Date(atMs).toISOString(), label, reason });
   };
 
@@ -250,9 +294,13 @@ export function computeReminderOptions(input: ComputeReminderOptionsInput): Smar
   };
 
   let evening = localToUtcIso(today, d.evening.hh, d.evening.mm, input.timezone);
-  if (Date.parse(evening) <= nowMs) evening = localToUtcIso(today, d.lateEvening.hh, d.lateEvening.mm, input.timezone);
+  if (Date.parse(evening) <= nowMs)
+    evening = localToUtcIso(today, d.lateEvening.hh, d.lateEvening.mm, input.timezone);
   if (Date.parse(evening) > nowMs) fixed('this_evening', evening);
-  fixed('tomorrow_morning', localToUtcIso(addLocalDays(today, 1), d.morning.hh, d.morning.mm, input.timezone));
+  fixed(
+    'tomorrow_morning',
+    localToUtcIso(addLocalDays(today, 1), d.morning.hh, d.morning.mm, input.timezone),
+  );
 
   const smart = computeSmartReminder({
     anchorAt: anchorMs !== null ? new Date(anchorMs).toISOString() : null,
@@ -264,9 +312,16 @@ export function computeReminderOptions(input: ComputeReminderOptionsInput): Smar
     locale: ctx.locale,
     meetingLeadMinutes: input.meetingLeadMinutes,
   });
-  if (smart) push('smart', Date.parse(smart.at), fill(t.smart, { when: whenLabel(smart.at, ctx) }), smart.reason);
+  if (smart)
+    push(
+      'smart',
+      Date.parse(smart.at),
+      fill(t.smart, { when: whenLabel(smart.at, ctx) }),
+      smart.reason,
+    );
 
-  const customMs = futureAnchor && anchorMs !== null ? anchorMs : nowMs + d.customFallbackMinutes * MINUTE;
+  const customMs =
+    futureAnchor && anchorMs !== null ? anchorMs : nowMs + d.customFallbackMinutes * MINUTE;
   push('custom', customMs, t.custom);
 
   return { options, smart };
@@ -275,8 +330,7 @@ export function computeReminderOptions(input: ComputeReminderOptionsInput): Smar
 // --- Custom time validation ----------------------------------------------------------------------------
 
 export type CustomReminderResult =
-  | { ok: true; at: string }
-  | { ok: false; reason: 'invalid' | 'past' | 'too_far'; message: string };
+  { ok: true; at: string } | { ok: false; reason: 'invalid' | 'past' | 'too_far'; message: string };
 
 const CUSTOM_MESSAGES: Record<Locale, Record<'invalid' | 'past' | 'too_far', string>> = {
   tr: {
@@ -292,13 +346,22 @@ const CUSTOM_MESSAGES: Record<Locale, Record<'invalid' | 'past' | 'too_far', str
 };
 
 /** A custom reminder must be a valid instant, strictly in the future and within a year. */
-export function validateCustomReminder(at: string, now: string, opts: { locale?: Locale; maxDays?: number } = {}): CustomReminderResult {
+export function validateCustomReminder(
+  at: string,
+  now: string,
+  opts: { locale?: Locale; maxDays?: number } = {},
+): CustomReminderResult {
   const locale = opts.locale ?? 'tr';
   const atMs = Date.parse(at);
   const nowMs = Date.parse(now);
-  const fail = (reason: 'invalid' | 'past' | 'too_far'): CustomReminderResult => ({ ok: false, reason, message: CUSTOM_MESSAGES[locale][reason] });
+  const fail = (reason: 'invalid' | 'past' | 'too_far'): CustomReminderResult => ({
+    ok: false,
+    reason,
+    message: CUSTOM_MESSAGES[locale][reason],
+  });
   if (!Number.isFinite(atMs) || !Number.isFinite(nowMs)) return fail('invalid');
   if (atMs <= nowMs) return fail('past');
-  if (atMs - nowMs > (opts.maxDays ?? REMINDER_DEFAULTS.maxCustomDays) * DAY) return fail('too_far');
+  if (atMs - nowMs > (opts.maxDays ?? REMINDER_DEFAULTS.maxCustomDays) * DAY)
+    return fail('too_far');
   return { ok: true, at: new Date(atMs).toISOString() };
 }

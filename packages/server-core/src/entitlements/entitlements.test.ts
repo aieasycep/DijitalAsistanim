@@ -81,7 +81,12 @@ describe('entitlements · resolveEntitlement', () => {
   });
 
   it('grants Pro for an active RevenueCat subscription and exposes expiry & trial flag', () => {
-    const s = resolveEntitlement({ subscriptions: [sub({ isTrial: true, status: 'trial' })], referralCredits: [], usage, now });
+    const s = resolveEntitlement({
+      subscriptions: [sub({ isTrial: true, status: 'trial' })],
+      referralCredits: [],
+      usage,
+      now,
+    });
     expect(s.isPro).toBe(true);
     expect(s.source).toBe('revenuecat');
     expect(s.isTrial).toBe(true);
@@ -100,14 +105,25 @@ describe('entitlements · resolveEntitlement', () => {
       sub({ entitlementId: 'other' }),
     ];
     for (const c of cases) {
-      expect(resolveEntitlement({ subscriptions: [c], referralCredits: [], usage, now }).isPro).toBe(false);
+      expect(
+        resolveEntitlement({ subscriptions: [c], referralCredits: [], usage, now }).isPro,
+      ).toBe(false);
     }
   });
 
   it('keeps Pro during grace and tolerates small clock skew on startsAt', () => {
-    expect(resolveEntitlement({ subscriptions: [sub({ status: 'grace' })], referralCredits: [], usage, now }).isPro).toBe(true);
+    expect(
+      resolveEntitlement({
+        subscriptions: [sub({ status: 'grace' })],
+        referralCredits: [],
+        usage,
+        now,
+      }).isPro,
+    ).toBe(true);
     const skewed = sub({ startsAt: '2026-09-05T08:03:00.000Z' });
-    expect(resolveEntitlement({ subscriptions: [skewed], referralCredits: [], usage, now }).isPro).toBe(true);
+    expect(
+      resolveEntitlement({ subscriptions: [skewed], referralCredits: [], usage, now }).isPro,
+    ).toBe(true);
   });
 
   it('grants Pro from an unexpired referral credit with source referral', () => {
@@ -117,25 +133,52 @@ describe('entitlements · resolveEntitlement', () => {
     expect(s.expiresAt).toBe('2026-09-15T00:00:00.000Z');
     expect(s.isTrial).toBe(false);
     const expired = credit({ expiresAt: '2026-09-04T00:00:00.000Z' });
-    expect(resolveEntitlement({ subscriptions: [], referralCredits: [expired], usage, now }).isPro).toBe(false);
+    expect(
+      resolveEntitlement({ subscriptions: [], referralCredits: [expired], usage, now }).isPro,
+    ).toBe(false);
   });
 
   it('applies source precedence revenuecat > promo > demo > referral', () => {
-    const promo = sub({ id: 'p', source: 'promo', store: 'promotional', expiresAt: '2027-01-01T00:00:00.000Z' });
+    const promo = sub({
+      id: 'p',
+      source: 'promo',
+      store: 'promotional',
+      expiresAt: '2027-01-01T00:00:00.000Z',
+    });
     const demo = sub({ id: 'd', source: 'demo', store: 'demo', expiresAt: null });
-    const s1 = resolveEntitlement({ subscriptions: [demo, promo], referralCredits: [credit()], usage, now });
+    const s1 = resolveEntitlement({
+      subscriptions: [demo, promo],
+      referralCredits: [credit()],
+      usage,
+      now,
+    });
     expect(s1.source).toBe('promo');
     expect(s1.expiresAt).toBe('2027-01-01T00:00:00.000Z');
-    const s2 = resolveEntitlement({ subscriptions: [demo, promo, sub()], referralCredits: [credit()], usage, now });
+    const s2 = resolveEntitlement({
+      subscriptions: [demo, promo, sub()],
+      referralCredits: [credit()],
+      usage,
+      now,
+    });
     expect(s2.source).toBe('revenuecat');
     expect(s2.expiresAt).toBe('2026-10-05T08:00:00.000Z');
-    const s3 = resolveEntitlement({ subscriptions: [demo], referralCredits: [credit()], usage, now });
+    const s3 = resolveEntitlement({
+      subscriptions: [demo],
+      referralCredits: [credit()],
+      usage,
+      now,
+    });
     expect(s3.source).toBe('demo');
     expect(s3.expiresAt).toBeNull();
   });
 
   it('never reports negative usage', () => {
-    const s = resolveEntitlement({ subscriptions: [], referralCredits: [], usage: { ...usage, assistantQueriesToday: -3 }, now });
+    const s = resolveEntitlement({
+      subscriptions: [],
+      referralCredits: [],
+      usage: { ...usage, assistantQueriesToday: -3 },
+      now,
+    });
     expect(s.usage.assistantQueriesToday).toBe(0);
   });
 });
@@ -176,15 +219,31 @@ describe('entitlements · features & quotas', () => {
 
   it('assistant quota: remaining and assertion', () => {
     expect(assistantQuotaRemaining(free)).toBe(10);
-    const exhausted = resolveEntitlement({ subscriptions: [], referralCredits: [], usage: { ...usage, assistantQueriesToday: 10 }, now });
+    const exhausted = resolveEntitlement({
+      subscriptions: [],
+      referralCredits: [],
+      usage: { ...usage, assistantQueriesToday: 10 },
+      now,
+    });
     expect(assistantQuotaRemaining(exhausted)).toBe(0);
-    expect(() => assertAssistantQuota(exhausted)).toThrow('Bugünkü asistan hakkın doldu. Yarın yeniden sorabilirsin.');
+    expect(() => assertAssistantQuota(exhausted)).toThrow(
+      'Bugünkü asistan hakkın doldu. Yarın yeniden sorabilirsin.',
+    );
     try {
       assertAssistantQuota(exhausted);
     } catch (e) {
-      expect((e as AppError).details).toMatchObject({ feature: 'unlimited_assistant', limit: 10, used: 10 });
+      expect((e as AppError).details).toMatchObject({
+        feature: 'unlimited_assistant',
+        limit: 10,
+        used: 10,
+      });
     }
-    const proBusy = resolveEntitlement({ subscriptions: [sub()], referralCredits: [], usage: { ...usage, assistantQueriesToday: 10 }, now });
+    const proBusy = resolveEntitlement({
+      subscriptions: [sub()],
+      referralCredits: [],
+      usage: { ...usage, assistantQueriesToday: 10 },
+      now,
+    });
     expect(() => assertAssistantQuota(proBusy)).not.toThrow();
   });
 });
@@ -215,14 +274,37 @@ describe('entitlements · applyRevenueCatEvent', () => {
 
   it('is idempotent by event id and ignores TEST / unknown / foreign-entitlement events', () => {
     const existing = sub({ lastEventId: 'evt-100' });
-    expect(applyRevenueCatEvent(existing, rcEvent(), { now, userId: 'u1' })).toMatchObject({ changed: false, reason: 'duplicate_event' });
-    expect(applyRevenueCatEvent(null, rcEvent({ id: 'e2', type: 'TEST' }), { now, userId: 'u1' })).toMatchObject({ changed: false, reason: 'test_event' });
-    expect(applyRevenueCatEvent(null, rcEvent({ id: 'e3', type: 'SOMETHING_NEW' }), { now, userId: 'u1' })).toMatchObject({ changed: false, reason: 'unsupported_event_type' });
-    expect(applyRevenueCatEvent(null, rcEvent({ id: 'e4', entitlement_ids: ['other'] }), { now, userId: 'u1' })).toMatchObject({ changed: false, reason: 'foreign_entitlement' });
+    expect(applyRevenueCatEvent(existing, rcEvent(), { now, userId: 'u1' })).toMatchObject({
+      changed: false,
+      reason: 'duplicate_event',
+    });
+    expect(
+      applyRevenueCatEvent(null, rcEvent({ id: 'e2', type: 'TEST' }), { now, userId: 'u1' }),
+    ).toMatchObject({ changed: false, reason: 'test_event' });
+    expect(
+      applyRevenueCatEvent(null, rcEvent({ id: 'e3', type: 'SOMETHING_NEW' }), {
+        now,
+        userId: 'u1',
+      }),
+    ).toMatchObject({ changed: false, reason: 'unsupported_event_type' });
+    expect(
+      applyRevenueCatEvent(null, rcEvent({ id: 'e4', entitlement_ids: ['other'] }), {
+        now,
+        userId: 'u1',
+      }),
+    ).toMatchObject({ changed: false, reason: 'foreign_entitlement' });
   });
 
   it('RENEWAL keeps the existing row id and extends expiry', () => {
-    const r = applyRevenueCatEvent(sub(), rcEvent({ id: 'e5', type: 'RENEWAL', expiration_at_ms: Date.parse('2026-11-05T08:00:00.000Z') }), { now, userId: 'u1' });
+    const r = applyRevenueCatEvent(
+      sub(),
+      rcEvent({
+        id: 'e5',
+        type: 'RENEWAL',
+        expiration_at_ms: Date.parse('2026-11-05T08:00:00.000Z'),
+      }),
+      { now, userId: 'u1' },
+    );
     expect(r.changed).toBe(true);
     if (!r.changed) return;
     expect(r.subscription.id).toBe('sub-1');
@@ -232,44 +314,90 @@ describe('entitlements · applyRevenueCatEvent', () => {
   });
 
   it('CANCELLATION keeps access until expiry with willRenew=false; refunds cancel immediately', () => {
-    const r = applyRevenueCatEvent(sub(), rcEvent({ id: 'e6', type: 'CANCELLATION', purchased_at_ms: undefined }), { now, userId: 'u1' });
+    const r = applyRevenueCatEvent(
+      sub(),
+      rcEvent({ id: 'e6', type: 'CANCELLATION', purchased_at_ms: undefined }),
+      { now, userId: 'u1' },
+    );
     expect(r.changed).toBe(true);
     if (!r.changed) return;
     expect(r.subscription.status).toBe('active');
     expect(r.subscription.willRenew).toBe(false);
     expect(r.subscription.startsAt).toBe('2026-08-05T08:00:00.000Z');
-    expect(resolveEntitlement({ subscriptions: [{ ...sub(), ...r.subscription, id: 'sub-1' }], referralCredits: [], usage, now }).isPro).toBe(true);
+    expect(
+      resolveEntitlement({
+        subscriptions: [{ ...sub(), ...r.subscription, id: 'sub-1' }],
+        referralCredits: [],
+        usage,
+        now,
+      }).isPro,
+    ).toBe(true);
 
-    const refund = applyRevenueCatEvent(sub(), rcEvent({ id: 'e7', type: 'CANCELLATION', cancel_reason: 'CUSTOMER_SUPPORT', expiration_at_ms: Date.parse(now) - 1000 }), { now, userId: 'u1' });
+    const refund = applyRevenueCatEvent(
+      sub(),
+      rcEvent({
+        id: 'e7',
+        type: 'CANCELLATION',
+        cancel_reason: 'CUSTOMER_SUPPORT',
+        expiration_at_ms: Date.parse(now) - 1000,
+      }),
+      { now, userId: 'u1' },
+    );
     expect(refund.changed && refund.subscription.status).toBe('cancelled');
   });
 
   it('UNCANCELLATION restores renewal, EXPIRATION expires, SUBSCRIPTION_PAUSED stops renewal', () => {
     const cancelled = sub({ willRenew: false });
-    const un = applyRevenueCatEvent(cancelled, rcEvent({ id: 'e8', type: 'UNCANCELLATION' }), { now, userId: 'u1' });
+    const un = applyRevenueCatEvent(cancelled, rcEvent({ id: 'e8', type: 'UNCANCELLATION' }), {
+      now,
+      userId: 'u1',
+    });
     expect(un.changed && un.subscription.willRenew).toBe(true);
     expect(un.changed && un.subscription.status).toBe('active');
 
-    const ex = applyRevenueCatEvent(sub(), rcEvent({ id: 'e9', type: 'EXPIRATION', expiration_at_ms: Date.parse(now) - 60_000 }), { now, userId: 'u1' });
+    const ex = applyRevenueCatEvent(
+      sub(),
+      rcEvent({ id: 'e9', type: 'EXPIRATION', expiration_at_ms: Date.parse(now) - 60_000 }),
+      { now, userId: 'u1' },
+    );
     expect(ex.changed && ex.subscription.status).toBe('expired');
     expect(ex.changed && ex.subscription.willRenew).toBe(false);
 
-    const paused = applyRevenueCatEvent(sub(), rcEvent({ id: 'e10', type: 'SUBSCRIPTION_PAUSED' }), { now, userId: 'u1' });
+    const paused = applyRevenueCatEvent(
+      sub(),
+      rcEvent({ id: 'e10', type: 'SUBSCRIPTION_PAUSED' }),
+      { now, userId: 'u1' },
+    );
     expect(paused.changed && paused.subscription.status).toBe('active');
     expect(paused.changed && paused.subscription.willRenew).toBe(false);
   });
 
   it('BILLING_ISSUE is grace while expiry is ahead, billing_issue afterwards', () => {
-    const grace = applyRevenueCatEvent(sub(), rcEvent({ id: 'e11', type: 'BILLING_ISSUE' }), { now, userId: 'u1' });
+    const grace = applyRevenueCatEvent(sub(), rcEvent({ id: 'e11', type: 'BILLING_ISSUE' }), {
+      now,
+      userId: 'u1',
+    });
     expect(grace.changed && grace.subscription.status).toBe('grace');
-    const issue = applyRevenueCatEvent(sub(), rcEvent({ id: 'e12', type: 'BILLING_ISSUE', expiration_at_ms: Date.parse(now) - 1 }), { now, userId: 'u1' });
+    const issue = applyRevenueCatEvent(
+      sub(),
+      rcEvent({ id: 'e12', type: 'BILLING_ISSUE', expiration_at_ms: Date.parse(now) - 1 }),
+      { now, userId: 'u1' },
+    );
     expect(issue.changed && issue.subscription.status).toBe('billing_issue');
   });
 
   it('PRODUCT_CHANGE swaps the product, TRANSFER marks transferred and updates the RC user id', () => {
-    const pc = applyRevenueCatEvent(sub(), rcEvent({ id: 'e13', type: 'PRODUCT_CHANGE', product_id: 'da_pro_annual' }), { now, userId: 'u1' });
+    const pc = applyRevenueCatEvent(
+      sub(),
+      rcEvent({ id: 'e13', type: 'PRODUCT_CHANGE', product_id: 'da_pro_annual' }),
+      { now, userId: 'u1' },
+    );
     expect(pc.changed && pc.subscription.productId).toBe('da_pro_annual');
-    const tr = applyRevenueCatEvent(null, rcEvent({ id: 'e14', type: 'TRANSFER', app_user_id: 'rc-u2', product_id: undefined }), { now, userId: 'u2' });
+    const tr = applyRevenueCatEvent(
+      null,
+      rcEvent({ id: 'e14', type: 'TRANSFER', app_user_id: 'rc-u2', product_id: undefined }),
+      { now, userId: 'u2' },
+    );
     expect(tr.changed).toBe(true);
     if (!tr.changed) return;
     expect(tr.transferred).toBe(true);
@@ -279,7 +407,11 @@ describe('entitlements · applyRevenueCatEvent', () => {
   });
 
   it('flags SANDBOX events and maps promotional stores to the promo source', () => {
-    const r = applyRevenueCatEvent(null, rcEvent({ id: 'e15', environment: 'SANDBOX', store: 'PROMOTIONAL' }), { now, userId: 'u1' });
+    const r = applyRevenueCatEvent(
+      null,
+      rcEvent({ id: 'e15', environment: 'SANDBOX', store: 'PROMOTIONAL' }),
+      { now, userId: 'u1' },
+    );
     expect(r.sandbox).toBe(true);
     expect(r.changed && r.subscription.source).toBe('promo');
     expect(r.changed && r.subscription.store).toBe('promotional');

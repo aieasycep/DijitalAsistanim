@@ -54,14 +54,18 @@ export function isOpenAiStrictCompatible(schema: unknown): boolean {
   if (schema.type === 'object' || isRecord(schema.properties)) {
     if (schema.additionalProperties !== false) return false;
     const properties = isRecord(schema.properties) ? schema.properties : {};
-    const required = Array.isArray(schema.required) ? schema.required.filter((r): r is string => typeof r === 'string') : [];
+    const required = Array.isArray(schema.required)
+      ? schema.required.filter((r): r is string => typeof r === 'string')
+      : [];
     for (const name of Object.keys(properties)) if (!required.includes(name)) return false;
-    for (const value of Object.values(properties)) if (!isOpenAiStrictCompatible(value)) return false;
+    for (const value of Object.values(properties))
+      if (!isOpenAiStrictCompatible(value)) return false;
   }
   if (schema.items !== undefined && !isOpenAiStrictCompatible(schema.items)) return false;
   for (const combinator of ['anyOf', 'oneOf', 'allOf'] as const) {
     const branches = schema[combinator];
-    if (Array.isArray(branches)) for (const branch of branches) if (!isOpenAiStrictCompatible(branch)) return false;
+    if (Array.isArray(branches))
+      for (const branch of branches) if (!isOpenAiStrictCompatible(branch)) return false;
   }
   return true;
 }
@@ -104,6 +108,7 @@ export function formatZodIssues(error: z.ZodError, maxIssues = 12): string {
     const path = issue.path.length ? issue.path.map(String).join('.') : '(root)';
     return `- ${path}: ${issue.message}`;
   });
-  if (error.issues.length > maxIssues) lines.push(`- … ve ${error.issues.length - maxIssues} sorun daha`);
+  if (error.issues.length > maxIssues)
+    lines.push(`- … ve ${error.issues.length - maxIssues} sorun daha`);
   return lines.join('\n');
 }

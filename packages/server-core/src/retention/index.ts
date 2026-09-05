@@ -79,7 +79,13 @@ function cleanupSteps(cutoff: string | null): CleanupStep[] {
     { table: 'email_messages', column: 'sent_at', op: 'delete', cutoff },
     { table: 'email_threads', column: 'last_message_at', op: 'delete', cutoff },
     { table: 'memory_chunks', column: 'occurred_at', op: 'delete', cutoff },
-    { table: 'captures', column: 'created_at', op: 'soft_delete', cutoff, storagePathColumn: 'storage_path' },
+    {
+      table: 'captures',
+      column: 'created_at',
+      op: 'soft_delete',
+      cutoff,
+      storagePathColumn: 'storage_path',
+    },
     { table: 'android_notifications', column: 'posted_at', op: 'delete', cutoff },
     { table: 'assistant_messages', column: 'created_at', op: 'delete', cutoff },
     { table: 'briefings', column: 'generated_at', op: 'delete', cutoff },
@@ -104,7 +110,12 @@ export function buildCleanupPlan(input: BuildCleanupPlanInput): CleanupPlan[] {
   for (const user of input.users) {
     const cutoff = retentionCutoff(user.retention, input.now);
     if (cutoff === null) continue;
-    plans.push({ userId: user.userId, retention: user.retention, cutoff, steps: cleanupSteps(cutoff) });
+    plans.push({
+      userId: user.userId,
+      retention: user.retention,
+      cutoff,
+      steps: cleanupSteps(cutoff),
+    });
   }
   return plans;
 }
@@ -120,7 +131,10 @@ export interface DeleteHistoryPlan {
  * "Geçmişi sil": same tables as retention cleanup, optionally limited to rows older than N days.
  * `olderThanDays` 0/undefined deletes all history.
  */
-export function deleteHistoryPlan(userId: string, opts: { now: string; olderThanDays?: number }): DeleteHistoryPlan {
+export function deleteHistoryPlan(
+  userId: string,
+  opts: { now: string; olderThanDays?: number },
+): DeleteHistoryPlan {
   const days = opts.olderThanDays ?? 0;
   if (!Number.isFinite(days) || days < 0) throw new RangeError('olderThanDays negatif olamaz');
   const cutoff = days > 0 ? new Date(Date.parse(opts.now) - days * DAY).toISOString() : null;
@@ -129,7 +143,12 @@ export function deleteHistoryPlan(userId: string, opts: { now: string; olderThan
 
 // --- Account deletion ----------------------------------------------------------------------------
 
-export const USER_STORAGE_PREFIXES = ['captures', 'exports', 'briefing-audio', 'attachments-cache'] as const;
+export const USER_STORAGE_PREFIXES = [
+  'captures',
+  'exports',
+  'briefing-audio',
+  'attachments-cache',
+] as const;
 
 export type AccountDeletionStep =
   | { step: 'revoke_tokens' }

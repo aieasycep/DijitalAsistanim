@@ -47,8 +47,29 @@ export function turkishLocative(word: string): string {
   return `${clean}'${consonant}${isBackHarmony(clean) ? 'a' : 'e'}`;
 }
 
-const UNIT_DATIVE: Record<number, string> = { 0: 'a', 1: 'e', 2: 'ye', 3: 'e', 4: 'e', 5: 'e', 6: 'ya', 7: 'ye', 8: 'e', 9: 'a' };
-const TENS_DATIVE: Record<number, string> = { 10: 'a', 20: 'ye', 30: 'a', 40: 'a', 50: 'ye', 60: 'a', 70: 'e', 80: 'e', 90: 'a' };
+const UNIT_DATIVE: Record<number, string> = {
+  0: 'a',
+  1: 'e',
+  2: 'ye',
+  3: 'e',
+  4: 'e',
+  5: 'e',
+  6: 'ya',
+  7: 'ye',
+  8: 'e',
+  9: 'a',
+};
+const TENS_DATIVE: Record<number, string> = {
+  10: 'a',
+  20: 'ye',
+  30: 'a',
+  40: 'a',
+  50: 'ye',
+  60: 'a',
+  70: 'e',
+  80: 'e',
+  90: 'a',
+};
 
 /** Dative suffix (without apostrophe) for a spoken number: 17 → "ye" (on yediye), 18 → "e", 30 → "a". */
 export function turkishNumberDative(n: number): string {
@@ -61,8 +82,29 @@ export function turkishNumberDative(n: number): string {
   return 'e';
 }
 
-const UNIT_LOCATIVE: Record<number, string> = { 0: 'da', 1: 'de', 2: 'de', 3: 'te', 4: 'te', 5: 'te', 6: 'da', 7: 'de', 8: 'de', 9: 'da' };
-const TENS_LOCATIVE: Record<number, string> = { 10: 'da', 20: 'de', 30: 'da', 40: 'ta', 50: 'de', 60: 'ta', 70: 'te', 80: 'de', 90: 'da' };
+const UNIT_LOCATIVE: Record<number, string> = {
+  0: 'da',
+  1: 'de',
+  2: 'de',
+  3: 'te',
+  4: 'te',
+  5: 'te',
+  6: 'da',
+  7: 'de',
+  8: 'de',
+  9: 'da',
+};
+const TENS_LOCATIVE: Record<number, string> = {
+  10: 'da',
+  20: 'de',
+  30: 'da',
+  40: 'ta',
+  50: 'de',
+  60: 'ta',
+  70: 'te',
+  80: 'de',
+  90: 'da',
+};
 
 /** Locative suffix (without apostrophe) for a spoken number: 2027 → "de" (yedide), 2030 → "da", 15 → "te". */
 export function turkishNumberLocative(n: number): string {

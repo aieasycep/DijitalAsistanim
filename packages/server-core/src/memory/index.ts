@@ -4,7 +4,23 @@
  * for Turkish, context trimming by token budget, grounding checks for answers, source refs and
  * search result mapping. Pure functions; embeddings and storage live elsewhere.
  */
-import type { CalendarEvent, Capture, Commitment, Contact, EmailAnalysis, EmailThread, LifeEvent, Locale, MemoryChunk, PostMeetingNote, SearchResult, SourceRef, SourceType, TaskItem, UUID } from '@da/domain';
+import type {
+  CalendarEvent,
+  Capture,
+  Commitment,
+  Contact,
+  EmailAnalysis,
+  EmailThread,
+  LifeEvent,
+  Locale,
+  MemoryChunk,
+  PostMeetingNote,
+  SearchResult,
+  SourceRef,
+  SourceType,
+  TaskItem,
+  UUID,
+} from '@da/domain';
 import { MONTHS_TR_TITLE, formatClock, localDateOf, monthIndex } from '../dates';
 import { stripSubjectPrefixes } from '../followups';
 import { sourceLabel } from '../insights';
@@ -16,11 +32,25 @@ export const CITATION_MAX_CHARS = 280;
 export type MemoryChunkDraft = Omit<MemoryChunk, 'id' | 'userId' | 'createdAt' | 'updatedAt'>;
 
 export type MemorySource =
-  | { kind: 'email_thread'; entity: EmailThread; analysis?: EmailAnalysis | null; bodyText?: string | null; sourceType?: SourceType; contactId?: UUID | null }
+  | {
+      kind: 'email_thread';
+      entity: EmailThread;
+      analysis?: EmailAnalysis | null;
+      bodyText?: string | null;
+      sourceType?: SourceType;
+      contactId?: UUID | null;
+    }
   | { kind: 'calendar_event'; entity: CalendarEvent }
   | { kind: 'commitment'; entity: Commitment }
   | { kind: 'capture'; entity: Capture }
-  | { kind: 'meeting_note'; entity: PostMeetingNote; eventTitle?: string | null; personName?: string | null; contactId?: UUID | null; eventAt?: string | null };
+  | {
+      kind: 'meeting_note';
+      entity: PostMeetingNote;
+      eventTitle?: string | null;
+      personName?: string | null;
+      contactId?: UUID | null;
+      eventAt?: string | null;
+    };
 
 export interface BuildMemoryChunksInput {
   source: MemorySource;
@@ -41,27 +71,54 @@ function lower(s: string | null | undefined): string {
 }
 
 function excerptOf(text: string | null | undefined, max = EXCERPT_MAX_CHARS): string {
-  const clean = normalizeText(stripQuotedHistory(text ?? '')).replace(/\s*\n\s*/g, ' ').trim();
+  const clean = normalizeText(stripQuotedHistory(text ?? ''))
+    .replace(/\s*\n\s*/g, ' ')
+    .trim();
   return clean ? truncate(clean, max) : '';
 }
 
 function joinLines(lines: (string | null | undefined)[]): string {
-  return lines.map((l) => l?.trim() ?? '').filter(Boolean).join('\n');
+  return lines
+    .map((l) => l?.trim() ?? '')
+    .filter(Boolean)
+    .join('\n');
 }
 
 function dateSentence(iso: string, timezone: string, locale: Locale, withTime = true): string {
   const d = localDateOf(iso, timezone);
   const month = MONTHS_TR_TITLE[d.m - 1] ?? '';
-  const date = locale === 'en' ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso)) : `${d.d} ${month} ${d.y}`;
+  const date =
+    locale === 'en'
+      ? new Intl.DateTimeFormat('en-GB', {
+          timeZone: timezone,
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }).format(new Date(iso))
+      : `${d.d} ${month} ${d.y}`;
   return withTime ? `${date} ${formatClock(iso, timezone)}` : date;
 }
 
-function finishChunk(partial: Omit<MemoryChunkDraft, 'tokenCount' | 'hasEmbedding' | 'expiresAt'>, retentionDays: number | null | undefined): MemoryChunkDraft {
-  const expiresAt = retentionDays && retentionDays > 0 ? new Date(ms(partial.occurredAt) + retentionDays * DAY).toISOString() : null;
-  return { ...partial, tokenCount: estimateTokens(partial.content), hasEmbedding: false, expiresAt };
+function finishChunk(
+  partial: Omit<MemoryChunkDraft, 'tokenCount' | 'hasEmbedding' | 'expiresAt'>,
+  retentionDays: number | null | undefined,
+): MemoryChunkDraft {
+  const expiresAt =
+    retentionDays && retentionDays > 0
+      ? new Date(ms(partial.occurredAt) + retentionDays * DAY).toISOString()
+      : null;
+  return {
+    ...partial,
+    tokenCount: estimateTokens(partial.content),
+    hasEmbedding: false,
+    expiresAt,
+  };
 }
 
-function emailChunk(input: BuildMemoryChunksInput, src: Extract<MemorySource, { kind: 'email_thread' }>): MemoryChunkDraft[] {
+function emailChunk(
+  input: BuildMemoryChunksInput,
+  src: Extract<MemorySource, { kind: 'email_thread' }>,
+): MemoryChunkDraft[] {
   const thread = src.entity;
   const analysis = src.analysis ?? thread.analysis ?? null;
   if (thread.deletedAt) return [];
@@ -69,19 +126,39 @@ function emailChunk(input: BuildMemoryChunksInput, src: Extract<MemorySource, { 
   const importance = analysis?.importance ?? thread.importance;
   if (category === 'promotion') return [];
   const labels = thread.labels.map((l) => l.toLowerCase());
-  if (labels.some((l) => l.includes('promotion') || l.includes('newsletter') || l.includes('bülten') || l.includes('bulten'))) return [];
-  const actionable = (analysis?.requiresUserAction ?? false) || !!analysis?.deadline || !!analysis?.lifeEvent || (analysis?.commitments.length ?? 0) > 0;
+  if (
+    labels.some(
+      (l) =>
+        l.includes('promotion') ||
+        l.includes('newsletter') ||
+        l.includes('bülten') ||
+        l.includes('bulten'),
+    )
+  )
+    return [];
+  const actionable =
+    (analysis?.requiresUserAction ?? false) ||
+    !!analysis?.deadline ||
+    !!analysis?.lifeEvent ||
+    (analysis?.commitments.length ?? 0) > 0;
   if (importance === 'low' && !actionable) return [];
   const locale = input.locale ?? 'tr';
   const userEmails = new Set((input.userEmails ?? []).map(lower));
-  const counterpart = thread.participants.find((p) => !userEmails.has(lower(p.email))) ?? thread.participants[0] ?? null;
+  const counterpart =
+    thread.participants.find((p) => !userEmails.has(lower(p.email))) ??
+    thread.participants[0] ??
+    null;
   const personName = counterpart?.name?.trim() || counterpart?.email || null;
   const keyPoints = analysis?.keyPoints.filter((k) => k.trim()) ?? [];
   const excerpt = excerptOf(src.bodyText ?? thread.snippet);
   const content = joinLines([
     analysis?.summary ?? null,
-    keyPoints.length ? `${locale === 'en' ? 'Key points' : 'Öne çıkanlar'}: ${keyPoints.join('; ')}` : null,
-    analysis?.deadlineText ? `${locale === 'en' ? 'Deadline' : 'Son tarih'}: ${analysis.deadlineText}` : null,
+    keyPoints.length
+      ? `${locale === 'en' ? 'Key points' : 'Öne çıkanlar'}: ${keyPoints.join('; ')}`
+      : null,
+    analysis?.deadlineText
+      ? `${locale === 'en' ? 'Deadline' : 'Son tarih'}: ${analysis.deadlineText}`
+      : null,
     excerpt && excerpt !== analysis?.summary ? excerpt : null,
   ]);
   if (!content) return [];
@@ -120,7 +197,9 @@ function eventChunk(input: BuildMemoryChunksInput, event: CalendarEvent): Memory
   const attendees = event.attendees.map((a) => a.name?.trim() || a.email || '').filter(Boolean);
   const primary = event.attendees.find((a) => !(a.isOrganizer && event.organizerIsUser));
   const personName = primary?.name?.trim() || primary?.email || null;
-  const when = event.allDay ? dateSentence(event.startAt, input.timezone, locale, false) : `${dateSentence(event.startAt, input.timezone, locale)}–${formatClock(event.endAt, input.timezone)}`;
+  const when = event.allDay
+    ? dateSentence(event.startAt, input.timezone, locale, false)
+    : `${dateSentence(event.startAt, input.timezone, locale)}–${formatClock(event.endAt, input.timezone)}`;
   const content = joinLines([
     event.title,
     `${en ? 'When' : 'Ne zaman'}: ${when}`,
@@ -139,18 +218,47 @@ function eventChunk(input: BuildMemoryChunksInput, event: CalendarEvent): Memory
     ...(event.meetingUrl ? { url: event.meetingUrl } : {}),
     excerpt: truncate(`${event.title} · ${when}`, CITATION_MAX_CHARS),
   };
-  return [finishChunk({ sourceType: event.source, sourceId: event.id, source, content, topic: event.title, personName, contactId: primary?.contactId ?? null, occurredAt: event.startAt }, input.retentionDays)];
+  return [
+    finishChunk(
+      {
+        sourceType: event.source,
+        sourceId: event.id,
+        source,
+        content,
+        topic: event.title,
+        personName,
+        contactId: primary?.contactId ?? null,
+        occurredAt: event.startAt,
+      },
+      input.retentionDays,
+    ),
+  ];
 }
 
 function commitmentChunk(input: BuildMemoryChunksInput, c: Commitment): MemoryChunkDraft[] {
   if (c.deletedAt || c.status === 'cancelled') return [];
   const locale = input.locale ?? 'tr';
   const en = locale === 'en';
-  const who = c.direction === 'user_owes' ? (en ? 'Your promise' : 'Verdiğin söz') : c.counterpartName ? (en ? `${c.counterpartName}'s promise` : `${c.counterpartName} sözü`) : en ? 'Their promise' : 'Karşı tarafın sözü';
+  const who =
+    c.direction === 'user_owes'
+      ? en
+        ? 'Your promise'
+        : 'Verdiğin söz'
+      : c.counterpartName
+        ? en
+          ? `${c.counterpartName}'s promise`
+          : `${c.counterpartName} sözü`
+        : en
+          ? 'Their promise'
+          : 'Karşı tarafın sözü';
   const content = joinLines([
     `${who}: ${c.text}`,
     c.quote ? `“${c.quote}”` : null,
-    c.dueAt ? `${en ? 'Due' : 'Son tarih'}: ${dateSentence(c.dueAt, input.timezone, locale)}${c.dueText ? ` (${c.dueText})` : ''}` : c.dueText ? `${en ? 'Due' : 'Son tarih'}: ${c.dueText}` : null,
+    c.dueAt
+      ? `${en ? 'Due' : 'Son tarih'}: ${dateSentence(c.dueAt, input.timezone, locale)}${c.dueText ? ` (${c.dueText})` : ''}`
+      : c.dueText
+        ? `${en ? 'Due' : 'Son tarih'}: ${c.dueText}`
+        : null,
   ]);
   return [
     finishChunk(
@@ -174,22 +282,78 @@ function captureChunk(input: BuildMemoryChunksInput, cap: Capture): MemoryChunkD
   const locale = input.locale ?? 'tr';
   const a = cap.analysis ?? null;
   const excerpt = excerptOf(cap.extractedText ?? cap.originalText);
-  const content = joinLines([a?.summary ?? null, a?.keyPoints.length ? `${locale === 'en' ? 'Key points' : 'Öne çıkanlar'}: ${a.keyPoints.join('; ')}` : null, excerpt && excerpt !== a?.summary ? excerpt : null]);
+  const content = joinLines([
+    a?.summary ?? null,
+    a?.keyPoints.length
+      ? `${locale === 'en' ? 'Key points' : 'Öne çıkanlar'}: ${a.keyPoints.join('; ')}`
+      : null,
+    excerpt && excerpt !== a?.summary ? excerpt : null,
+  ]);
   if (!content) return [];
   const personName = a?.person?.name?.trim() || null;
-  const source: SourceRef = { type: 'capture', id: cap.id, label: sourceLabel('capture', locale), ...(personName ? { person: personName } : {}), timestamp: cap.createdAt, ...(cap.url ? { url: cap.url } : {}), excerpt: truncate(a?.summary ?? excerpt, CITATION_MAX_CHARS) };
-  return [finishChunk({ sourceType: 'capture', sourceId: cap.id, source, content, topic: a?.title ?? null, personName, contactId: null, occurredAt: cap.createdAt }, input.retentionDays)];
+  const source: SourceRef = {
+    type: 'capture',
+    id: cap.id,
+    label: sourceLabel('capture', locale),
+    ...(personName ? { person: personName } : {}),
+    timestamp: cap.createdAt,
+    ...(cap.url ? { url: cap.url } : {}),
+    excerpt: truncate(a?.summary ?? excerpt, CITATION_MAX_CHARS),
+  };
+  return [
+    finishChunk(
+      {
+        sourceType: 'capture',
+        sourceId: cap.id,
+        source,
+        content,
+        topic: a?.title ?? null,
+        personName,
+        contactId: null,
+        occurredAt: cap.createdAt,
+      },
+      input.retentionDays,
+    ),
+  ];
 }
 
-function noteChunk(input: BuildMemoryChunksInput, src: Extract<MemorySource, { kind: 'meeting_note' }>): MemoryChunkDraft[] {
+function noteChunk(
+  input: BuildMemoryChunksInput,
+  src: Extract<MemorySource, { kind: 'meeting_note' }>,
+): MemoryChunkDraft[] {
   const note = src.entity;
   const locale = input.locale ?? 'tr';
   const text = excerptOf(note.text);
   if (!text) return [];
-  const content = joinLines([src.eventTitle ? `${locale === 'en' ? 'Meeting' : 'Toplantı'}: ${src.eventTitle}` : null, text]);
+  const content = joinLines([
+    src.eventTitle ? `${locale === 'en' ? 'Meeting' : 'Toplantı'}: ${src.eventTitle}` : null,
+    text,
+  ]);
   const occurredAt = src.eventAt ?? note.createdAt;
-  const source: SourceRef = { type: 'meeting_note', id: note.id, label: sourceLabel('meeting_note', locale), ...(src.personName ? { person: src.personName } : {}), ...(src.contactId ? { personId: src.contactId } : {}), timestamp: occurredAt, excerpt: truncate(text, CITATION_MAX_CHARS) };
-  return [finishChunk({ sourceType: 'meeting_note', sourceId: note.id, source, content, topic: src.eventTitle ?? (locale === 'en' ? 'Meeting note' : 'Toplantı notu'), personName: src.personName ?? null, contactId: src.contactId ?? null, occurredAt }, input.retentionDays)];
+  const source: SourceRef = {
+    type: 'meeting_note',
+    id: note.id,
+    label: sourceLabel('meeting_note', locale),
+    ...(src.personName ? { person: src.personName } : {}),
+    ...(src.contactId ? { personId: src.contactId } : {}),
+    timestamp: occurredAt,
+    excerpt: truncate(text, CITATION_MAX_CHARS),
+  };
+  return [
+    finishChunk(
+      {
+        sourceType: 'meeting_note',
+        sourceId: note.id,
+        source,
+        content,
+        topic: src.eventTitle ?? (locale === 'en' ? 'Meeting note' : 'Toplantı notu'),
+        personName: src.personName ?? null,
+        contactId: src.contactId ?? null,
+        occurredAt,
+      },
+      input.retentionDays,
+    ),
+  ];
 }
 
 /** Memory chunk drafts for one source; empty when the source is noise (promotions, newsletters, low & inert). */
@@ -213,8 +377,148 @@ export function buildMemoryChunks(input: BuildMemoryChunksInput): MemoryChunkDra
 // ---------------------------------------------------------------------------
 
 export const TURKISH_STOPWORDS: ReadonlySet<string> = new Set([
-  'acaba', 'ama', 'ancak', 'artık', 'bana', 'bazı', 'belki', 'ben', 'beni', 'benim', 'beri', 'bile', 'bir', 'biraz', 'biri', 'birkaç', 'birşey', 'biz', 'bize', 'bizi', 'bizim', 'böyle', 'bu', 'buna', 'bunda', 'bundan', 'bunu', 'bunun', 'burada', 'çok', 'çünkü', 'da', 'daha', 'de', 'defa', 'diye', 'değil', 'en', 'gibi', 'göre', 'hangi', 'hatta', 'hem', 'hep', 'hepsi', 'her', 'hiç', 'için', 'ile', 'ise', 'işte', 'kadar', 'kez', 'ki', 'kim', 'kime', 'kimi', 'mı', 'mi', 'mu', 'mü', 'nasıl', 'ne', 'neden', 'nerede', 'nereye', 'niçin', 'niye', 'o', 'olan', 'olarak', 'oldu', 'olduğu', 'olur', 'ona', 'onda', 'ondan', 'onlar', 'onların', 'onu', 'onun', 'öyle', 'sana', 'sen', 'seni', 'senin', 'siz', 'size', 'sizi', 'sizin', 'şey', 'şu', 'şuna', 'şunu', 'tüm', 'var', 've', 'veya', 'ya', 'yani', 'yok', 'zaten',
-  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'did', 'do', 'does', 'for', 'from', 'had', 'has', 'have', 'how', 'i', 'in', 'is', 'it', 'its', 'me', 'my', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'was', 'what', 'when', 'where', 'which', 'who', 'with', 'you', 'your',
+  'acaba',
+  'ama',
+  'ancak',
+  'artık',
+  'bana',
+  'bazı',
+  'belki',
+  'ben',
+  'beni',
+  'benim',
+  'beri',
+  'bile',
+  'bir',
+  'biraz',
+  'biri',
+  'birkaç',
+  'birşey',
+  'biz',
+  'bize',
+  'bizi',
+  'bizim',
+  'böyle',
+  'bu',
+  'buna',
+  'bunda',
+  'bundan',
+  'bunu',
+  'bunun',
+  'burada',
+  'çok',
+  'çünkü',
+  'da',
+  'daha',
+  'de',
+  'defa',
+  'diye',
+  'değil',
+  'en',
+  'gibi',
+  'göre',
+  'hangi',
+  'hatta',
+  'hem',
+  'hep',
+  'hepsi',
+  'her',
+  'hiç',
+  'için',
+  'ile',
+  'ise',
+  'işte',
+  'kadar',
+  'kez',
+  'ki',
+  'kim',
+  'kime',
+  'kimi',
+  'mı',
+  'mi',
+  'mu',
+  'mü',
+  'nasıl',
+  'ne',
+  'neden',
+  'nerede',
+  'nereye',
+  'niçin',
+  'niye',
+  'o',
+  'olan',
+  'olarak',
+  'oldu',
+  'olduğu',
+  'olur',
+  'ona',
+  'onda',
+  'ondan',
+  'onlar',
+  'onların',
+  'onu',
+  'onun',
+  'öyle',
+  'sana',
+  'sen',
+  'seni',
+  'senin',
+  'siz',
+  'size',
+  'sizi',
+  'sizin',
+  'şey',
+  'şu',
+  'şuna',
+  'şunu',
+  'tüm',
+  'var',
+  've',
+  'veya',
+  'ya',
+  'yani',
+  'yok',
+  'zaten',
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'by',
+  'did',
+  'do',
+  'does',
+  'for',
+  'from',
+  'had',
+  'has',
+  'have',
+  'how',
+  'i',
+  'in',
+  'is',
+  'it',
+  'its',
+  'me',
+  'my',
+  'of',
+  'on',
+  'or',
+  'that',
+  'the',
+  'this',
+  'to',
+  'was',
+  'what',
+  'when',
+  'where',
+  'which',
+  'who',
+  'with',
+  'you',
+  'your',
 ]);
 
 const TR_QUESTION_SUFFIX = /^(mıydı|miydi|muydu|müydü|mı|mi|mu|mü)$/;
@@ -290,8 +594,13 @@ function recencyScore(occurredAt: string, nowMs: number): number {
 }
 
 /** Order chunks by retrieval score blended with recency and keep as many as fit the token budget. */
-export function rankAndTrimContext<T extends ScoredChunk>(chunks: readonly T[], opts: TrimContextOptions): T[] {
-  const nowMs = opts.now ? ms(opts.now) : Math.max(...chunks.map((c) => ms(c.occurredAt)).filter((x) => !Number.isNaN(x)), 0);
+export function rankAndTrimContext<T extends ScoredChunk>(
+  chunks: readonly T[],
+  opts: TrimContextOptions,
+): T[] {
+  const nowMs = opts.now
+    ? ms(opts.now)
+    : Math.max(...chunks.map((c) => ms(c.occurredAt)).filter((x) => !Number.isNaN(x)), 0);
   const w = Math.max(0, Math.min(1, opts.scoreWeight ?? 0.7));
   const seen = new Set<string>();
   const ranked = chunks
@@ -300,8 +609,16 @@ export function rankAndTrimContext<T extends ScoredChunk>(chunks: readonly T[], 
       seen.add(c.id);
       return true;
     })
-    .map((c) => ({ c, s: (typeof c.score === 'number' ? Math.max(0, Math.min(1, c.score)) : 0.5) * w + recencyScore(c.occurredAt, nowMs) * (1 - w) }))
-    .sort((a, b) => b.s - a.s || ms(b.c.occurredAt) - ms(a.c.occurredAt) || a.c.id.localeCompare(b.c.id));
+    .map((c) => ({
+      c,
+      s:
+        (typeof c.score === 'number' ? Math.max(0, Math.min(1, c.score)) : 0.5) * w +
+        recencyScore(c.occurredAt, nowMs) * (1 - w),
+    }))
+    .sort(
+      (a, b) =>
+        b.s - a.s || ms(b.c.occurredAt) - ms(a.c.occurredAt) || a.c.id.localeCompare(b.c.id),
+    );
   const out: T[] = [];
   let used = 0;
   for (const { c } of ranked) {
@@ -323,13 +640,21 @@ export interface GroundingResult {
   unsupportedFacts: string[];
 }
 
-const MONTH_WORDS = 'ocak|şubat|subat|mart|nisan|mayıs|mayis|haziran|temmuz|ağustos|agustos|eylül|eylul|ekim|kasım|kasim|aralık|aralik|oca|şub|mar|nis|may|haz|tem|ağu|eyl|eki|kas|ara|january|february|march|april|june|july|august|september|october|november|december|jan|feb|apr|jun|jul|aug|sep|sept|oct|nov|dec';
+const MONTH_WORDS =
+  'ocak|şubat|subat|mart|nisan|mayıs|mayis|haziran|temmuz|ağustos|agustos|eylül|eylul|ekim|kasım|kasim|aralık|aralik|oca|şub|mar|nis|may|haz|tem|ağu|eyl|eki|kas|ara|january|february|march|april|june|july|august|september|october|november|december|jan|feb|apr|jun|jul|aug|sep|sept|oct|nov|dec';
 const RE_TIME = /(?<![\d:])([01]?\d|2[0-3]):([0-5]\d)(?![\d:])/g;
-const RE_DATE_TR = new RegExp(`(?<![\\p{L}\\p{N}])(\\d{1,2})\\s+(${MONTH_WORDS})(?:\\s+(\\d{4}))?(?![\\p{L}\\p{N}])`, 'giu');
-const RE_DATE_EN = new RegExp(`(?<![\\p{L}\\p{N}])(${MONTH_WORDS})\\s+(\\d{1,2})(?:,?\\s+(\\d{4}))?(?![\\p{L}\\p{N}])`, 'giu');
+const RE_DATE_TR = new RegExp(
+  `(?<![\\p{L}\\p{N}])(\\d{1,2})\\s+(${MONTH_WORDS})(?:\\s+(\\d{4}))?(?![\\p{L}\\p{N}])`,
+  'giu',
+);
+const RE_DATE_EN = new RegExp(
+  `(?<![\\p{L}\\p{N}])(${MONTH_WORDS})\\s+(\\d{1,2})(?:,?\\s+(\\d{4}))?(?![\\p{L}\\p{N}])`,
+  'giu',
+);
 const RE_DATE_ISO = /\b(\d{4})-(\d{2})-(\d{2})\b/g;
 const RE_DATE_NUM = /(?<![\d.])(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4}))?(?![\d.])/g;
-const RE_AMOUNT = /(?<![\d.,])(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)\s?(tl|₺|try|usd|eur|gbp|\$|€|£)(?![\p{L}])/giu;
+const RE_AMOUNT =
+  /(?<![\d.,])(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)\s?(tl|₺|try|usd|eur|gbp|\$|€|£)(?![\p{L}])/giu;
 const RE_PERCENT = /%\s?(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s?%/g;
 const RE_CODE = /\b([A-Z]{2}\d{3,4})\b/g;
 const RE_PNR = /\bPNR\s*:?\s*([A-Z0-9]{5,6})\b/gi;
@@ -376,7 +701,13 @@ function dateKey(day: string, month: string, year?: string): string {
   return `${Number(day)}-${m}${year ? `-${year.length === 2 ? `20${year}` : year}` : ''}`;
 }
 
-function collect(re: RegExp, text: string, fn: (m: RegExpExecArray) => ExtractedFact | null, facts: ExtractedFact[], blank: (start: number, end: number) => void): void {
+function collect(
+  re: RegExp,
+  text: string,
+  fn: (m: RegExpExecArray) => ExtractedFact | null,
+  facts: ExtractedFact[],
+  blank: (start: number, end: number) => void,
+): void {
   re.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
@@ -397,25 +728,89 @@ export function extractFacts(text: string): ExtractedFact[] {
   const sync = (): void => {
     work = chars.join('');
   };
-  collect(RE_DATE_TR, work, (m) => ({ text: m[0].trim(), kind: 'date', key: dateKey(m[1] ?? '', m[2] ?? '', m[3]) }), facts, blank);
+  collect(
+    RE_DATE_TR,
+    work,
+    (m) => ({ text: m[0].trim(), kind: 'date', key: dateKey(m[1] ?? '', m[2] ?? '', m[3]) }),
+    facts,
+    blank,
+  );
   sync();
-  collect(RE_DATE_EN, work, (m) => ({ text: m[0].trim(), kind: 'date', key: dateKey(m[2] ?? '', m[1] ?? '', m[3]) }), facts, blank);
+  collect(
+    RE_DATE_EN,
+    work,
+    (m) => ({ text: m[0].trim(), kind: 'date', key: dateKey(m[2] ?? '', m[1] ?? '', m[3]) }),
+    facts,
+    blank,
+  );
   sync();
-  collect(RE_DATE_ISO, work, (m) => ({ text: m[0], kind: 'date', key: dateKey(m[3] ?? '', m[2] ?? '', m[1]) }), facts, blank);
+  collect(
+    RE_DATE_ISO,
+    work,
+    (m) => ({ text: m[0], kind: 'date', key: dateKey(m[3] ?? '', m[2] ?? '', m[1]) }),
+    facts,
+    blank,
+  );
   sync();
-  collect(RE_TIME, work, (m) => ({ text: m[0], kind: 'time', key: `${String(Number(m[1])).padStart(2, '0')}:${m[2] ?? ''}` }), facts, blank);
+  collect(
+    RE_TIME,
+    work,
+    (m) => ({
+      text: m[0],
+      kind: 'time',
+      key: `${String(Number(m[1])).padStart(2, '0')}:${m[2] ?? ''}`,
+    }),
+    facts,
+    blank,
+  );
   sync();
-  collect(RE_DATE_NUM, work, (m) => ({ text: m[0], kind: 'date', key: dateKey(m[1] ?? '', m[2] ?? '', m[3]) }), facts, blank);
+  collect(
+    RE_DATE_NUM,
+    work,
+    (m) => ({ text: m[0], kind: 'date', key: dateKey(m[1] ?? '', m[2] ?? '', m[3]) }),
+    facts,
+    blank,
+  );
   sync();
-  collect(RE_AMOUNT, work, (m) => ({ text: m[0].trim(), kind: 'amount', key: canonicalNumber(m[1] ?? '') }), facts, blank);
+  collect(
+    RE_AMOUNT,
+    work,
+    (m) => ({ text: m[0].trim(), kind: 'amount', key: canonicalNumber(m[1] ?? '') }),
+    facts,
+    blank,
+  );
   sync();
-  collect(RE_PERCENT, work, (m) => ({ text: m[0].trim(), kind: 'amount', key: canonicalNumber(m[1] ?? m[2] ?? '') }), facts, blank);
+  collect(
+    RE_PERCENT,
+    work,
+    (m) => ({ text: m[0].trim(), kind: 'amount', key: canonicalNumber(m[1] ?? m[2] ?? '') }),
+    facts,
+    blank,
+  );
   sync();
-  collect(RE_PNR, work, (m) => ({ text: m[0].trim(), kind: 'code', key: (m[1] ?? '').toUpperCase() }), facts, blank);
+  collect(
+    RE_PNR,
+    work,
+    (m) => ({ text: m[0].trim(), kind: 'code', key: (m[1] ?? '').toUpperCase() }),
+    facts,
+    blank,
+  );
   sync();
-  collect(RE_CODE, work, (m) => ({ text: m[0], kind: 'code', key: (m[1] ?? '').toUpperCase() }), facts, blank);
+  collect(
+    RE_CODE,
+    work,
+    (m) => ({ text: m[0], kind: 'code', key: (m[1] ?? '').toUpperCase() }),
+    facts,
+    blank,
+  );
   sync();
-  collect(RE_NUMBER, work, (m) => ({ text: m[0], kind: 'number', key: canonicalNumber(m[1] ?? '') }), facts, blank);
+  collect(
+    RE_NUMBER,
+    work,
+    (m) => ({ text: m[0], kind: 'number', key: canonicalNumber(m[1] ?? '') }),
+    facts,
+    blank,
+  );
   return facts.filter((f) => f.key.length > 0);
 }
 
@@ -423,12 +818,22 @@ export function extractFacts(text: string): ExtractedFact[] {
  * Every concrete fact in the answer (numbers, dates, times, amounts, codes) must appear in the
  * content of the cited chunks; otherwise the answer is uncertain ("Kaynakta kesinleşmiyor.").
  */
-export function groundingCheck(answerText: string, citedIds: readonly string[], chunks: readonly Pick<MemoryChunk, 'id' | 'content'>[]): GroundingResult {
+export function groundingCheck(
+  answerText: string,
+  citedIds: readonly string[],
+  chunks: readonly Pick<MemoryChunk, 'id' | 'content'>[],
+): GroundingResult {
   const byId = new Map(chunks.map((c) => [c.id, c]));
-  const cited = citedIds.map((id) => byId.get(id)).filter((c): c is Pick<MemoryChunk, 'id' | 'content'> => !!c);
+  const cited = citedIds
+    .map((id) => byId.get(id))
+    .filter((c): c is Pick<MemoryChunk, 'id' | 'content'> => !!c);
   const unknownCitation = citedIds.some((id) => !byId.has(id));
   const answerFacts = extractFacts(answerText);
-  if (cited.length === 0) return { uncertain: answerFacts.length > 0 || unknownCitation, unsupportedFacts: answerFacts.map((f) => f.text) };
+  if (cited.length === 0)
+    return {
+      uncertain: answerFacts.length > 0 || unknownCitation,
+      unsupportedFacts: answerFacts.map((f) => f.text),
+    };
   const haystack = cited.map((c) => c.content).join('\n');
   const supported = new Set<string>();
   for (const f of extractFacts(haystack)) {
@@ -447,13 +852,20 @@ export function groundingCheck(answerText: string, citedIds: readonly string[], 
   const unsupported: string[] = [];
   for (const f of answerFacts) {
     let ok = false;
-    if (f.kind === 'date') ok = supported.has(`date:${f.key}`) || supported.has(`date:${f.key.split('-').slice(0, 2).join('-')}`);
+    if (f.kind === 'date')
+      ok =
+        supported.has(`date:${f.key}`) ||
+        supported.has(`date:${f.key.split('-').slice(0, 2).join('-')}`);
     else if (f.kind === 'code') ok = upperHay.includes(f.key);
-    else if (f.kind === 'amount') ok = supported.has(`amount:${f.key}`) || supported.has(`number:${f.key}`);
+    else if (f.kind === 'amount')
+      ok = supported.has(`amount:${f.key}`) || supported.has(`number:${f.key}`);
     else ok = supported.has(`${f.kind}:${f.key}`);
     if (!ok) unsupported.push(f.text);
   }
-  return { uncertain: unknownCitation || unsupported.length > 0, unsupportedFacts: [...new Set(unsupported)] };
+  return {
+    uncertain: unknownCitation || unsupported.length > 0,
+    unsupportedFacts: [...new Set(unsupported)],
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -461,14 +873,17 @@ export function groundingCheck(answerText: string, citedIds: readonly string[], 
 // ---------------------------------------------------------------------------
 
 /** One SourceRef per underlying source (first occurrence wins), with a citation excerpt. */
-export function buildSourceRefs(chunks: readonly Pick<MemoryChunk, 'source' | 'content'>[]): SourceRef[] {
+export function buildSourceRefs(
+  chunks: readonly Pick<MemoryChunk, 'source' | 'content'>[],
+): SourceRef[] {
   const seen = new Set<string>();
   const out: SourceRef[] = [];
   for (const c of chunks) {
     const key = `${c.source.type}:${c.source.id}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const excerpt = c.source.excerpt ?? truncate(c.content.replace(/\s*\n\s*/g, ' '), CITATION_MAX_CHARS);
+    const excerpt =
+      c.source.excerpt ?? truncate(c.content.replace(/\s*\n\s*/g, ' '), CITATION_MAX_CHARS);
     out.push({ ...c.source, excerpt });
   }
   return out;
@@ -508,7 +923,10 @@ function queryTokens(query: string | undefined): string[] {
 export function termOverlap(query: string | undefined, text: string): number {
   const tokens = queryTokens(query);
   if (tokens.length === 0) return 0;
-  const words = text.toLocaleLowerCase('tr-TR').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const words = text
+    .toLocaleLowerCase('tr-TR')
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
   let hits = 0;
   for (const t of tokens) if (words.some((w) => w.startsWith(t))) hits += 1;
   return hits / tokens.length;
@@ -518,7 +936,14 @@ export function termOverlap(query: string | undefined, text: string): number {
  * Retrieval scores (vector / FTS rank) are authoritative with a small recency tie-break; entities
  * without a score are ranked by term overlap, capped below a strong retrieval hit in semantic mode.
  */
-function relevance(query: string | undefined, text: string, date: string, nowMs: number, mode: 'semantic' | 'fts', given?: number): number {
+function relevance(
+  query: string | undefined,
+  text: string,
+  date: string,
+  nowMs: number,
+  mode: 'semantic' | 'fts',
+  given?: number,
+): number {
   const rec = recencyScore(date, nowMs);
   if (typeof given === 'number') return Math.max(0, Math.min(1, given)) * 0.9 + rec * 0.1;
   if (!query) return rec;
@@ -545,7 +970,14 @@ export function toSearchResults(input: SearchInput, opts: ToSearchResultsOptions
       summary: truncate(c.content.replace(/\s*\n\s*/g, ' '), 200),
       date: c.occurredAt,
       source: c.source,
-      score: relevance(opts.query, `${title} ${c.content}`, c.occurredAt, nowMs, opts.mode, c.score),
+      score: relevance(
+        opts.query,
+        `${title} ${c.content}`,
+        c.occurredAt,
+        nowMs,
+        opts.mode,
+        c.score,
+      ),
       entityId: c.sourceId,
     });
   }
@@ -560,14 +992,29 @@ export function toSearchResults(input: SearchInput, opts: ToSearchResultsOptions
       title: stripSubjectPrefixes(t.subject),
       summary: truncate(summary, 200),
       date: t.lastMessageAt,
-      source: { type: 'gmail', id: t.id, externalId: t.externalThreadId, label: sourceLabel('gmail', locale), ...(person ? { person } : {}), timestamp: t.lastMessageAt },
-      score: relevance(opts.query, `${t.subject} ${summary} ${person ?? ''}`, t.lastMessageAt, nowMs, opts.mode),
+      source: {
+        type: 'gmail',
+        id: t.id,
+        externalId: t.externalThreadId,
+        label: sourceLabel('gmail', locale),
+        ...(person ? { person } : {}),
+        timestamp: t.lastMessageAt,
+      },
+      score: relevance(
+        opts.query,
+        `${t.subject} ${summary} ${person ?? ''}`,
+        t.lastMessageAt,
+        nowMs,
+        opts.mode,
+      ),
       entityId: t.id,
     });
   }
   for (const e of input.events ?? []) {
     if (e.deletedAt || e.status === 'cancelled') continue;
-    const when = e.allDay ? dateSentence(e.startAt, timezone, locale, false) : dateSentence(e.startAt, timezone, locale);
+    const when = e.allDay
+      ? dateSentence(e.startAt, timezone, locale, false)
+      : dateSentence(e.startAt, timezone, locale);
     const summary = [when, e.location ?? null].filter(Boolean).join(' · ');
     push({
       id: `event:${e.id}`,
@@ -575,8 +1022,20 @@ export function toSearchResults(input: SearchInput, opts: ToSearchResultsOptions
       title: e.title,
       summary,
       date: e.startAt,
-      source: { type: e.source, id: e.id, externalId: e.externalEventId, label: sourceLabel(e.source, locale), timestamp: e.startAt },
-      score: relevance(opts.query, `${e.title} ${e.location ?? ''} ${e.attendees.map((a) => a.name ?? '').join(' ')}`, e.startAt, nowMs, opts.mode),
+      source: {
+        type: e.source,
+        id: e.id,
+        externalId: e.externalEventId,
+        label: sourceLabel(e.source, locale),
+        timestamp: e.startAt,
+      },
+      score: relevance(
+        opts.query,
+        `${e.title} ${e.location ?? ''} ${e.attendees.map((a) => a.name ?? '').join(' ')}`,
+        e.startAt,
+        nowMs,
+        opts.mode,
+      ),
       entityId: e.id,
     });
   }
@@ -590,21 +1049,67 @@ export function toSearchResults(input: SearchInput, opts: ToSearchResultsOptions
       title: c.displayName,
       summary,
       date,
-      source: { type: 'user', id: c.id, label: locale === 'en' ? 'Contact' : 'Kişi', person: c.displayName, personId: c.id, timestamp: date },
-      score: relevance(opts.query, `${c.displayName} ${c.emails.join(' ')} ${summary}`, date, nowMs, opts.mode),
+      source: {
+        type: 'user',
+        id: c.id,
+        label: locale === 'en' ? 'Contact' : 'Kişi',
+        person: c.displayName,
+        personId: c.id,
+        timestamp: date,
+      },
+      score: relevance(
+        opts.query,
+        `${c.displayName} ${c.emails.join(' ')} ${summary}`,
+        date,
+        nowMs,
+        opts.mode,
+      ),
       entityId: c.id,
     });
   }
   for (const l of input.lifeEvents ?? []) {
     if (l.deletedAt) continue;
     const date = l.eventAt ?? l.source.timestamp;
-    const detail = [l.details.merchant, l.details.carrier, l.details.airline, l.details.payee, l.details.serviceName, l.details.venue].filter(Boolean).join(' · ');
-    push({ id: `life:${l.id}`, kind: 'life_event', title: l.title, summary: detail, date, source: l.source, score: relevance(opts.query, `${l.title} ${detail}`, date, nowMs, opts.mode), entityId: l.id });
+    const detail = [
+      l.details.merchant,
+      l.details.carrier,
+      l.details.airline,
+      l.details.payee,
+      l.details.serviceName,
+      l.details.venue,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    push({
+      id: `life:${l.id}`,
+      kind: 'life_event',
+      title: l.title,
+      summary: detail,
+      date,
+      source: l.source,
+      score: relevance(opts.query, `${l.title} ${detail}`, date, nowMs, opts.mode),
+      entityId: l.id,
+    });
   }
   for (const c of input.commitments ?? []) {
     if (c.deletedAt) continue;
     const date = c.dueAt ?? c.source.timestamp;
-    push({ id: `commitment:${c.id}`, kind: 'commitment', title: c.text, summary: c.quote ?? c.dueText ?? '', date, source: c.source, score: relevance(opts.query, `${c.text} ${c.quote ?? ''} ${c.counterpartName ?? ''}`, date, nowMs, opts.mode), entityId: c.id });
+    push({
+      id: `commitment:${c.id}`,
+      kind: 'commitment',
+      title: c.text,
+      summary: c.quote ?? c.dueText ?? '',
+      date,
+      source: c.source,
+      score: relevance(
+        opts.query,
+        `${c.text} ${c.quote ?? ''} ${c.counterpartName ?? ''}`,
+        date,
+        nowMs,
+        opts.mode,
+      ),
+      entityId: c.id,
+    });
   }
   for (const t of input.tasks ?? []) {
     if (t.deletedAt) continue;
@@ -615,7 +1120,12 @@ export function toSearchResults(input: SearchInput, opts: ToSearchResultsOptions
       title: t.title,
       summary: t.notes ?? '',
       date,
-      source: t.source ?? { type: 'user', id: t.id, label: sourceLabel('user', locale), timestamp: t.createdAt },
+      source: t.source ?? {
+        type: 'user',
+        id: t.id,
+        label: sourceLabel('user', locale),
+        timestamp: t.createdAt,
+      },
       score: relevance(opts.query, `${t.title} ${t.notes ?? ''}`, date, nowMs, opts.mode),
       entityId: t.id,
     });

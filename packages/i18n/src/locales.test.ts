@@ -6,7 +6,9 @@ import { createI18n } from './index';
 function flatten(obj: unknown, prefix = ''): string[] {
   if (Array.isArray(obj)) return [prefix];
   if (obj && typeof obj === 'object') {
-    return Object.entries(obj as Record<string, unknown>).flatMap(([k, v]) => flatten(v, prefix ? `${prefix}.${k}` : k));
+    return Object.entries(obj as Record<string, unknown>).flatMap(([k, v]) =>
+      flatten(v, prefix ? `${prefix}.${k}` : k),
+    );
   }
   return [prefix];
 }
@@ -25,7 +27,9 @@ describe('locales', () => {
     const i18n = createI18n('tr');
     expect(i18n.t('greeting.morning', { name: 'Yunus' })).toBe('Günaydın, Yunus');
     expect(i18n.t('today.headline', { count: 5 })).toBe('Bugün bilmen gereken 5 şey var.');
-    expect(i18n.t('common.sourceLine', { label: 'Gmail', person: 'Ahmet Yılmaz', time: '08:42' })).toBe('Gmail · Ahmet Yılmaz · 08:42');
+    expect(
+      i18n.t('common.sourceLine', { label: 'Gmail', person: 'Ahmet Yılmaz', time: '08:42' }),
+    ).toBe('Gmail · Ahmet Yılmaz · 08:42');
   });
 
   it('switches to English', () => {

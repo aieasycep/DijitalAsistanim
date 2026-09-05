@@ -17,7 +17,12 @@ export class AiProviderError extends Error {
     provider: AiProviderName,
     kind: AiProviderErrorKind,
     message: string,
-    opts: { status?: number | null; retryable?: boolean; retryAfterSec?: number | null; cause?: unknown } = {},
+    opts: {
+      status?: number | null;
+      retryable?: boolean;
+      retryAfterSec?: number | null;
+      cause?: unknown;
+    } = {},
   ) {
     super(message, { cause: opts.cause });
     this.name = 'AiProviderError';
@@ -44,7 +49,9 @@ function defaultRetryable(kind: AiProviderErrorKind, status: number | null): boo
     case 'timeout':
       return true;
     case 'http':
-      return status === 408 || status === 409 || status === 429 || (status !== null && status >= 500);
+      return (
+        status === 408 || status === 409 || status === 429 || (status !== null && status >= 500)
+      );
     case 'parse':
     case 'empty':
       return true;

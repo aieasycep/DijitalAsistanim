@@ -10,19 +10,140 @@ export const SUF = flexI(
   "(?:'?(?:nden|ndan|nde|nda|den|dan|ten|tan|de|da|te|ta|ye|ya|ne|na|ni|nı|nu|nü|yi|yı|yu|yü|nin|nın|nun|nün|si|sı|su|sü|ki|kü|in|ın|un|ün|e|a|i|ı|u|ü))?",
 );
 
-export const MONTHS_TR = ['ocak', 'şubat', 'mart', 'nisan', 'mayıs', 'haziran', 'temmuz', 'ağustos', 'eylül', 'ekim', 'kasım', 'aralık'] as const;
-export const MONTHS_TR_TITLE = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'] as const;
-export const MONTHS_TR_ABBR = ['oca', 'şub', 'mar', 'nis', 'may', 'haz', 'tem', 'ağu', 'eyl', 'eki', 'kas', 'ara'] as const;
-export const MONTHS_EN = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'] as const;
-export const MONTHS_EN_TITLE = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as const;
-export const MONTHS_EN_ABBR = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'] as const;
+export const MONTHS_TR = [
+  'ocak',
+  'şubat',
+  'mart',
+  'nisan',
+  'mayıs',
+  'haziran',
+  'temmuz',
+  'ağustos',
+  'eylül',
+  'ekim',
+  'kasım',
+  'aralık',
+] as const;
+export const MONTHS_TR_TITLE = [
+  'Ocak',
+  'Şubat',
+  'Mart',
+  'Nisan',
+  'Mayıs',
+  'Haziran',
+  'Temmuz',
+  'Ağustos',
+  'Eylül',
+  'Ekim',
+  'Kasım',
+  'Aralık',
+] as const;
+export const MONTHS_TR_ABBR = [
+  'oca',
+  'şub',
+  'mar',
+  'nis',
+  'may',
+  'haz',
+  'tem',
+  'ağu',
+  'eyl',
+  'eki',
+  'kas',
+  'ara',
+] as const;
+export const MONTHS_EN = [
+  'january',
+  'february',
+  'march',
+  'april',
+  'may',
+  'june',
+  'july',
+  'august',
+  'september',
+  'october',
+  'november',
+  'december',
+] as const;
+export const MONTHS_EN_TITLE = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
+export const MONTHS_EN_ABBR = [
+  'jan',
+  'feb',
+  'mar',
+  'apr',
+  'may',
+  'jun',
+  'jul',
+  'aug',
+  'sep',
+  'oct',
+  'nov',
+  'dec',
+] as const;
 
-export const WEEKDAYS_TR = ['pazartesi', 'salı', 'çarşamba', 'perşembe', 'cuma', 'cumartesi', 'pazar'] as const;
-export const WEEKDAYS_TR_TITLE = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'] as const;
-export const WEEKDAYS_EN = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
-export const WEEKDAYS_EN_TITLE = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+export const WEEKDAYS_TR = [
+  'pazartesi',
+  'salı',
+  'çarşamba',
+  'perşembe',
+  'cuma',
+  'cumartesi',
+  'pazar',
+] as const;
+export const WEEKDAYS_TR_TITLE = [
+  'Pazartesi',
+  'Salı',
+  'Çarşamba',
+  'Perşembe',
+  'Cuma',
+  'Cumartesi',
+  'Pazar',
+] as const;
+export const WEEKDAYS_EN = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const;
+export const WEEKDAYS_EN_TITLE = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+] as const;
 const WEEKDAYS_TR_SAFE_ABBR = ['pzt', 'çar', 'cmt'] as const;
-export const WEEKDAYS_EN_ABBR = ['mon', 'tues', 'tue', 'wed', 'thurs', 'thur', 'thu', 'fri', 'sat', 'sun'] as const;
+export const WEEKDAYS_EN_ABBR = [
+  'mon',
+  'tues',
+  'tue',
+  'wed',
+  'thurs',
+  'thur',
+  'thu',
+  'fri',
+  'sat',
+  'sun',
+] as const;
 
 /** Build an alternation of literal words, longest first, with ı/i made interchangeable. */
 export function alternation(words: readonly string[]): string {
@@ -77,7 +198,11 @@ export function weekdayIndex(name: string): number | null {
 export const MONTH_TR_FULL_ALT = alternation(MONTHS_TR);
 export const MONTH_TR_ABBR_ALT = alternation(MONTHS_TR_ABBR);
 export const MONTH_EN_ALT = alternation([...MONTHS_EN, ...MONTHS_EN_ABBR, 'sept']);
-export const WEEKDAY_FULL_ALT = alternation([...WEEKDAYS_TR, ...WEEKDAYS_TR_SAFE_ABBR, ...WEEKDAYS_EN]);
+export const WEEKDAY_FULL_ALT = alternation([
+  ...WEEKDAYS_TR,
+  ...WEEKDAYS_TR_SAFE_ABBR,
+  ...WEEKDAYS_EN,
+]);
 export const WEEKDAY_EN_ABBR_ALT = alternation(WEEKDAYS_EN_ABBR);
 
 export type TimeOfDayCategory = 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
@@ -133,10 +258,39 @@ export function adjustHourForTimeOfDay(category: TimeOfDayCategory, hh: number):
 }
 
 const TR_NUMBER_WORDS: Record<string, number> = {
-  bir: 1, iki: 2, üç: 3, dört: 4, beş: 5, altı: 6, yedi: 7, sekiz: 8, dokuz: 9, on: 10, 'on beş': 15, yirmi: 20, otuz: 30, kırk: 40, elli: 50, altmış: 60,
+  bir: 1,
+  iki: 2,
+  üç: 3,
+  dört: 4,
+  beş: 5,
+  altı: 6,
+  yedi: 7,
+  sekiz: 8,
+  dokuz: 9,
+  on: 10,
+  'on beş': 15,
+  yirmi: 20,
+  otuz: 30,
+  kırk: 40,
+  elli: 50,
+  altmış: 60,
 };
 const EN_NUMBER_WORDS: Record<string, number> = {
-  a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, fifteen: 15, twenty: 20, thirty: 30,
+  a: 1,
+  an: 1,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  fifteen: 15,
+  twenty: 20,
+  thirty: 30,
 };
 
 export const TR_NUMBER_ALT = alternation(Object.keys(TR_NUMBER_WORDS));

@@ -26,17 +26,22 @@ export const DEFAULT_EXCLUDED_PACKAGES: readonly string[] = [
   'com.samsung.android.samsungpass',
 ];
 
-const SENSITIVE_PACKAGE_PATTERN = /(?:authenticator|password|passwd|otp|2fa|totp|passkey|vault|keychain|keeper|bitwarden|lastpass|1password|dashlane)/i;
+const SENSITIVE_PACKAGE_PATTERN =
+  /(?:authenticator|password|passwd|otp|2fa|totp|passkey|vault|keychain|keeper|bitwarden|lastpass|1password|dashlane)/i;
 
 const OTP_KEYWORDS = new RegExp(
   '(?<![\\p{L}])(?:doğrulama kodu|onay kodu|giriş kodu|güvenlik kodu|tek kullanımlık|kodunuz|kodun|şifreniz|parolanız|verification code|security code|login code|one[- ]time (?:code|password|passcode)|otp|2fa|passcode|your code|code is|pin kodu|your pin|sms kodu)[a-zçğıöşü]{0,4}(?![\\p{L}])',
   'iu',
 );
 const CODE_TOKEN = /(?<![\d-])\d{3}[\s-]?\d{3}(?![\d-])|(?<!\d)\d{4,8}(?!\d)/u;
-const NON_OTP_CONTEXT = /(?:sipariş|order|kargo|takip|tracking|indirim|kupon|coupon|promosyon|referans|reference|rezervasyon|pnr|fatura|invoice|abone|müşteri no|customer)/iu;
+const NON_OTP_CONTEXT =
+  /(?:sipariş|order|kargo|takip|tracking|indirim|kupon|coupon|promosyon|referans|reference|rezervasyon|pnr|fatura|invoice|abone|müşteri no|customer)/iu;
 const CREDENTIAL = /(?:şifreniz|parolanız|your password|password is|şifreniz:|parola:|password:)/iu;
 
-export function isSensitiveNotification(input: NotificationInput, opts: { excludedPackages?: readonly string[] } = {}): SensitiveNotificationResult {
+export function isSensitiveNotification(
+  input: NotificationInput,
+  opts: { excludedPackages?: readonly string[] } = {},
+): SensitiveNotificationResult {
   const pkg = input.packageName.trim().toLowerCase();
   const excluded = opts.excludedPackages ?? DEFAULT_EXCLUDED_PACKAGES;
   if (excluded.some((p) => p.toLowerCase() === pkg) || SENSITIVE_PACKAGE_PATTERN.test(pkg)) {

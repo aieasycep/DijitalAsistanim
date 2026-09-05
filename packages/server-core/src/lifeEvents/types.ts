@@ -10,7 +10,18 @@ export interface ExtractLifeEventInput {
   locale?: Locale;
 }
 
-export type BillKind = 'electricity' | 'water' | 'gas' | 'internet' | 'phone' | 'credit_card' | 'dues' | 'rent' | 'insurance' | 'tax' | 'school';
+export type BillKind =
+  | 'electricity'
+  | 'water'
+  | 'gas'
+  | 'internet'
+  | 'phone'
+  | 'credit_card'
+  | 'dues'
+  | 'rent'
+  | 'insurance'
+  | 'tax'
+  | 'school';
 
 /**
  * LifeEventExtraction plus the verbatim evidence that justifies every date/amount/number field and

@@ -30,7 +30,8 @@ export function formatDayLabel(iso: string, opts: FormatDateOptions): string {
     const wd = isoWeekday(target) - 1;
     return (locale === 'tr' ? WEEKDAYS_TR_TITLE[wd] : WEEKDAYS_EN_TITLE[wd]) ?? '';
   }
-  const month = (locale === 'tr' ? MONTHS_TR_TITLE[target.m - 1] : MONTHS_EN_TITLE[target.m - 1]) ?? '';
+  const month =
+    (locale === 'tr' ? MONTHS_TR_TITLE[target.m - 1] : MONTHS_EN_TITLE[target.m - 1]) ?? '';
   const year = target.y !== today.y ? ` ${target.y}` : '';
   return `${target.d} ${month}${year}`;
 }
@@ -60,7 +61,10 @@ export function formatDateLocative(iso: string, opts: FormatDateOptions): string
 }
 
 /** "bugün 17:00'ye kadar" / "by today 17:00" — for deadline sentences. */
-export function formatDeadlinePhrase(iso: string, opts: FormatDateOptions & { hasTime?: boolean }): string {
+export function formatDeadlinePhrase(
+  iso: string,
+  opts: FormatDateOptions & { hasTime?: boolean },
+): string {
   const locale = opts.locale ?? 'tr';
   const day = formatDayLabel(iso, opts);
   const t = localDateTimeOf(iso, opts.timezone);

@@ -40,9 +40,14 @@ function domainMatches(domain: string, pattern: string): boolean {
   return d === p || d.endsWith(`.${p}`);
 }
 
-export function matchPriorityRules(rules: readonly PriorityRule[], c: PriorityCandidate): RuleHit[] {
+export function matchPriorityRules(
+  rules: readonly PriorityRule[],
+  c: PriorityCandidate,
+): RuleHit[] {
   const email = (c.senderEmail ?? '').trim().toLowerCase();
-  const domain = (c.senderDomain ?? (email.includes('@') ? email.slice(email.lastIndexOf('@') + 1) : '')).toLowerCase();
+  const domain = (
+    c.senderDomain ?? (email.includes('@') ? email.slice(email.lastIndexOf('@') + 1) : '')
+  ).toLowerCase();
   const text = (c.text ?? '').toLocaleLowerCase('tr-TR');
   const hits: RuleHit[] = [];
   for (const rule of [...rules].sort((a, b) => a.position - b.position)) {
@@ -52,7 +57,10 @@ export function matchPriorityRules(rules: readonly PriorityRule[], c: PriorityCa
     switch (rule.type) {
       case 'sender_important':
       case 'vip_notify':
-        if ((value.includes('@') && value === email) || (!value.includes('@') && c.contactId && value === c.contactId.toLowerCase())) {
+        if (
+          (value.includes('@') && value === email) ||
+          (!value.includes('@') && c.contactId && value === c.contactId.toLowerCase())
+        ) {
           hits.push({ rule, effect: 'important' });
         }
         break;
@@ -60,10 +68,12 @@ export function matchPriorityRules(rules: readonly PriorityRule[], c: PriorityCa
         if (domain && domainMatches(domain, value)) hits.push({ rule, effect: 'important' });
         break;
       case 'keyword_high':
-        if (text.includes(rule.value.trim().toLocaleLowerCase('tr-TR'))) hits.push({ rule, effect: 'important' });
+        if (text.includes(rule.value.trim().toLocaleLowerCase('tr-TR')))
+          hits.push({ rule, effect: 'important' });
         break;
       case 'keyword_low':
-        if (text.includes(rule.value.trim().toLocaleLowerCase('tr-TR'))) hits.push({ rule, effect: 'low' });
+        if (text.includes(rule.value.trim().toLocaleLowerCase('tr-TR')))
+          hits.push({ rule, effect: 'low' });
         break;
       case 'promotions_low':
         if (c.isPromotion || c.category === 'promotion') hits.push({ rule, effect: 'low' });
@@ -80,7 +90,10 @@ export function matchPriorityRules(rules: readonly PriorityRule[], c: PriorityCa
 }
 
 /** Sum of enabled learned weights that apply to this candidate, clamped to -1..1. */
-export function learnedWeight(learned: readonly LearnedPreference[], c: PriorityCandidate): { weight: number; statements: string[] } {
+export function learnedWeight(
+  learned: readonly LearnedPreference[],
+  c: PriorityCandidate,
+): { weight: number; statements: string[] } {
   const keys = new Set<string>();
   if (c.contactId) keys.add(c.contactId.toLowerCase());
   if (c.senderEmail) keys.add(c.senderEmail.toLowerCase());
@@ -90,7 +103,13 @@ export function learnedWeight(learned: readonly LearnedPreference[], c: Priority
   const statements: string[] = [];
   for (const p of learned) {
     if (!p.enabled) continue;
-    if (p.kind !== 'person_priority' && p.kind !== 'category_priority' && p.kind !== 'dismiss_pattern' && p.kind !== 'briefing_focus') continue;
+    if (
+      p.kind !== 'person_priority' &&
+      p.kind !== 'category_priority' &&
+      p.kind !== 'dismiss_pattern' &&
+      p.kind !== 'briefing_focus'
+    )
+      continue;
     if (!keys.has(p.subjectKey.toLowerCase())) continue;
     weight += p.kind === 'dismiss_pattern' ? -Math.abs(p.weight) : p.weight;
     if (p.statement) statements.push(p.statement);
@@ -120,7 +139,14 @@ export function scoreCandidate(c: PriorityCandidate, ctx: PriorityContext): Prio
       tier: 'low',
       reasons: [rulePhrase(locale, mute.rule.type, mute.rule.value)],
       muted: true,
-      factors: [{ level: 1, key: `rule:${mute.rule.type}`, points: 0, reason: rulePhrase(locale, mute.rule.type, mute.rule.value) }],
+      factors: [
+        {
+          level: 1,
+          key: `rule:${mute.rule.type}`,
+          points: 0,
+          reason: rulePhrase(locale, mute.rule.type, mute.rule.value),
+        },
+      ],
       matchedRuleIds,
     };
   }
@@ -130,7 +156,12 @@ export function scoreCandidate(c: PriorityCandidate, ctx: PriorityContext): Prio
   const importantRule = hits.find((h) => h.effect === 'important');
   const lowRule = hits.find((h) => h.effect === 'low');
   // When both kinds of explicit rule match, the one the user placed first wins.
-  const explicit = importantRule && lowRule ? (importantRule.rule.position <= lowRule.rule.position ? importantRule : lowRule) : (importantRule ?? lowRule);
+  const explicit =
+    importantRule && lowRule
+      ? importantRule.rule.position <= lowRule.rule.position
+        ? importantRule
+        : lowRule
+      : (importantRule ?? lowRule);
   if (explicit) {
     const reason = rulePhrase(locale, explicit.rule.type, explicit.rule.value);
     if (explicit.effect === 'important') {
@@ -140,7 +171,12 @@ export function scoreCandidate(c: PriorityCandidate, ctx: PriorityContext): Prio
       explicitCeiling = 'low';
       points -= 80;
     }
-    factors.push({ level: 1, key: `rule:${explicit.rule.type}`, points: explicit.effect === 'important' ? 120 : -80, reason });
+    factors.push({
+      level: 1,
+      key: `rule:${explicit.rule.type}`,
+      points: explicit.effect === 'important' ? 120 : -80,
+      reason,
+    });
     reasons.push(reason);
   }
 
@@ -170,7 +206,8 @@ export function scoreCandidate(c: PriorityCandidate, ctx: PriorityContext): Prio
       reason = t(locale, 'deadlineOverdue', { day: formatDayLabel(c.deadlineAt, fmt) });
     } else {
       const phrase = formatDeadlinePhrase(c.deadlineAt, { ...fmt, hasTime });
-      const actionable = c.requiresUserAction || c.isUserCommitment || c.kind === 'task' || c.kind === 'commitment';
+      const actionable =
+        c.requiresUserAction || c.isUserCommitment || c.kind === 'task' || c.kind === 'commitment';
       if (h <= 24) {
         pts = 110;
         floor = maxTier(floor, actionable ? 'critical' : 'high');
@@ -183,7 +220,11 @@ export function scoreCandidate(c: PriorityCandidate, ctx: PriorityContext): Prio
       } else {
         pts = 25;
       }
-      reason = c.isUserCommitment ? t(locale, 'deadlineCommitment', { phrase }) : c.requiresUserAction ? t(locale, 'deadlineReply', { phrase }) : t(locale, 'deadline', { phrase });
+      reason = c.isUserCommitment
+        ? t(locale, 'deadlineCommitment', { phrase })
+        : c.requiresUserAction
+          ? t(locale, 'deadlineReply', { phrase })
+          : t(locale, 'deadline', { phrase });
     }
     points += pts;
     factors.push({ level: 3, key: 'deadline', points: pts, reason });
@@ -201,11 +242,15 @@ export function scoreCandidate(c: PriorityCandidate, ctx: PriorityContext): Prio
   }
 
   // 5 — waiting for user reply
-  if (c.requiresUserAction && (c.category === 'waiting_for_user' || c.category === 'action_required' || c.kind === 'email')) {
+  if (
+    c.requiresUserAction &&
+    (c.category === 'waiting_for_user' || c.category === 'action_required' || c.kind === 'email')
+  ) {
     floor = maxTier(floor, 'normal');
     points += 50;
     const days = Math.floor(c.ageHours / 24);
-    const reason = days >= 2 ? t(locale, 'waitingDays', { days: String(days) }) : t(locale, 'waiting');
+    const reason =
+      days >= 2 ? t(locale, 'waitingDays', { days: String(days) }) : t(locale, 'waiting');
     factors.push({ level: 5, key: 'waiting_for_user', points: 50, reason });
     reasons.push(reason);
   }
@@ -225,7 +270,9 @@ export function scoreCandidate(c: PriorityCandidate, ctx: PriorityContext): Prio
       const pts = h <= 24 ? 40 : 20;
       floor = maxTier(floor, 'normal');
       points += pts;
-      const reason = t(locale, 'meeting', { label: formatDateLabel(c.relatedMeetingAt, { ...fmt, withTime: true }) });
+      const reason = t(locale, 'meeting', {
+        label: formatDateLabel(c.relatedMeetingAt, { ...fmt, withTime: true }),
+      });
       factors.push({ level: 7, key: 'meeting', points: pts, reason });
       reasons.push(reason);
     }
@@ -247,9 +294,17 @@ export function scoreCandidate(c: PriorityCandidate, ctx: PriorityContext): Prio
   }
 
   // 9 — AI importance
-  const aiPts = Math.round({ critical: 60, high: 40, normal: 15, low: 0 }[c.importance] * (0.5 + 0.5 * Math.max(0, Math.min(1, c.confidence))));
+  const aiPts = Math.round(
+    { critical: 60, high: 40, normal: 15, low: 0 }[c.importance] *
+      (0.5 + 0.5 * Math.max(0, Math.min(1, c.confidence))),
+  );
   points += aiPts;
-  const aiReason = c.importance === 'critical' ? t(locale, 'aiCritical') : c.importance === 'high' ? t(locale, 'aiHigh') : undefined;
+  const aiReason =
+    c.importance === 'critical'
+      ? t(locale, 'aiCritical')
+      : c.importance === 'high'
+        ? t(locale, 'aiHigh')
+        : undefined;
   factors.push({ level: 9, key: `ai:${c.importance}`, points: aiPts, reason: aiReason });
   if (aiReason && reasons.length === 0) reasons.push(aiReason);
 
@@ -258,7 +313,10 @@ export function scoreCandidate(c: PriorityCandidate, ctx: PriorityContext): Prio
   if (c.isPromotion || c.isNewsletter || c.category === 'promotion') {
     const pts = c.isPromotion || c.category === 'promotion' ? -60 : -40;
     points += pts;
-    const reason = t(locale, c.isPromotion || c.category === 'promotion' ? 'promotion' : 'newsletter');
+    const reason = t(
+      locale,
+      c.isPromotion || c.category === 'promotion' ? 'promotion' : 'newsletter',
+    );
     factors.push({ level: 10, key: 'promotion', points: pts, reason });
     reasons.push(reason);
     if (floor === null) weakCeiling = 'low';
@@ -290,7 +348,9 @@ function findVip(ctx: PriorityContext, c: PriorityCandidate): string | null {
   }
   if (c.senderName) {
     const name = c.senderName.trim().toLocaleLowerCase('tr-TR');
-    const byName = ctx.vips.find((v) => !v.email && !v.contactId && v.displayName.trim().toLocaleLowerCase('tr-TR') === name);
+    const byName = ctx.vips.find(
+      (v) => !v.email && !v.contactId && v.displayName.trim().toLocaleLowerCase('tr-TR') === name,
+    );
     if (byName) return byName.displayName;
   }
   return null;

@@ -83,7 +83,11 @@ export interface GenerateTextResult {
 
 export interface AiClient {
   readonly providers: readonly AiProvider[];
-  generateStructured<T>(schema: z.ZodType<T>, prompt: PromptSpec, opts: GenerateOptions): Promise<GenerateStructuredResult<T>>;
+  generateStructured<T>(
+    schema: z.ZodType<T>,
+    prompt: PromptSpec,
+    opts: GenerateOptions,
+  ): Promise<GenerateStructuredResult<T>>;
   generateText(prompt: PromptSpec, opts: GenerateOptions): Promise<GenerateTextResult>;
 }
 
@@ -109,8 +113,14 @@ function buildProviders(config: AiClientConfig): AiProvider[] {
   const make = (name: AiProviderName): AiProvider | null => {
     const injected = config.providers?.[name];
     if (injected) return injected;
-    const base = { fetch: config.fetch, timeoutMs: config.timeoutMs, logger: config.logger, now: config.now };
-    if (name === 'anthropic') return config.anthropic ? new AnthropicProvider({ ...config.anthropic, ...base }) : null;
+    const base = {
+      fetch: config.fetch,
+      timeoutMs: config.timeoutMs,
+      logger: config.logger,
+      now: config.now,
+    };
+    if (name === 'anthropic')
+      return config.anthropic ? new AnthropicProvider({ ...config.anthropic, ...base }) : null;
     return config.openai ? new OpenAIProvider({ ...config.openai, ...base }) : null;
   };
   const primary = make(config.provider);
@@ -124,7 +134,10 @@ function buildProviders(config: AiClientConfig): AiProvider[] {
   if (fallbackName && fallbackName !== config.provider) {
     const fallback = make(fallbackName);
     if (fallback) chain.push(fallback);
-    else config.logger?.warn('ai fallback provider not configured; continuing without fallback', { provider: fallbackName });
+    else
+      config.logger?.warn('ai fallback provider not configured; continuing without fallback', {
+        provider: fallbackName,
+      });
   }
   return chain;
 }
@@ -132,7 +145,8 @@ function buildProviders(config: AiClientConfig): AiProvider[] {
 export function createAiClient(config: AiClientConfig): AiClient {
   const providers = buildProviders(config);
   const now = config.now ?? (() => Date.now());
-  const sleep = config.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const sleep =
+    config.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const defaultLocale = config.locale ?? 'tr';
 
   const emit = async (record: AiUsageRecord): Promise<void> => {
@@ -140,7 +154,9 @@ export function createAiClient(config: AiClientConfig): AiClient {
     try {
       await config.onUsage(record);
     } catch (cause) {
-      config.logger?.warn('ai usage sink failed', { cause: cause instanceof Error ? cause.message : 'unknown' });
+      config.logger?.warn('ai usage sink failed', {
+        cause: cause instanceof Error ? cause.message : 'unknown',
+      });
     }
   };
 
@@ -200,8 +216,15 @@ export function createAiClient(config: AiClientConfig): AiClient {
     return { error: lastError, attempts };
   };
 
-  const unavailable = (locale: Locale, attempts: number, failures: string[], lastError: unknown): AppError => {
-    const retryAfterSec = isAiProviderError(lastError) ? (lastError.retryAfterSec ?? undefined) : undefined;
+  const unavailable = (
+    locale: Locale,
+    attempts: number,
+    failures: string[],
+    lastError: unknown,
+  ): AppError => {
+    const retryAfterSec = isAiProviderError(lastError)
+      ? (lastError.retryAfterSec ?? undefined)
+      : undefined;
     return new AppError('ai_unavailable', aiUnavailableMessage(locale), {
       details: { attempts, failures },
       ...(retryAfterSec ? { retryAfterSec } : {}),
@@ -212,19 +235,34 @@ export function createAiClient(config: AiClientConfig): AiClient {
   const addUsage = (total: AiUsage, part: AiUsage): void => {
     total.inputTokens += part.inputTokens;
     total.outputTokens += part.outputTokens;
-    if (part.cacheReadInputTokens) total.cacheReadInputTokens = (total.cacheReadInputTokens ?? 0) + part.cacheReadInputTokens;
+    if (part.cacheReadInputTokens)
+      total.cacheReadInputTokens = (total.cacheReadInputTokens ?? 0) + part.cacheReadInputTokens;
   };
 
-  const baseRequest = (prompt: PromptSpec, opts: GenerateOptions, messages: AiMessage[]): AiRequest => ({
+  const baseRequest = (
+    prompt: PromptSpec,
+    opts: GenerateOptions,
+    messages: AiMessage[],
+  ): AiRequest => ({
     tier: prompt.tier,
     system: prompt.system,
     messages,
-    maxOutputTokens: opts.maxOutputTokens ?? prompt.maxOutputTokens ?? config.defaultMaxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
-    ...(opts.temperature ?? prompt.temperature) !== undefined ? { temperature: opts.temperature ?? prompt.temperature } : {},
+    maxOutputTokens:
+      opts.maxOutputTokens ??
+      prompt.maxOutputTokens ??
+      config.defaultMaxOutputTokens ??
+      DEFAULT_MAX_OUTPUT_TOKENS,
+    ...((opts.temperature ?? prompt.temperature) !== undefined
+      ? { temperature: opts.temperature ?? prompt.temperature }
+      : {}),
     metadata: { userId: opts.userId, purpose: prompt.purpose },
   });
 
-  async function generateStructured<T>(schema: z.ZodType<T>, prompt: PromptSpec, opts: GenerateOptions): Promise<GenerateStructuredResult<T>> {
+  async function generateStructured<T>(
+    schema: z.ZodType<T>,
+    prompt: PromptSpec,
+    opts: GenerateOptions,
+  ): Promise<GenerateStructuredResult<T>> {
     const locale = opts.locale ?? prompt.locale ?? defaultLocale;
     const jsonSchema = jsonSchemaFor(schema);
     const fit = fitPromptToBudget(prompt, {
@@ -248,7 +286,15 @@ export function createAiClient(config: AiClientConfig): AiClient {
           cached: true,
           ok: true,
         });
-        return { data: hit.data, usage: { inputTokens: 0, outputTokens: 0 }, model: hit.model, provider: hit.provider, attempts: 0, truncated: fit.truncated, cached: true };
+        return {
+          data: hit.data,
+          usage: { inputTokens: 0, outputTokens: 0 },
+          model: hit.model,
+          provider: hit.provider,
+          attempts: 0,
+          truncated: fit.truncated,
+          cached: true,
+        };
       }
     }
 
@@ -265,17 +311,37 @@ export function createAiClient(config: AiClientConfig): AiClient {
         attempts += outcome.attempts;
         if ('error' in outcome) {
           lastError = outcome.error;
-          failures.push(`${provider.name}:${isAiProviderError(outcome.error) ? outcome.error.code : 'unknown'}`);
+          failures.push(
+            `${provider.name}:${isAiProviderError(outcome.error) ? outcome.error.code : 'unknown'}`,
+          );
           break;
         }
         addUsage(usage, outcome.response.usage);
-        const candidate = outcome.response.json !== undefined ? outcome.response.json : extractJson(outcome.response.text);
+        const candidate =
+          outcome.response.json !== undefined
+            ? outcome.response.json
+            : extractJson(outcome.response.text);
         const parsed = schema.safeParse(candidate);
         if (parsed.success) {
           if (cacheKey && config.cache) {
-            await writeCache(config.cache, cacheKey, parsed.data, outcome.response, opts.cacheTtlSec ?? DEFAULT_CACHE_TTL_SEC, config.logger);
+            await writeCache(
+              config.cache,
+              cacheKey,
+              parsed.data,
+              outcome.response,
+              opts.cacheTtlSec ?? DEFAULT_CACHE_TTL_SEC,
+              config.logger,
+            );
           }
-          return { data: parsed.data, usage, model: outcome.response.model, provider: provider.name, attempts, truncated: fit.truncated, cached: false };
+          return {
+            data: parsed.data,
+            usage,
+            model: outcome.response.model,
+            provider: provider.name,
+            attempts,
+            truncated: fit.truncated,
+            cached: false,
+          };
         }
         failures.push(`${provider.name}:invalid_output`);
         config.logger?.warn('ai structured output failed validation', {
@@ -285,14 +351,20 @@ export function createAiClient(config: AiClientConfig): AiClient {
           round,
         });
         if (round === 0) {
-          messages.push({ role: 'assistant', content: outcome.response.text }, { role: 'user', content: repairMessage(formatZodIssues(parsed.error), locale) });
+          messages.push(
+            { role: 'assistant', content: outcome.response.text },
+            { role: 'user', content: repairMessage(formatZodIssues(parsed.error), locale) },
+          );
         }
       }
     }
     throw unavailable(locale, attempts, failures, lastError);
   }
 
-  async function generateText(prompt: PromptSpec, opts: GenerateOptions): Promise<GenerateTextResult> {
+  async function generateText(
+    prompt: PromptSpec,
+    opts: GenerateOptions,
+  ): Promise<GenerateTextResult> {
     const locale = opts.locale ?? prompt.locale ?? defaultLocale;
     const fit = fitPromptToBudget(prompt, { maxInputTokens: config.maxInputTokensPerCall, locale });
     const failures: string[] = [];
@@ -304,7 +376,9 @@ export function createAiClient(config: AiClientConfig): AiClient {
       attempts += outcome.attempts;
       if ('error' in outcome) {
         lastError = outcome.error;
-        failures.push(`${provider.name}:${isAiProviderError(outcome.error) ? outcome.error.code : 'unknown'}`);
+        failures.push(
+          `${provider.name}:${isAiProviderError(outcome.error) ? outcome.error.code : 'unknown'}`,
+        );
         continue;
       }
       return {
@@ -338,7 +412,9 @@ async function readCache<T>(
   try {
     raw = await cache.get(key);
   } catch (cause) {
-    logger?.warn('ai cache read failed', { cause: cause instanceof Error ? cause.message : 'unknown' });
+    logger?.warn('ai cache read failed', {
+      cause: cause instanceof Error ? cause.message : 'unknown',
+    });
     return null;
   }
   if (!raw) return null;
@@ -363,6 +439,8 @@ async function writeCache(
   try {
     await cache.set(key, JSON.stringify(entry), ttlSec);
   } catch (cause) {
-    logger?.warn('ai cache write failed', { cause: cause instanceof Error ? cause.message : 'unknown' });
+    logger?.warn('ai cache write failed', {
+      cause: cause instanceof Error ? cause.message : 'unknown',
+    });
   }
 }

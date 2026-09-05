@@ -30,7 +30,11 @@ interface RawCall {
 function mockFetch(responder: (call: RawCall, index: number) => Response) {
   const calls: RawCall[] = [];
   const fetch: AiFetch = async (url, init) => {
-    const call: RawCall = { url, headers: (init.headers ?? {}) as Record<string, string>, body: init.body };
+    const call: RawCall = {
+      url,
+      headers: (init.headers ?? {}) as Record<string, string>,
+      body: init.body,
+    };
     calls.push(call);
     return responder(call, calls.length - 1);
   };
@@ -42,11 +46,17 @@ function bytes(n: number, fill = 7): Uint8Array {
 }
 
 function audioResponse(payload: Uint8Array): Response {
-  return new Response(new Uint8Array(payload).buffer, { status: 200, headers: { 'content-type': 'audio/mpeg' } });
+  return new Response(new Uint8Array(payload).buffer, {
+    status: 200,
+    headers: { 'content-type': 'audio/mpeg' },
+  });
 }
 
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...headers } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json', ...headers },
+  });
 }
 
 function parseBody(call: RawCall): Record<string, unknown> {
@@ -72,12 +82,21 @@ describe('speech · OpenAI TTS', () => {
   it('posts /v1/audio/speech with model, voice, mp3 format and returns mp3 bytes', async () => {
     const { fetch, calls } = mockFetch(() => audioResponse(bytes(10)));
     const tts = new OpenAiTts({ apiKey: 'sk-test', voice: 'alloy', fetch });
-    const result = await tts.synthesize('Bugün bilmen gereken 5 şey var.', { voice: null, speed: 1, format: 'mp3' });
+    const result = await tts.synthesize('Bugün bilmen gereken 5 şey var.', {
+      voice: null,
+      speed: 1,
+      format: 'mp3',
+    });
     expect(calls).toHaveLength(1);
     expect(calls[0]!.url).toBe(OPENAI_SPEECH_URL);
     expect(calls[0]!.headers.authorization).toBe('Bearer sk-test');
     const body = parseBody(calls[0]!);
-    expect(body).toMatchObject({ model: 'gpt-4o-mini-tts', input: 'Bugün bilmen gereken 5 şey var.', voice: 'alloy', response_format: 'mp3' });
+    expect(body).toMatchObject({
+      model: 'gpt-4o-mini-tts',
+      input: 'Bugün bilmen gereken 5 şey var.',
+      voice: 'alloy',
+      response_format: 'mp3',
+    });
     expect(typeof body.instructions).toBe('string');
     expect(body.speed).toBeUndefined();
     expect(result.mimeType).toBe('audio/mpeg');
@@ -89,7 +108,13 @@ describe('speech · OpenAI TTS', () => {
     const { fetch, calls } = mockFetch(() => audioResponse(bytes(3)));
     const tts = new OpenAiTts({ apiKey: 'sk-test', model: 'tts-1', voice: 'alloy', fetch });
     await tts.synthesize('Merhaba.', { voice: 'nova', speed: 1.25, format: 'mp3' });
-    expect(parseBody(calls[0]!)).toEqual({ model: 'tts-1', input: 'Merhaba.', voice: 'nova', response_format: 'mp3', speed: 1.25 });
+    expect(parseBody(calls[0]!)).toEqual({
+      model: 'tts-1',
+      input: 'Merhaba.',
+      voice: 'nova',
+      response_format: 'mp3',
+      speed: 1.25,
+    });
   });
 
   it('splits long scripts into provider-sized segments and concatenates the audio', async () => {
@@ -98,16 +123,24 @@ describe('speech · OpenAI TTS', () => {
     const script = 'Bu bir cümle ve biraz uzunca. '.repeat(400); // ~12k chars
     const result = await tts.synthesize(script, { format: 'mp3' });
     expect(calls.length).toBeGreaterThanOrEqual(3);
-    for (const call of calls) expect((parseBody(call).input as string).length).toBeLessThanOrEqual(OPENAI_TTS_SEGMENT_CHARS);
+    for (const call of calls)
+      expect((parseBody(call).input as string).length).toBeLessThanOrEqual(
+        OPENAI_TTS_SEGMENT_CHARS,
+      );
     expect(result.audio.byteLength).toBe(calls.length * 5);
     expect(result.audio.slice(0, 5)).toEqual(bytes(5, 1));
     expect(result.audio.slice(5, 10)).toEqual(bytes(5, 2));
   });
 
   it('maps provider errors and rejects empty text', async () => {
-    const { fetch } = mockFetch(() => json({ error: { message: 'rate' } }, 429, { 'retry-after': '12' }));
+    const { fetch } = mockFetch(() =>
+      json({ error: { message: 'rate' } }, 429, { 'retry-after': '12' }),
+    );
     const tts = new OpenAiTts({ apiKey: 'sk-test', fetch });
-    const error = await expectAppError(tts.synthesize('Merhaba', { format: 'mp3' }), 'ai_unavailable');
+    const error = await expectAppError(
+      tts.synthesize('Merhaba', { format: 'mp3' }),
+      'ai_unavailable',
+    );
     expect(error.retryAfterSec).toBe(12);
     expect(error.details).toMatchObject({ provider: 'openai', status: 429 });
     await expectAppError(tts.synthesize('   ', { format: 'mp3' }), 'validation');
@@ -122,7 +155,11 @@ describe('speech · ElevenLabs TTS', () => {
     expect(calls[0]!.url).toBe(`${ELEVENLABS_TTS_BASE_URL}/voice123?output_format=mp3_44100_128`);
     expect(calls[0]!.headers['xi-api-key']).toBe('xi-test');
     expect(calls[0]!.headers.accept).toBe('audio/mpeg');
-    expect(parseBody(calls[0]!)).toEqual({ text: 'Günaydın Yunus.', model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 1.2 } });
+    expect(parseBody(calls[0]!)).toEqual({
+      text: 'Günaydın Yunus.',
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 1.2 },
+    });
     expect(result.audio).toEqual(bytes(4));
     await tts.synthesize('Selam.', { voice: 'other-voice', format: 'mp3' });
     expect(calls[1]!.url).toContain('/other-voice?');
@@ -136,12 +173,27 @@ describe('speech · resolveTtsProvider', () => {
     const logger = { warn: (m: string) => void warnings.push(m), error: () => undefined };
     expect(resolveTtsProvider({ provider: 'none', fetch })).toBeNull();
     expect(resolveTtsProvider({ provider: 'openai', fetch, logger })).toBeNull();
-    expect(resolveTtsProvider({ provider: 'elevenlabs', elevenLabsApiKey: 'k', fetch, logger })).toBeNull();
+    expect(
+      resolveTtsProvider({ provider: 'elevenlabs', elevenLabsApiKey: 'k', fetch, logger }),
+    ).toBeNull();
     expect(warnings).toHaveLength(2);
-    const openai = resolveTtsProvider({ provider: 'openai', openaiApiKey: 'k', openaiModel: 'tts-1', voice: 'shimmer', fetch });
+    const openai = resolveTtsProvider({
+      provider: 'openai',
+      openaiApiKey: 'k',
+      openaiModel: 'tts-1',
+      voice: 'shimmer',
+      fetch,
+    });
     expect(openai).toBeInstanceOf(OpenAiTts);
     expect((openai as OpenAiTts).model).toBe('tts-1');
-    expect(resolveTtsProvider({ provider: 'elevenlabs', elevenLabsApiKey: 'k', elevenLabsVoiceId: 'v', fetch })).toBeInstanceOf(ElevenLabsTts);
+    expect(
+      resolveTtsProvider({
+        provider: 'elevenlabs',
+        elevenLabsApiKey: 'k',
+        elevenLabsVoiceId: 'v',
+        fetch,
+      }),
+    ).toBeInstanceOf(ElevenLabsTts);
   });
 });
 
@@ -154,17 +206,25 @@ describe('speech · toPlainSpeech', () => {
     expect(toPlainSpeech('Toplantı 17:00.')).toBe('Toplantı saat 17:00.');
     expect(toPlainSpeech('Toplantı saat 17:00.')).toBe('Toplantı saat 17:00.');
     expect(toPlainSpeech('Yarın 09:15 uçuş var.')).toBe('Yarın saat 09:15 uçuş var.');
-    expect(toPlainSpeech('Kargo 14:00–18:00 arasında geliyor.')).toBe('Kargo saat 14:00 ile 18:00 arasında geliyor.');
+    expect(toPlainSpeech('Kargo 14:00–18:00 arasında geliyor.')).toBe(
+      'Kargo saat 14:00 ile 18:00 arasında geliyor.',
+    );
     expect(toPlainSpeech('Boşluk: 14:00–16:30.')).toBe('Boşluk: saat 14:00 ile 16:30 arası.');
     expect(toPlainSpeech('Süre 2 dk 14 sn.')).toBe('Süre 2 dakika 14 saniye.');
     expect(toPlainSpeech('Fatura 1.842 TL, 10 Eylül.')).toBe('Fatura 1.842 TL, 10 Eylül.');
   });
 
   it('normalises separators, strips markdown, emoji, urls and list markers', () => {
-    expect(toPlainSpeech('3 önemli mail · 4 etkinlik · 2 takip')).toBe('3 önemli mail, 4 etkinlik, 2 takip');
-    expect(toPlainSpeech('**Bugün** *sakin* bir gün. ## Başlık\n- madde bir\n- madde iki')).toBe('Bugün sakin bir gün. Başlık\nmadde bir\nmadde iki');
+    expect(toPlainSpeech('3 önemli mail · 4 etkinlik · 2 takip')).toBe(
+      '3 önemli mail, 4 etkinlik, 2 takip',
+    );
+    expect(toPlainSpeech('**Bugün** *sakin* bir gün. ## Başlık\n- madde bir\n- madde iki')).toBe(
+      'Bugün sakin bir gün. Başlık\nmadde bir\nmadde iki',
+    );
     expect(toPlainSpeech('✅ Tamam 🎉 gönderildi 👍🏽')).toBe('Tamam gönderildi');
-    expect(toPlainSpeech('Ayrıntılar: https://example.com/x?y=1 burada. [Teklif](https://x.y) hazır.')).toBe('Ayrıntılar: burada. Teklif hazır.');
+    expect(
+      toPlainSpeech('Ayrıntılar: https://example.com/x?y=1 burada. [Teklif](https://x.y) hazır.'),
+    ).toBe('Ayrıntılar: burada. Teklif hazır.');
     expect(toPlainSpeech('TK2412 İstanbul → Antalya')).toBe('TK2412 İstanbul - Antalya');
     expect(toPlainSpeech('a_b değişkeni ve `kod`')).toBe('a_b değişkeni ve kod');
   });
@@ -195,7 +255,13 @@ describe('speech · buildAudioChapters', () => {
 
   it('honours playback speed and chapter pauses', () => {
     const text = Array.from({ length: 150 }, (_, i) => `k${i}`).join(' ');
-    const fast = buildAudioChapters([{ title: '', text }, { title: '', text }], { speed: 1.5, chapterPauseSec: 2 });
+    const fast = buildAudioChapters(
+      [
+        { title: '', text },
+        { title: '', text },
+      ],
+      { speed: 1.5, chapterPauseSec: 2 },
+    );
     expect(fast.chapters.map((c) => [c.startSec, c.durationSec])).toEqual([
       [0, 40],
       [42, 40],
@@ -208,7 +274,11 @@ describe('speech · buildAudioChapters', () => {
   it('timing helpers', () => {
     expect(countWords("Mehmet'e teklif, 17:00'de.")).toBe(4);
     expect(estimateSpeechSeconds('', {})).toBe(0);
-    expect(estimateSpeechSeconds(Array.from({ length: 300 }, () => 'a').join(' '), { wordsPerMinute: 150 })).toBe(120);
+    expect(
+      estimateSpeechSeconds(Array.from({ length: 300 }, () => 'a').join(' '), {
+        wordsPerMinute: 150,
+      }),
+    ).toBe(120);
     expect(splitForSpeech('Bir. İki! Üç? Dört.', 9)).toEqual(['Bir. İki!', 'Üç? Dört.']);
     expect(splitForSpeech('x'.repeat(25), 10)).toEqual(['xxxxxxxxxx', 'xxxxxxxxxx', 'xxxxx']);
     expect(splitForSpeech('   ', 10)).toEqual([]);
@@ -221,7 +291,7 @@ describe('speech · buildAudioChapters', () => {
 
 describe('speech · OpenAI STT', () => {
   it('posts multipart /v1/audio/transcriptions with file, model and language tr', async () => {
-    const { fetch, calls } = mockFetch(() => json({ text: ' Mehmet\'ten cevap geldi mi? ' }));
+    const { fetch, calls } = mockFetch(() => json({ text: " Mehmet'ten cevap geldi mi? " }));
     const stt = new OpenAiStt({ apiKey: 'sk-test', fetch });
     const audio = bytes(64, 9);
     const result = await stt.transcribe(audio, { mimeType: 'audio/mp4', language: 'tr' });
@@ -254,8 +324,14 @@ describe('speech · OpenAI STT', () => {
   it('rejects empty audio and maps failures', async () => {
     const { fetch } = mockFetch(() => json({ error: { message: 'bad' } }, 500));
     const stt = new OpenAiStt({ apiKey: 'sk-test', fetch });
-    await expectAppError(stt.transcribe(new Uint8Array(0), { mimeType: 'audio/mp4', language: 'tr' }), 'validation');
-    const error = await expectAppError(stt.transcribe(bytes(4), { mimeType: 'audio/mp4', language: 'tr' }), 'ai_unavailable');
+    await expectAppError(
+      stt.transcribe(new Uint8Array(0), { mimeType: 'audio/mp4', language: 'tr' }),
+      'validation',
+    );
+    const error = await expectAppError(
+      stt.transcribe(bytes(4), { mimeType: 'audio/mp4', language: 'tr' }),
+      'ai_unavailable',
+    );
     expect(error.details).toMatchObject({ provider: 'openai', status: 500 });
   });
 });
@@ -263,7 +339,10 @@ describe('speech · OpenAI STT', () => {
 describe('speech · Deepgram STT', () => {
   it('posts raw audio to /v1/listen with language, nova-3 and smart_format', async () => {
     const { fetch, calls } = mockFetch(() =>
-      json({ metadata: { duration: 3.2 }, results: { channels: [{ alternatives: [{ transcript: 'Brifingimi oku. ' }] }] } }),
+      json({
+        metadata: { duration: 3.2 },
+        results: { channels: [{ alternatives: [{ transcript: 'Brifingimi oku. ' }] }] },
+      }),
     );
     const stt = new DeepgramStt({ apiKey: 'dg-test', fetch });
     const audio = bytes(32, 3);
@@ -282,7 +361,9 @@ describe('speech · Deepgram STT', () => {
   it('returns empty text when nothing was recognised', async () => {
     const { fetch } = mockFetch(() => json({ results: { channels: [] } }));
     const stt = new DeepgramStt({ apiKey: 'dg-test', fetch });
-    expect(await stt.transcribe(bytes(4), { mimeType: 'audio/wav', language: 'tr' })).toEqual({ text: '' });
+    expect(await stt.transcribe(bytes(4), { mimeType: 'audio/wav', language: 'tr' })).toEqual({
+      text: '',
+    });
   });
 });
 
@@ -292,10 +373,17 @@ describe('speech · resolveSttProvider and helpers', () => {
     expect(resolveSttProvider({ provider: 'none', fetch })).toBeNull();
     expect(resolveSttProvider({ provider: 'openai', fetch })).toBeNull();
     expect(resolveSttProvider({ provider: 'deepgram', fetch })).toBeNull();
-    const openai = resolveSttProvider({ provider: 'openai', openaiApiKey: 'k', openaiModel: 'whisper-1', fetch });
+    const openai = resolveSttProvider({
+      provider: 'openai',
+      openaiApiKey: 'k',
+      openaiModel: 'whisper-1',
+      fetch,
+    });
     expect(openai).toBeInstanceOf(OpenAiStt);
     expect((openai as OpenAiStt).model).toBe('whisper-1');
-    expect(resolveSttProvider({ provider: 'deepgram', deepgramApiKey: 'k', fetch })).toBeInstanceOf(DeepgramStt);
+    expect(resolveSttProvider({ provider: 'deepgram', deepgramApiKey: 'k', fetch })).toBeInstanceOf(
+      DeepgramStt,
+    );
   });
 
   it('audioExtensionFor maps common containers', () => {

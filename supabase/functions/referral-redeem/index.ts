@@ -129,18 +129,16 @@ Deno.serve(
       throw new AppError('internal', `Davet kaydedilemedi: ${error?.message ?? ''}`);
     }
     const referralId = (referral as { id: string }).id;
-    const { error: creditErr } = await admin
-      .from('referral_credits')
-      .insert(
-        result.credits.map((c) => ({
-          user_id: c.userId,
-          referral_id: referralId,
-          days: c.days,
-          starts_at: c.startsAt,
-          expires_at: c.expiresAt,
-          role: c.role,
-        })),
-      );
+    const { error: creditErr } = await admin.from('referral_credits').insert(
+      result.credits.map((c) => ({
+        user_id: c.userId,
+        referral_id: referralId,
+        days: c.days,
+        starts_at: c.startsAt,
+        expires_at: c.expiresAt,
+        role: c.role,
+      })),
+    );
     if (creditErr) throw new AppError('internal', `Bonus tanımlanamadı: ${creditErr.message}`);
     await admin.from('profiles').update({ referred_by_code: code }).eq('id', user.id);
 
