@@ -126,6 +126,11 @@
       "reactNativeDirectoryCheck": {
         "listUnknownPackages": false
       }
+    },
+    "install": {
+      "exclude": [
+        "typescript"
+      ]
     }
   }
 }
