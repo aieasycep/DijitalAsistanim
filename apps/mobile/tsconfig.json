@@ -22,7 +22,7 @@
       "@da/ui": ["../../packages/ui/src/index.ts"],
       "@da/validation": ["../../packages/validation/src/index.ts"]
     },
-    "types": ["jest", "react-native", "expo-widgets/types"]
+    "types": ["jest", "react-native"]
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "src/types/*.d.ts"],
   "exclude": ["node_modules", "ios", "android", "modules/**/android", "modules/**/ios", "maestro"]

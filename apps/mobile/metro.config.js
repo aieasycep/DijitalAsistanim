@@ -13,10 +13,5 @@ config.resolver.disableHierarchicalLookup = false;
 config.resolver.sourceExts = [...config.resolver.sourceExts, 'sql'];
 config.resolver.unstable_enablePackageExports = true;
 
-// Widgets are bundled separately by expo-widgets' metro plugin.
-try {
-  const { withExpoWidgets } = require('expo-widgets/metro.config');
-  module.exports = withExpoWidgets(config);
-} catch {
-  module.exports = config;
-}
+// Widgets are bundled by expo-widgets' own Metro config (node_modules/expo-widgets/metro.config.js) at build time.
+module.exports = config;

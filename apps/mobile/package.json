@@ -96,6 +96,7 @@
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.0",
+    "babel-plugin-module-resolver": "^5.0.3",
     "expo-doctor": "^1.20.0",
     "jest": "^29.7.0",
     "jest-expo": "~57.0.5",
@@ -104,14 +105,21 @@
   },
   "jest": {
     "preset": "jest-expo",
-    "setupFilesAfterEnv": ["<rootDir>/jest.setup.ts"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.ts"
+    ],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|expo-share-intent|posthog-react-native|@shopify/flash-list|react-native-mmkv|react-native-purchases)"
     ],
     "moduleNameMapper": {
       "^@da/(.*)$": "<rootDir>/../../packages/$1/src"
     },
-    "testPathIgnorePatterns": ["/node_modules/", "/ios/", "/android/", "/.expo/"]
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/ios/",
+      "/android/",
+      "/.expo/"
+    ]
   },
   "expo": {
     "doctor": {

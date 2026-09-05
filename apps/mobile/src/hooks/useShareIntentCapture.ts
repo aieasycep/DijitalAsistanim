@@ -14,7 +14,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useRouter, type Href } from 'expo-router';
-import { useShareIntent, type ShareIntentOptions } from 'expo-share-intent';
+import { useShareIntent } from 'expo-share-intent';
+
+type ShareIntentOptions = NonNullable<Parameters<typeof useShareIntent>[0]>;
 import { env } from '@/lib/env';
 import { captureError } from '@/lib/monitoring';
 import { useSessionStore } from '@/store/session';

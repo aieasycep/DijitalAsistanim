@@ -62,8 +62,8 @@ export function useApprovalFlow() {
   }, [queryClient]);
 
   const create = useMutation({
-    mutationFn: <T extends ApprovalActionType>(req: CreateApprovalRequest<T>) =>
-      ds.approvals.createApproval(req),
+    mutationFn: (req: CreateApprovalRequest): Promise<ApprovalAction> =>
+      ds.approvals.createApproval(req as CreateApprovalRequest<ApprovalActionType>),
     onSuccess: () => void refreshPending(),
   });
 
@@ -74,12 +74,12 @@ export function useApprovalFlow() {
       opts: { navigate?: boolean } = {},
     ): Promise<ApprovalAction<T> | null> => {
       try {
-        const approval = await create.mutateAsync(req);
+        const approval = await create.mutateAsync(req as CreateApprovalRequest);
         if (opts.navigate !== false)
           router.push({ pathname: '/approvals/[id]', params: { id: approval.id } });
         return approval as ApprovalAction<T>;
       } catch (e) {
-        toast.show({ message: describeError(e, t).title, icon: 'error', iconTone: 'critical' });
+        toast.show({ message: describeError(e, t).title, icon: 'warning', iconTone: 'critical' });
         return null;
       }
     },

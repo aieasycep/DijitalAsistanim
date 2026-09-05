@@ -76,4 +76,7 @@ export function setMonitoringUser(id: string | null): void {
 
 export const wrapWithMonitoring = <P extends object>(
   component: React.ComponentType<P>,
-): React.ComponentType<P> => (env.sentryDsn ? Sentry.wrap(component) : component);
+): React.ComponentType<P> =>
+  env.sentryDsn
+    ? (Sentry.wrap(component as React.ComponentType<Record<string, unknown>>) as unknown as React.ComponentType<P>)
+    : component;

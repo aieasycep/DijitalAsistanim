@@ -56,12 +56,12 @@ export function useInsightActions() {
       if (variables.status === 'dismissed')
         toast.show({
           message: t('today.dismissedToast'),
-          icon: 'auto_awesome',
+          icon: 'sparkle',
           iconTone: 'primary',
         });
     },
     onError: (e) =>
-      toast.show({ message: describeError(e, t).title, icon: 'error', iconTone: 'critical' }),
+      toast.show({ message: describeError(e, t).title, icon: 'warning', iconTone: 'critical' }),
   });
 
   const snooze = useMutation({
@@ -161,7 +161,7 @@ export function useInsightActions() {
           const startAt = payloadString(payload, 'startAt') ?? insight.dueAt;
           const calendarAccountId = payloadString(payload, 'accountId');
           if (!startAt || !calendarAccountId) {
-            toast.show({ message: t('errors.notFound'), icon: 'error', iconTone: 'critical' });
+            toast.show({ message: t('errors.notFound'), icon: 'warning', iconTone: 'critical' });
             return false;
           }
           const endAt =
@@ -218,7 +218,7 @@ export function useInsightActions() {
           }
           const ok = await openExternal(url);
           if (!ok)
-            toast.show({ message: t('errors.handoffFailed'), icon: 'error', iconTone: 'critical' });
+            toast.show({ message: t('errors.handoffFailed'), icon: 'warning', iconTone: 'critical' });
           return ok;
         }
         case 'wallet':

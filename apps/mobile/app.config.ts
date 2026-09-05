@@ -31,15 +31,8 @@ const config = (_ctx: ConfigContext): ExpoConfig => ({
   scheme: SCHEME,
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
-  newArchEnabled: true,
   primaryColor: '#5B5CE2',
   backgroundColor: '#F5F4F0',
-  splash: {
-    image: './assets/splash-icon.png',
-    resizeMode: 'contain',
-    backgroundColor: '#F5F4F0',
-    dark: { image: './assets/splash-icon-dark.png', backgroundColor: '#141311' },
-  },
   assetBundlePatterns: ['**/*'],
   locales: {
     tr: './assets/locales/tr.json',
@@ -101,7 +94,6 @@ const config = (_ctx: ConfigContext): ExpoConfig => ({
       monochromeImage: './assets/adaptive-icon-mono.png',
       backgroundColor: '#5B5CE2',
     },
-    edgeToEdgeEnabled: true,
     allowBackup: false,
     softwareKeyboardLayoutMode: 'pan',
     permissions: [
@@ -225,7 +217,7 @@ const config = (_ctx: ConfigContext): ExpoConfig => ({
     [
       'expo-build-properties',
       {
-        ios: { deploymentTarget: '16.0', useFrameworks: 'static' },
+        ios: { deploymentTarget: '16.4', useFrameworks: 'static' },
         android: { compileSdkVersion: 36, targetSdkVersion: 36, minSdkVersion: 26 },
       },
     ],

@@ -1,4 +1,3 @@
-import '@testing-library/react-native/extend-expect';
 
 // Native module shims for unit tests (no native runtime in Jest).
 jest.mock('expo-secure-store', () => {

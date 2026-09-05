@@ -104,11 +104,11 @@ export function useDeepLinks(): void {
           track('account_connected', { provider, kind });
           if (kind === 'calendar') track('calendar_connected', { provider });
         } else {
-          toast.show({ message: t('errors.oauthFailed'), icon: 'error', iconTone: 'critical' });
+          toast.show({ message: t('errors.oauthFailed'), icon: 'warning', iconTone: 'critical' });
         }
       } catch (e) {
         captureError(e, { where: 'useDeepLinks.completeOAuth', provider: p.provider ?? 'unknown' });
-        toast.show({ message: t('errors.oauthFailed'), icon: 'error', iconTone: 'critical' });
+        toast.show({ message: t('errors.oauthFailed'), icon: 'warning', iconTone: 'critical' });
       }
     },
     [ds, queryClient, toast],
@@ -120,7 +120,7 @@ export function useDeepLinks(): void {
         await ds.auth.exchangeCodeForSession(url);
       } catch (e) {
         captureError(e, { where: 'useDeepLinks.authCallback' });
-        toast.show({ message: t('errors.oauthFailed'), icon: 'error', iconTone: 'critical' });
+        toast.show({ message: t('errors.oauthFailed'), icon: 'warning', iconTone: 'critical' });
       }
     },
     [ds, toast],
