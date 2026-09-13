@@ -109,8 +109,8 @@ describe('enqueue', () => {
     const stored = JSON.parse(mockMemory.get('offline.pending.v1') ?? '[]') as unknown[];
     expect(stored).toHaveLength(2);
 
-    // A fresh process reloads the persisted queue.
-    resetOfflineQueueForTests();
+    // A fresh process (same day) reloads the persisted queue.
+    resetOfflineQueueForTests(() => new Date(Date.UTC(2026, 8, 5, 9, 0, 0)));
     expect(size()).toBe(2);
   });
 

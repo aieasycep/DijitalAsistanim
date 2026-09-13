@@ -41,6 +41,7 @@ jest.mock('@/lib/i18n', () => ({
   formatCtx: (overrides: Record<string, unknown> = {}) => ({
     locale: 'tr',
     timezone: 'Europe/Istanbul',
+    now: new Date('2026-09-05T06:41:00Z'),
     ...overrides,
   }),
   setupI18n: jest.fn(),
