@@ -39,7 +39,8 @@ tags: [critical, flow-a]
     visible:
       id: 'today-screen'
     timeout: 30000
+# Exact greeting depends on the (pinned) demo clock — see maestro/README.md.
 - assertVisible:
-    text: 'Günaydın, Yunus'
+    text: '(Günaydın|İyi günler|İyi akşamlar|İyi geceler), Yunus'
 - assertVisible:
     id: 'today-hero-cta'

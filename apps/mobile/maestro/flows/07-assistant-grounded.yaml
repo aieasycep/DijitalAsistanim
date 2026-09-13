@@ -24,6 +24,9 @@ tags: [critical, flow-h]
       id: 'email-screen'
     timeout: 15000
 - back
+# New thread so card ids restart at 0 (ids are cumulative within a thread).
+- tapOn:
+    id: 'assistant-new'
 - tapOn:
     id: 'assistant-input'
 - inputText: 'Mehmet ile en son ne konuştuk?'

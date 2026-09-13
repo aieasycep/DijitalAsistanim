@@ -58,6 +58,8 @@ export interface FunctionEnv {
   sentryDsn?: string;
   posthog: { key?: string; host: string };
   routes: { provider: 'none' | 'google'; googleApiKey?: string };
+  /** iOS interruption levels: time-sensitive pushes need the Apple entitlement (TIME_SENSITIVE_ENTITLEMENT=true). */
+  push: { timeSensitiveEntitlement: boolean };
   cronSecret?: string;
   supportEmail: string;
 }
@@ -152,12 +154,13 @@ export function getEnv(): FunctionEnv {
     sentryDsn: read('SENTRY_DSN'),
     posthog: {
       key: read('POSTHOG_KEY') ?? read('EXPO_PUBLIC_POSTHOG_KEY'),
-      host: read('POSTHOG_HOST') ?? 'https://eu.i.posthog.com',
+      host: read('POSTHOG_HOST') ?? read('EXPO_PUBLIC_POSTHOG_HOST') ?? 'https://eu.i.posthog.com',
     },
     routes: {
       provider: oneOf('ROUTES_PROVIDER', ['none', 'google'] as const, 'none'),
       googleApiKey: read('GOOGLE_ROUTES_API_KEY'),
     },
+    push: { timeSensitiveEntitlement: read('TIME_SENSITIVE_ENTITLEMENT') === 'true' },
     cronSecret: read('CRON_SECRET'),
     supportEmail: read('SUPPORT_EMAIL') ?? 'destek@dijitalasistan.app',
   };

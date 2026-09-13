@@ -35,6 +35,7 @@
     "undo": "Geri al",
     "learnMore": "Daha fazla",
     "openSource": "Kaynağı Gör",
+    "sourceUnavailable": "Bu kaynağın açılabilir bir bağlantısı yok.",
     "whyImportant": "Neden önemli?",
     "notImportant": "Önemli değil",
     "showMore": "Bunu daha sık göster",
@@ -1286,7 +1287,12 @@
       "deviceDenied": "Takvim izni kapalı. Sistem ayarlarından açabilirsin.",
       "openSettings": "Ayarları Aç",
       "empty": "Henüz bağlı hesap yok.",
-      "emptyBody": "Mail ve takvimini bağla; brifingler ve öncelikler buradan beslenir."
+      "emptyBody": "Mail ve takvimini bağla; brifingler ve öncelikler buradan beslenir.",
+      "consentTitle": "Microsoft izni elle kaldırılmalı",
+      "consentBody": "{{name}} bağlantısı kaldırıldı ve erişim bilgilerin silindi. Microsoft, uygulama izninin sunucudan kaldırılmasına izin vermiyor; hesabındaki izni Microsoft izin sayfasından kaldır.",
+      "consentOpen": "Microsoft izin sayfasını aç",
+      "consentLater": "Daha sonra",
+      "consentOpenFailed": "Sayfa açılamadı. Tarayıcıda account.live.com/consent/Manage adresine git."
     },
     "dataSourceScreen": {
       "readEmail": "Mailleri oku",
@@ -1526,20 +1532,19 @@
     "benefits": [
       "Sınırsız AI analiz",
       "Akıllı takip",
-      "Meeting Prep",
+      "Toplantı Hazırlığı",
       "Gün Ortası & Akşam Brifingi",
       "Sesli brifing",
       "AI hafıza",
       "Çoklu hesap",
-      "VIP kişiler",
-      "Android Notification Intelligence"
+      "VIP kişiler"
     ],
+    "benefitsAndroid": ["Android Bildirim Zekâsı"],
     "monthly": "Aylık",
     "annual": "Yıllık",
-    "monthlyPrice": "199 TL / ay",
-    "annualPrice": "1.490 TL / yıl",
+    "monthlyPrice": "{{price}} / ay",
+    "annualPrice": "{{price}} / yıl",
     "bestValue": "En Avantajlı",
-    "trial": "7 Gün Ücretsiz Pro",
     "cta": "Ücretsiz Dene",
     "ctaNoTrial": "Pro'ya Geç",
     "continueFree": "Free ile devam et",

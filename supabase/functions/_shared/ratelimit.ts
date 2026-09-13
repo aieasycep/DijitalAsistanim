@@ -1,5 +1,6 @@
 import { AppError } from '@da/server-core/errors';
 import { adminClient } from './db.ts';
+import { log } from './log.ts';
 
 export type RatePolicy =
   | 'assistant_query'
@@ -24,17 +25,26 @@ const POLICIES: Record<RatePolicy, { limit: number; windowSec: number }> = {
   feedback: { limit: 10, windowSec: 3600 },
 };
 
-/** Fixed-window rate limit backed by public.rate_limits via internal.rate_limit_hit(). */
+/**
+ * Fixed-window rate limit backed by public.rate_limits. Calls the service-role-only wrapper
+ * `public.rate_limit_hit` (→ internal.rate_limit_hit); the `internal` schema itself is not exposed
+ * through PostgREST.
+ */
 export async function enforceRateLimit(policy: RatePolicy, subject: string): Promise<void> {
   const p = POLICIES[policy];
   const key = `${policy}:${subject}`;
-  const { data, error } = await adminClient().schema('internal').rpc('rate_limit_hit', {
+  const { data, error } = await adminClient().rpc('rate_limit_hit', {
     p_key: key,
     p_limit: p.limit,
     p_window_sec: p.windowSec,
   });
   if (error) {
-    // Fail open for reads but never block legitimate sync; log for visibility.
+    // Fail open: a broken limiter must never block legitimate traffic, but it must be visible.
+    log.error('rate limit check failed; failing open', {
+      policy,
+      code: error.code,
+      error: error.message,
+    });
     return;
   }
   const row = (Array.isArray(data) ? data[0] : data) as

@@ -49,8 +49,10 @@ Two separate things use OAuth:
 ## Apple
 
 - **Sign in with Apple**: enable the capability on the App ID (`com.dijitalasistan.app`), create a Services ID for Supabase
-  (`APPLE_SERVICES_ID`), a Sign in with Apple key (`APPLE_KEY_ID`, `.p8` → `APPLE_PRIVATE_KEY_P8_BASE64`), and configure the
-  Apple provider in Supabase Auth with the generated client secret.
+  (`APPLE_SERVICES_ID`) and a Sign in with Apple key (`APPLE_KEY_ID` + the `.p8` file, kept as `APPLE_PRIVATE_KEY_P8_BASE64`
+  for the generation step). Generate the client-secret JWT from that key (Apple's documented ES256 JWT, valid ≤ 6 months)
+  and store it as `APPLE_OAUTH_CLIENT_SECRET` — that is the value `supabase/config.toml` (and the hosted Auth provider
+  settings) read; rotate it before it expires.
 - Apple Calendar / Reminders use **EventKit on device** (no OAuth). Events read on device are uploaded through
   `device-calendar-upsert`; writes happen only after approvals.
 

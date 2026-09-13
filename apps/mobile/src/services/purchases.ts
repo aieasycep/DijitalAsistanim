@@ -16,6 +16,7 @@ import type {
 } from 'react-native-purchases';
 import type { DataSource } from '@da/api-client';
 import type { EntitlementState } from '@da/domain';
+import { freeTrialFor, type FreeTrial } from '@/features/paywall/freeTrial';
 import { env } from '@/lib/env';
 import { captureError } from '@/lib/monitoring';
 import { openExternal } from '@/lib/openExternal';
@@ -111,8 +112,11 @@ export interface ProOfferings {
   annual: PurchasesPackage | null;
   monthlyPriceLabel: string | null;
   annualPriceLabel: string | null;
-  /** Only true when the store product declares an introductory (trial) offer — drives "7 Gün Ücretsiz". */
-  hasIntroOffer: boolean;
+  /**
+   * Free trial per plan, derived only from store data (`freeTrialFor`): a 0-priced introductory phase
+   * with a known length. `null` means no free trial — the paywall then says "Pro'ya Geç", never a trial.
+   */
+  freeTrial: { monthly: FreeTrial | null; annual: FreeTrial | null };
 }
 
 /** Picks the monthly / annual packages by product id (falls back to package type). Pure. */
@@ -130,7 +134,10 @@ export function selectProPackages(
     annual,
     monthlyPriceLabel: monthly?.product.priceString ?? null,
     annualPriceLabel: annual?.product.priceString ?? null,
-    hasIntroOffer: [monthly, annual].some((p) => Boolean(p?.product.introPrice)),
+    freeTrial: {
+      monthly: freeTrialFor(monthly?.product),
+      annual: freeTrialFor(annual?.product),
+    },
   };
 }
 
@@ -154,27 +161,39 @@ export type PurchaseOutcome = 'purchased' | 'cancelled' | 'pending' | 'failed' |
 export interface PurchaseResult {
   outcome: PurchaseOutcome;
   customerInfo: CustomerInfo | null;
+  /** True only when the store activated a trial period for the entitlement — never inferred from the offer. */
+  isTrial: boolean;
 }
+
+const NOT_PURCHASED = (outcome: PurchaseOutcome): PurchaseResult => ({
+  outcome,
+  customerInfo: null,
+  isTrial: false,
+});
 
 export function isProActive(info: CustomerInfo | null | undefined): boolean {
   return Boolean(info?.entitlements.active[env.rcEntitlementId]?.isActive);
 }
 
 export async function purchasePro(pkg: PurchasesPackage): Promise<PurchaseResult> {
-  if (!(await configurePurchases())) return { outcome: 'unavailable', customerInfo: null };
+  if (!(await configurePurchases())) return NOT_PURCHASED('unavailable');
   const mod = loadPurchases();
-  if (!mod) return { outcome: 'unavailable', customerInfo: null };
+  if (!mod) return NOT_PURCHASED('unavailable');
   try {
     const { customerInfo } = await mod.default.purchasePackage(pkg);
-    return { outcome: isProActive(customerInfo) ? 'purchased' : 'pending', customerInfo };
+    return {
+      outcome: isProActive(customerInfo) ? 'purchased' : 'pending',
+      customerInfo,
+      isTrial: entitlementFromCustomerInfo(customerInfo).isTrial,
+    };
   } catch (e) {
     const err = asPurchasesError(e);
     if (err.userCancelled || err.code === mod.PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR)
-      return { outcome: 'cancelled', customerInfo: null };
+      return NOT_PURCHASED('cancelled');
     if (err.code === mod.PURCHASES_ERROR_CODE.PAYMENT_PENDING_ERROR)
-      return { outcome: 'pending', customerInfo: null };
+      return NOT_PURCHASED('pending');
     captureError(e, { where: 'purchasePro', code: err.code ?? 'unknown' });
-    return { outcome: 'failed', customerInfo: null };
+    return NOT_PURCHASED('failed');
   }
 }
 

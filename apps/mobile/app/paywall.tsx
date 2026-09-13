@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { TRIAL_DAYS } from '@da/domain';
 import { formatShortDate } from '@da/i18n';
 import {
   Badge,
@@ -21,7 +20,12 @@ import {
 } from '@da/ui';
 import { OfflineNotice } from '@/features/flow/ScreenStates';
 import { useFormatCtx } from '@/features/flow/useFormatCtx';
-import { contextTitleKey, planPricing, type PlanKey } from '@/features/paywall/paywallCopy';
+import {
+  contextTitleKey,
+  paywallBenefits,
+  planPricing,
+  type PlanKey,
+} from '@/features/paywall/paywallCopy';
 import { PlanOption } from '@/features/paywall/PlanOption';
 import { usePurchases } from '@/features/paywall/usePurchases';
 import { useEntitlement } from '@/hooks/useEntitlement';
@@ -32,7 +36,10 @@ import { useUiStore } from '@/store/ui';
 
 const LEGAL_PATHS = { terms: 'terms', privacy: 'privacy' } as const;
 
-/** Paywall: contextual headline, benefits, monthly / annual plans, honest CTA (trial only when the store says so). */
+/**
+ * Paywall: contextual headline, benefits (Android notification item only on Android), monthly / annual
+ * plans, honest CTA — trial copy and its day count come only from the store's free intro offer.
+ */
 export default function PaywallScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
@@ -52,17 +59,15 @@ export default function PaywallScreen() {
   const title = contextTitle ?? t('paywall.title');
   const subtitle = contextTitle ? t('paywall.title') : t('paywall.subtitle');
 
-  const rawBenefits = t('paywall.benefits', { returnObjects: true });
-  const benefits = Array.isArray(rawBenefits)
-    ? rawBenefits.filter((b): b is string => typeof b === 'string')
-    : [];
-  const pricing = planPricing(purchases.offerings, ctx.locale);
+  const benefits = paywallBenefits(t, Platform.OS);
+  const pricing = planPricing(purchases.offerings, ctx.locale, t);
   const storeBlocked = !purchases.available && !purchases.demo;
   const pricesLoading = purchases.offeringsLoading;
   const selectedPrice = plan === 'annual' ? pricing.annual : pricing.monthly;
-  const ctaLabel = pricing.hasIntroOffer ? t('paywall.cta') : t('paywall.ctaNoTrial');
-  const legal = pricing.hasIntroOffer
-    ? t('paywall.legalTrial', { days: TRIAL_DAYS, price: selectedPrice })
+  const freeTrial = pricing.freeTrial[plan];
+  const ctaLabel = freeTrial ? t('paywall.cta') : t('paywall.ctaNoTrial');
+  const legal = freeTrial
+    ? t('paywall.legalTrial', { days: freeTrial.days, price: selectedPrice })
     : t('paywall.legalNoTrial', { price: selectedPrice });
   const annualMeta = [
     pricing.annualPerMonth ? t('paywall.perMonth', { price: pricing.annualPerMonth }) : null,

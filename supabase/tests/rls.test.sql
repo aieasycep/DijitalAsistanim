@@ -1,7 +1,7 @@
 -- pgTAP · Row Level Security & server-side guards
 -- Runs after seed.sql. User 1 = demo user "Yunus", user 2 = another user; nothing may leak across.
 begin;
-select plan(37);
+select plan(86);
 
 create or replace function pg_temp.as_user(uid uuid) returns void language plpgsql as $$
 begin
@@ -17,6 +17,34 @@ begin
   perform set_config('request.jwt.claim.sub', '', true);
   perform set_config('request.jwt.claim.role', '', true);
   perform set_config('request.jwt.claims', '', true);
+end $$;
+
+-- anon = PostgREST request without a JWT; service = edge functions with the service-role key
+create or replace function pg_temp.as_anon() returns void language plpgsql as $$
+begin
+  execute 'reset role';
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', 'anon', true);
+  perform set_config('request.jwt.claims', json_build_object('role', 'anon')::text, true);
+  execute 'set local role anon';
+end $$;
+
+create or replace function pg_temp.as_service() returns void language plpgsql as $$
+begin
+  execute 'reset role';
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', 'service_role', true);
+  perform set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
+  execute 'set local role service_role';
+end $$;
+
+-- Runs a statement as the current role and returns the number of rows it touched (RLS applies).
+create or replace function pg_temp.rows_affected(stmt text) returns int language plpgsql as $$
+declare n int;
+begin
+  execute stmt;
+  get diagnostics n = row_count;
+  return n;
 end $$;
 
 -- ---------------------------------------------------------------------------
@@ -120,6 +148,133 @@ select throws_ok(
 select lives_ok(
   $$insert into storage.objects (bucket_id, name, owner) values ('captures', '00000000-0000-4000-8000-000000000001/foo.png', '00000000-0000-4000-8000-000000000001')$$,
   'can upload into own folder');
+
+-- ---------------------------------------------------------------------------
+-- 8. service-role RPC wrappers (public.* → internal.*): clients are denied, the service role executes
+-- ---------------------------------------------------------------------------
+select pg_temp.as_user('00000000-0000-4000-8000-000000000001');
+select throws_ok($$select * from public.rate_limit_hit('pgtap:client', 5, 60)$$, '42501', null, 'authenticated cannot call rate_limit_hit');
+select throws_ok($$select public.upsert_contact('00000000-0000-4000-8000-000000000001', 'X', 'x@example.com', now())$$, '42501', null, 'authenticated cannot call upsert_contact');
+select throws_ok($$select public.expire_approvals()$$, '42501', null, 'authenticated cannot call expire_approvals');
+select throws_ok($$select * from public.run_retention_cleanup()$$, '42501', null, 'authenticated cannot call run_retention_cleanup');
+select throws_ok($$select internal.expire_approvals()$$, '42501', null, 'internal schema stays unusable for clients');
+
+select pg_temp.as_anon();
+select throws_ok($$select * from public.rate_limit_hit('pgtap:anon', 5, 60)$$, '42501', null, 'anon cannot call rate_limit_hit');
+select throws_ok($$select public.upsert_contact('00000000-0000-4000-8000-000000000001', 'X', 'x@example.com', now())$$, '42501', null, 'anon cannot call upsert_contact');
+select throws_ok($$select public.expire_approvals()$$, '42501', null, 'anon cannot call expire_approvals');
+select throws_ok($$select * from public.run_retention_cleanup()$$, '42501', null, 'anon cannot call run_retention_cleanup');
+
+-- a pending approval whose deadline has passed (user2) — the only one expired in the seed
+select pg_temp.as_admin();
+insert into public.approval_actions (id, user_id, type, status, what, why, payload, original_payload, idempotency_key, requested_by, expires_at)
+values ('00000000-0000-4000-8000-000000004601', '00000000-0000-4000-8000-000000000002', 'reminder_create', 'pending', 'Süresi dolmuş onay', 'pgTAP', '{}'::jsonb, '{}'::jsonb, 'reminder:other:expired', 'assistant', now() - interval '1 hour');
+
+select pg_temp.as_service();
+select is((select allowed from public.rate_limit_hit('pgtap:limit', 2, 60)), true, 'service role: rate_limit_hit allows the first hit');
+select is((select remaining from public.rate_limit_hit('pgtap:limit', 2, 60)), 0, 'service role: second hit exhausts the window');
+select results_eq(
+  $$select allowed, remaining, retry_after_sec >= 1 from public.rate_limit_hit('pgtap:limit', 2, 60)$$,
+  $$values (false, 0, true)$$,
+  'service role: third hit is blocked with a retry hint');
+select is(public.expire_approvals(), 1, 'service role: expire_approvals expires exactly the overdue pending approval');
+select is((select status from public.approval_actions where id = '00000000-0000-4000-8000-000000004601'), 'expired'::public.approval_status_t, 'overdue approval is now expired');
+-- the insert happens inside the call, so it is checked in a separate statement (own snapshot)
+select lives_ok(
+  $$select set_config('pgtap.new_contact', public.upsert_contact('00000000-0000-4000-8000-000000000002', 'Yeni Kişi', 'Yeni@Ornek.com', now())::text, true)$$,
+  'service role: upsert_contact creates a contact');
+select is(
+  (select user_id || ':' || display_name || ':' || emails[1] from public.contacts where id = current_setting('pgtap.new_contact', true)::uuid),
+  '00000000-0000-4000-8000-000000000002:Yeni Kişi:yeni@ornek.com', 'new contact belongs to the given user with a normalised e-mail');
+select is(public.upsert_contact('00000000-0000-4000-8000-000000000001', 'Mehmet Yılmaz', 'MEHMET@musteri.com', now()), '00000000-0000-4000-8000-000000002202'::uuid, 'upsert_contact matches an existing contact case-insensitively');
+select is((select interaction_count from public.contacts where id = '00000000-0000-4000-8000-000000002202'), 43, 'upsert_contact bumps the interaction count');
+
+-- ---------------------------------------------------------------------------
+-- 9. priority_rules: owner CRUD works, nothing crosses users
+-- ---------------------------------------------------------------------------
+select pg_temp.as_user('00000000-0000-4000-8000-000000000001');
+select is((select count(*) from public.priority_rules), 2::bigint, 'user1 sees only own priority rules');
+select lives_ok(
+  $$insert into public.priority_rules (user_id, type, value, label, position) values ('00000000-0000-4000-8000-000000000001', 'keyword_high', 'fatura', 'Fatura yüksek öncelik', 2)$$,
+  'owner can insert a priority rule');
+select is(pg_temp.rows_affected($$update public.priority_rules set enabled = false where id = '00000000-0000-4000-8000-000000002402'$$), 1, 'owner can update own rule');
+select is((select enabled from public.priority_rules where id = '00000000-0000-4000-8000-000000002402'), false, 'own rule update persisted');
+select throws_ok(
+  $$insert into public.priority_rules (user_id, type, value, label) values ('00000000-0000-4000-8000-000000000002', 'mute_sender', 'spam@example.com', 'x')$$,
+  '42501', null, 'user1 cannot insert a rule for user2');
+
+select pg_temp.as_user('00000000-0000-4000-8000-000000000002');
+select is((select count(*) from public.priority_rules), 0::bigint, 'user2 sees none of user1 rules');
+select is(pg_temp.rows_affected($$update public.priority_rules set enabled = false where id = '00000000-0000-4000-8000-000000002401'$$), 0, 'cross-user update affects 0 rows');
+select is(pg_temp.rows_affected($$delete from public.priority_rules where id = '00000000-0000-4000-8000-000000002401'$$), 0, 'cross-user delete affects 0 rows');
+
+select pg_temp.as_user('00000000-0000-4000-8000-000000000001');
+select is(pg_temp.rows_affected($$delete from public.priority_rules where id = '00000000-0000-4000-8000-000000002401'$$), 1, 'owner can delete own rule');
+select pg_temp.as_admin();
+select is((select count(*) from public.priority_rules where user_id = '00000000-0000-4000-8000-000000000001'), 2::bigint, 'user1 rules: 2 seeded + 1 inserted - 1 deleted');
+
+-- ---------------------------------------------------------------------------
+-- 10. privacy: delete_my_history is caller-scoped; retention cleanup honours each user's preference
+-- ---------------------------------------------------------------------------
+-- fixtures: a 200-day-old memory chunk per user
+insert into public.memory_chunks (id, user_id, source_type, source_id, source, content, occurred_at)
+values
+  ('00000000-0000-4000-8000-000000004401', '00000000-0000-4000-8000-000000000001', 'gmail', '00000000-0000-4000-8000-000000004401', '{}'::jsonb, 'Eski hafıza · kullanıcı 1', now() - interval '200 days'),
+  ('00000000-0000-4000-8000-000000004402', '00000000-0000-4000-8000-000000000002', 'gmail', '00000000-0000-4000-8000-000000004402', '{}'::jsonb, 'Eski hafıza · kullanıcı 2', now() - interval '200 days');
+
+select pg_temp.as_user('00000000-0000-4000-8000-000000000002');
+select is(((public.delete_my_history(30)) ->> 'memory')::int, 1, 'delete_my_history(30) removes only the callers memory older than 30 days');
+select pg_temp.as_admin();
+select is((select count(*) from public.memory_chunks where id = '00000000-0000-4000-8000-000000004402'), 0::bigint, 'user2 old memory removed');
+select is((select count(*) from public.memory_chunks where id = '00000000-0000-4000-8000-000000004401'), 1::bigint, 'user1 old memory untouched by user2 delete_my_history');
+select is((select count(*) from public.audit_logs where user_id = '00000000-0000-4000-8000-000000000002' and action = 'data.delete_history'), 1::bigint, 'delete_my_history writes an audit row for the caller only');
+select throws_ok($$select public.delete_my_history()$$, '42501', null, 'delete_my_history refuses unauthenticated callers');
+
+-- retention cutoff per preference value
+select is(internal.retention_cutoff('30d', '2026-03-31T00:00:00Z'), '2026-03-01T00:00:00Z'::timestamptz, 'retention_cutoff 30d');
+select is(internal.retention_cutoff('1y', '2026-03-31T00:00:00Z'), '2025-03-31T00:00:00Z'::timestamptz, 'retention_cutoff 1y');
+select is(internal.retention_cutoff('forever'), null::timestamptz, 'retention_cutoff forever = no cutoff');
+
+-- user1 keeps everything forever; user2 starts at the default 90 days
+update public.user_preferences set retention = 'forever' where user_id = '00000000-0000-4000-8000-000000000001';
+select is((select retention from public.user_preferences where user_id = '00000000-0000-4000-8000-000000000002'), '90d'::public.retention_option_t, 'default retention is 90d');
+insert into public.email_threads (id, user_id, account_id, external_thread_id, subject, last_message_at, fingerprint)
+values
+  ('00000000-0000-4000-8000-000000004501', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-0000000000c1', 't-old-u1', 'Eski konu', now() - interval '400 days', 'fp-old-u1'),
+  ('00000000-0000-4000-8000-000000004502', '00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-0000000000c9', 't-old-u2', 'Eski konu', now() - interval '40 days', 'fp-old-u2'),
+  ('00000000-0000-4000-8000-000000004503', '00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-0000000000c9', 't-recent-u2', 'Yeni konu', now() - interval '10 days', 'fp-recent-u2');
+
+select pg_temp.as_service();
+select is((select deleted_threads from public.run_retention_cleanup() where user_id = '00000000-0000-4000-8000-000000000002'), 0, 'cleanup at 90d keeps a 40-day-old thread');
+select pg_temp.as_admin();
+update public.user_preferences set retention = '30d' where user_id = '00000000-0000-4000-8000-000000000002';
+select pg_temp.as_service();
+select results_eq(
+  $$select user_id, deleted_threads from public.run_retention_cleanup() order by user_id$$,
+  $$values ('00000000-0000-4000-8000-000000000002'::uuid, 1)$$,
+  'cleanup at 30d removes the 40-day-old thread; users with retention=forever are never visited');
+select pg_temp.as_admin();
+select is((select count(*) from public.email_threads where id = '00000000-0000-4000-8000-000000004502'), 0::bigint, 'thread past user2 retention deleted');
+select is((select count(*) from public.email_threads where id in ('00000000-0000-4000-8000-000000004503', '00000000-0000-4000-8000-0000000000f1')), 2::bigint, 'user2 threads within retention kept');
+select is((select count(*) from public.email_threads where id = '00000000-0000-4000-8000-000000004501'), 1::bigint, 'user1 (forever) 400-day-old thread kept');
+select is((select count(*) from public.memory_chunks where id = '00000000-0000-4000-8000-000000004401'), 1::bigint, 'user1 (forever) old memory kept by cleanup');
+
+-- ---------------------------------------------------------------------------
+-- 11. OAuth scopes: granted scopes readable by the owner only, never client-editable; credentials never readable
+-- ---------------------------------------------------------------------------
+select pg_temp.as_user('00000000-0000-4000-8000-000000000001');
+select is(
+  (select granted_scopes from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'),
+  array['openid', 'email', 'profile', 'https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/calendar.readonly'],
+  'owner can read the granted scopes of own account');
+select is((select 'https://www.googleapis.com/auth/gmail.send' = any (granted_scopes) from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), false, 'read-only connection carries no write scope');
+update public.connected_accounts set granted_scopes = array['https://www.googleapis.com/auth/gmail.send'] where id = '00000000-0000-4000-8000-0000000000c1';
+select is((select 'https://www.googleapis.com/auth/gmail.send' = any (granted_scopes) from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), false, 'client cannot self-grant a write scope');
+select throws_ok($$select scope from public.oauth_credentials where account_id = '00000000-0000-4000-8000-0000000000c1'$$, '42501', null, 'owner cannot read own oauth_credentials');
+
+select pg_temp.as_user('00000000-0000-4000-8000-000000000002');
+select is((select count(*) from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), 0::bigint, 'other users cannot see user1 account scopes');
+select throws_ok($$select * from public.oauth_credentials where user_id = '00000000-0000-4000-8000-000000000002'$$, '42501', null, 'oauth_credentials are invisible to their owner too');
 
 select * from finish();
 rollback;

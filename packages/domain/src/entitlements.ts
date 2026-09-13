@@ -61,11 +61,13 @@ export type ProductId = (typeof PRODUCT_IDS)[keyof typeof PRODUCT_IDS];
 
 export const ENTITLEMENT_ID = 'pro';
 
-/** Fallback design copy prices when the store has not returned localized prices. */
+/**
+ * Fallback design prices when the store has not returned localized prices. Amounts only — the
+ * user-facing label is always built through i18n (`paywall.monthlyPrice` / `paywall.annualPrice`).
+ */
 export const FALLBACK_PRICES = {
-  monthly: { amount: 199, currency: 'TRY', label: '199 TL / ay' },
-  annual: { amount: 1490, currency: 'TRY', label: '1.490 TL / yıl' },
+  monthly: { amount: 199, currency: 'TRY' },
+  annual: { amount: 1490, currency: 'TRY' },
 } as const;
 
 export const REFERRAL_BONUS_DAYS = 14;
-export const TRIAL_DAYS = 7;

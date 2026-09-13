@@ -38,6 +38,9 @@ eas build --profile production --platform all       # store builds
 eas submit --platform ios / android
 ```
 
+- Before `eas submit`, fill `submit.production.ios.ascAppId` / `appleTeamId` in `apps/mobile/eas.json` (EAS cannot read
+  them from env) and point `submit.production.android.serviceAccountKeyPath` at the Play service-account JSON.
+
 - Environment variables per profile live in EAS (`eas env`) or `apps/mobile/.env`: all `EXPO_PUBLIC_*` values plus
   `APP_ENV`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `APPLE_TEAM_ID`, `IOS_APP_GROUP`.
 - Native code (Android NotificationListener module, widgets, share extension) is compiled by EAS during prebuild;
@@ -64,15 +67,15 @@ Set `NEXT_PUBLIC_*`, `APPLE_TEAM_ID`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `ANDRO
 
 ## 5. Optional integrations
 
-| Feature             | Variables                                                 | Without it           |
-| ------------------- | --------------------------------------------------------- | -------------------- |
-| Gmail push          | `GOOGLE_PUBSUB_TOPIC`, `GOOGLE_PUBSUB_VERIFICATION_TOKEN` | polling every 10 min |
-| Graph notifications | `MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE`                    | polling              |
-| Server TTS          | `TTS_PROVIDER`, keys                                      | device TTS           |
-| Server STT          | `STT_PROVIDER`, keys                                      | type-to-ask fallback |
-| Embeddings          | `EMBEDDING_PROVIDER`, key                                 | Postgres FTS         |
-| Travel time         | `ROUTES_PROVIDER=google`, `GOOGLE_ROUTES_API_KEY`         | no travel hints      |
-| Sentry / PostHog    | DSN / key                                                 | silent no-op         |
+| Feature             | Variables                                                 | Without it                             |
+| ------------------- | --------------------------------------------------------- | -------------------------------------- |
+| Gmail push          | `GOOGLE_PUBSUB_TOPIC`, `GOOGLE_PUBSUB_VERIFICATION_TOKEN` | polling (mail 15 min Free / 5 min Pro) |
+| Graph notifications | `MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE`                    | polling (same cadence)                 |
+| Server TTS          | `TTS_PROVIDER`, keys                                      | device TTS                             |
+| Server STT          | `STT_PROVIDER`, keys                                      | type-to-ask fallback                   |
+| Embeddings          | `EMBEDDING_PROVIDER`, key                                 | Postgres FTS                           |
+| Travel time         | `ROUTES_PROVIDER=google`, `GOOGLE_ROUTES_API_KEY`         | no travel hints                        |
+| Sentry / PostHog    | DSN / key                                                 | silent no-op                           |
 
 ## 6. Rollout checklist
 

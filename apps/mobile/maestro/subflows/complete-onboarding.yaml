@@ -8,7 +8,7 @@ appId: ${APP_ID}
       text: 'Bağlandı'
     timeout: 15000
 - tapOn:
-    id: 'connect-card-apple'
+    id: 'connect-card-device'
 - extendedWaitUntil:
     visible:
       id: 'connect-continue'

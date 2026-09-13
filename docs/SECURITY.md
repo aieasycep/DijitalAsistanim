@@ -56,7 +56,7 @@ leak are **provider credentials** and **message content**. Everything below foll
   Graph `clientState`, RevenueCat `Authorization` header (constant-time compare). Events are idempotent via
   `webhook_events`.
 - `cron-dispatch` and function-to-function calls require `x-internal-secret` (`INTERNAL_FUNCTION_SECRET`).
-- Rate limits (`internal.rate_limit_hit`) per user/endpoint: assistant 20/min, capture upload 30/10 min,
+- Rate limits (`internal.rate_limit_hit`, called through the service-role-only `public.rate_limit_hit` wrapper) per user/endpoint: assistant 20/min, capture upload 30/10 min,
   OAuth start 10/10 min, referral redeem 5/h, search 60/min, export 3/day. Sync is never rate-limited into failure.
 - All user input is validated with zod (`@da/validation`) before use; errors return a stable envelope without stack traces.
 

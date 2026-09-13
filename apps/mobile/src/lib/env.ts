@@ -42,6 +42,13 @@ export const env = {
   universalHosts: extra.universalHosts ?? ['dijitalasistan.app'],
   appVersion: Constants.expoConfig?.version ?? '1.0.0',
   isProduction: IS_PRODUCTION,
+  /**
+   * E2E / demo builds only: pin the demo clock (ISO instant the app "boots" at, time keeps moving from
+   * there) and the demo timezone so greetings, plan suggestions and seeded meetings are deterministic.
+   * Ignored outside demo mode.
+   */
+  demoNow: pub('EXPO_PUBLIC_DEMO_NOW'),
+  demoTimezone: pub('EXPO_PUBLIC_DEMO_TIMEZONE'),
 } as const;
 
 export const hasSupabase = Boolean(env.supabaseUrl && env.supabaseAnonKey);

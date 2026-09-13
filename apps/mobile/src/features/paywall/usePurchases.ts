@@ -66,7 +66,8 @@ export function usePurchases() {
         }
         await refreshEntitlement();
         track('subscription_started', { productId });
-        if (offerings.data?.hasIntroOffer) track('trial_started', { productId });
+        // Only when the store itself opened a trial period — never inferred from the offer copy.
+        if (result.isTrial) track('trial_started', { productId });
         return 'purchased';
       }
       if (demo && ds.billing.recordDemoPurchase) {

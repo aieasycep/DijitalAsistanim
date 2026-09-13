@@ -35,6 +35,7 @@
     "undo": "Undo",
     "learnMore": "Learn more",
     "openSource": "View source",
+    "sourceUnavailable": "This source has no link that can be opened.",
     "whyImportant": "Why important?",
     "notImportant": "Not important",
     "showMore": "Show this more often",
@@ -1290,7 +1291,12 @@
       "deviceDenied": "Calendar permission is off. You can enable it in system settings.",
       "openSettings": "Open Settings",
       "empty": "No connected accounts yet.",
-      "emptyBody": "Connect your mail and calendar; briefings and priorities are built from them."
+      "emptyBody": "Connect your mail and calendar; briefings and priorities are built from them.",
+      "consentTitle": "Revoke Microsoft access manually",
+      "consentBody": "{{name}} was disconnected and your access credentials were deleted. Microsoft does not let apps revoke consent server-side; remove the app's permission on the Microsoft permissions page.",
+      "consentOpen": "Open Microsoft permissions",
+      "consentLater": "Later",
+      "consentOpenFailed": "Couldn't open the page. Visit account.live.com/consent/Manage in your browser."
     },
     "dataSourceScreen": {
       "readEmail": "Read emails",
@@ -1535,15 +1541,14 @@
       "Audio briefing",
       "AI memory",
       "Multiple accounts",
-      "VIP people",
-      "Android Notification Intelligence"
+      "VIP people"
     ],
+    "benefitsAndroid": ["Android Notification Intelligence"],
     "monthly": "Monthly",
     "annual": "Annual",
-    "monthlyPrice": "199 TL / month",
-    "annualPrice": "1,490 TL / year",
+    "monthlyPrice": "{{price}} / month",
+    "annualPrice": "{{price}} / year",
     "bestValue": "Best value",
-    "trial": "7 days free Pro",
     "cta": "Try free",
     "ctaNoTrial": "Go Pro",
     "continueFree": "Continue with Free",

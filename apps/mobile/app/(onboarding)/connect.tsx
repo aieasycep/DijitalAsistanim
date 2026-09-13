@@ -38,9 +38,10 @@ interface CardSpec {
   target?: OAuthTarget;
 }
 
+// Same testID on both platforms so the Maestro flows stay platform-independent; the key drives the copy.
 const DEVICE_CARD: CardSpec =
   Platform.OS === 'ios'
-    ? { key: 'apple_calendar', testID: 'connect-card-apple' }
+    ? { key: 'apple_calendar', testID: 'connect-card-device' }
     : { key: 'device_calendar', testID: 'connect-card-device' };
 
 const CARDS: CardSpec[] = [

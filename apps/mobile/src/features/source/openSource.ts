@@ -5,7 +5,9 @@
  */
 import { useCallback } from 'react';
 import { useRouter, type Href } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import type { SourceRef } from '@da/domain';
+import { useToast } from '@da/ui';
 import { openExternal } from '@/lib/openExternal';
 
 export function routeForSource(source: SourceRef): Href | null {
@@ -31,12 +33,16 @@ export function routeForSource(source: SourceRef): Href | null {
     case 'assistant':
       return { pathname: '/(tabs)/assistant' };
     case 'user':
-      return null;
+      // Things the user entered themselves: a contact (→ person page) or a manual task/commitment (→ Plan).
+      if (source.personId) return { pathname: '/person/[id]', params: { id: source.personId } };
+      return { pathname: '/(tabs)/plan' };
   }
 }
 
 export function useOpenSource() {
   const router = useRouter();
+  const toast = useToast();
+  const { t } = useTranslation();
   const openSource = useCallback(
     async (source: SourceRef): Promise<boolean> => {
       const href = routeForSource(source);
@@ -44,10 +50,15 @@ export function useOpenSource() {
         router.push(href);
         return true;
       }
-      if (source.url) return openExternal(source.url);
+      if (source.url) {
+        const opened = await openExternal(source.url);
+        if (opened) return true;
+      }
+      // Never a silent tap: say why nothing opened.
+      toast.show({ message: t('common.sourceUnavailable'), icon: 'info' });
       return false;
     },
-    [router],
+    [router, toast, t],
   );
   return { openSource };
 }

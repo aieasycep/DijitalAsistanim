@@ -1,5 +1,6 @@
 import 'react-native-gesture-handler/jestSetup';
 jest.mock('react-native-worklets', () => require('react-native-worklets/lib/module/mock'));
+import { Platform } from 'react-native';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { qk, type DataSource } from '@da/api-client';
 import {
@@ -74,12 +75,21 @@ jest.mock('expo-router', () => ({
 let mockDs: DataSource;
 jest.mock('@/hooks/useDataSource', () => ({ useDataSource: () => mockDs }));
 
+const ANDROID_BENEFIT = 'Android Bildirim Zekâsı';
+const originalOS = Platform.OS;
+
+function setPlatform(os: string) {
+  Object.defineProperty(Platform, 'OS', { value: os, configurable: true, writable: true });
+}
+
 beforeEach(async () => {
   jest.clearAllMocks();
   useUiStore.setState({ offline: false });
   mockDs = makeSettingsDataSource();
   await seedSession(mockDs);
 });
+
+afterEach(() => setPlatform(originalOS));
 
 describe('Subscription screen', () => {
   it('shows the Free plan with usage and opens the paywall from the upgrade button', async () => {
@@ -91,12 +101,25 @@ describe('Subscription screen', () => {
     expect(screen.getByText('1 / 5 bugün')).toBeTruthy();
     expect(screen.queryByText('Pro aktif')).toBeNull();
     expect(screen.queryByTestId('subscription-manage')).toBeNull();
+    // Jest runs as iOS: the Pro benefits never advertise the Android-only feature there.
+    expect(screen.getByText('Sınırsız AI analiz')).toBeTruthy();
+    expect(screen.queryByText(ANDROID_BENEFIT)).toBeNull();
 
     fireEvent.press(screen.getByTestId('subscription-upgrade'));
     expect(mockPush).toHaveBeenCalledWith({
       pathname: '/paywall',
       params: { context: 'subscription' },
     });
+  });
+
+  it('lists the Android notification benefit for Free users on Android', async () => {
+    setPlatform('android');
+    mockDs = withEntitlement(mockDs, FREE_ENTITLEMENT);
+    renderSettings(<SubscriptionScreen />);
+
+    expect(await screen.findByText('Ücretsiz plan')).toBeTruthy();
+    expect(screen.getByText('Sınırsız AI analiz')).toBeTruthy();
+    expect(screen.getByText(ANDROID_BENEFIT)).toBeTruthy();
   });
 
   it('shows the Pro state with expiry, source, manage and restore', async () => {

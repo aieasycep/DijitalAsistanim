@@ -208,8 +208,18 @@ export async function runRemindersJob(admin: Db, now: string): Promise<JobResult
 
 // --- Follow-ups -------------------------------------------------------------------------------------
 
+/** Move pending approvals past their expires_at to "expired" (service-role wrapper → internal.expire_approvals). */
+async function expireApprovals(admin: Db): Promise<number> {
+  const { data, error } = await admin.rpc('expire_approvals');
+  if (error) {
+    log.warn('approval expiry failed', { code: error.code, error: error.message });
+    return 0;
+  }
+  return typeof data === 'number' ? data : 0;
+}
+
 export async function runFollowUpsJob(admin: Db, now: string): Promise<JobResult> {
-  await admin.schema('internal').rpc('expire_approvals');
+  const expired = await expireApprovals(admin);
   const { data } = await admin
     .from('follow_ups')
     .select('*')
@@ -255,7 +265,7 @@ export async function runFollowUpsJob(admin: Db, now: string): Promise<JobResult
     }
     await admin.from('follow_ups').update({ last_nudged_at: now }).eq('id', f.id);
   }
-  return { processed, details: { nudged } };
+  return { processed, details: { nudged, expiredApprovals: expired } };
 }
 
 // --- Sync poll --------------------------------------------------------------------------------------
@@ -388,8 +398,14 @@ export async function runRenewSubscriptionsJob(admin: Db, now: string): Promise<
 
 // --- Retention --------------------------------------------------------------------------------------
 
+/**
+ * Nightly (pg_cron `da_retention` → "retention"): this handler is the single owner of the purge —
+ * the SQL cron only dispatches. Runs the per-user retention cleanup (service-role wrapper →
+ * internal.run_retention_cleanup), expires stale approvals, then removes storage objects.
+ */
 export async function runRetentionJob(admin: Db, now: string): Promise<JobResult> {
-  const { data, error } = await admin.schema('internal').rpc('run_retention_cleanup');
+  const expiredApprovals = await expireApprovals(admin);
+  const { data, error } = await admin.rpc('run_retention_cleanup');
   if (error) throw new AppError('internal', `Saklama temizliği başarısız: ${error.message}`);
   const rows = (data ?? []) as {
     user_id: string;
@@ -435,6 +451,7 @@ export async function runRetentionJob(admin: Db, now: string): Promise<JobResult
     processed: rows.length,
     details: {
       removedFiles,
+      expiredApprovals,
       threads: rows.reduce((s, r) => s + r.deleted_threads, 0),
       messages: rows.reduce((s, r) => s + r.deleted_messages, 0),
     },

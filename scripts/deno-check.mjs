@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Typechecks every Supabase Edge Function with Deno (uses a local `deno` from PATH or the npm-installed binary).
+// Typechecks (`deno check`) and lints (`deno lint`) every Supabase Edge Function with Deno (uses a local
+// `deno` from PATH or the npm-installed binary).
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -39,10 +40,20 @@ if (entries.length === 0) {
   process.exit(1);
 }
 
+const denoEnv = { ...process.env, DENO_NO_UPDATE_CHECK: '1', DENO_NO_PROMPT: '1' };
+
 const res = spawnSync(deno, ['check', '--config', path.join(FUNCTIONS, 'deno.json'), ...entries], {
   cwd: FUNCTIONS,
   stdio: 'inherit',
-  env: { ...process.env, DENO_NO_UPDATE_CHECK: '1', DENO_NO_PROMPT: '1' },
+  env: denoEnv,
 });
 if (res.status !== 0) process.exit(res.status ?? 1);
 console.log(`✓ deno check passed for ${entries.length} functions`);
+
+const lint = spawnSync(deno, ['lint', '--config', path.join(FUNCTIONS, 'deno.json'), '.'], {
+  cwd: FUNCTIONS,
+  stdio: 'inherit',
+  env: denoEnv,
+});
+if (lint.status !== 0) process.exit(lint.status ?? 1);
+console.log('✓ deno lint passed');

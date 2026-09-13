@@ -1,8 +1,12 @@
 {
   "CFBundleDisplayName": "Dijital Asistan",
-  "NSCalendarsFullAccessUsageDescription": "We read your calendar to understand your day and conflicts.",
+  "NSCalendarsFullAccessUsageDescription": "We read your calendar to understand your day, conflicts and meeting prep. Events are only created after you approve them.",
+  "NSCalendarsWriteOnlyAccessUsageDescription": "To add the events you approve to your calendar.",
+  "NSRemindersFullAccessUsageDescription": "To add the reminders you approve to the Reminders app.",
   "NSContactsUsageDescription": "To pick VIP people from your contacts. Optional.",
-  "NSMicrophoneUsageDescription": "So you can ask by voice.",
-  "NSCameraUsageDescription": "To capture and analyze documents or posters.",
-  "NSPhotoLibraryUsageDescription": "To analyze screenshots."
+  "NSMicrophoneUsageDescription": "So you can ask by voice and take post-meeting notes.",
+  "NSSpeechRecognitionUsageDescription": "To transcribe your voice questions on the device.",
+  "NSCameraUsageDescription": "To capture and analyze documents, screenshots or event posters.",
+  "NSPhotoLibraryUsageDescription": "To capture and analyze screenshots or photos.",
+  "NSFaceIDUsageDescription": "For quick and secure access to your account."
 }

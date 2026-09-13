@@ -477,12 +477,21 @@ export async function runPipeline(
     for (const p of it.thread.participants) {
       const email = p.email?.toLowerCase();
       if (!email || userEmails.has(email) || contactIdByEmail.has(email)) continue;
-      const { data: cid } = await admin.schema('internal').rpc('upsert_contact', {
+      const { data: cid, error: contactErr } = await admin.rpc('upsert_contact', {
         p_user: userId,
         p_name: p.name ?? email,
         p_email: email,
         p_at: it.thread.lastMessageAt,
       });
+      if (contactErr) {
+        // Skip the contact link for this participant; the rest of the pipeline continues.
+        log.warn('contact upsert failed', {
+          threadId: it.thread.id,
+          code: contactErr.code,
+          error: contactErr.message,
+        });
+        continue;
+      }
       if (typeof cid === 'string') contactIdByEmail.set(email, cid);
     }
     const counterpartEmail = it.last.isFromUser ? it.last.to[0]?.email?.toLowerCase() : senderEmail;

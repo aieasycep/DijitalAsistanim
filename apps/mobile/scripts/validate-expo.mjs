@@ -4,6 +4,7 @@
 //  2. run config plugins via `expo config --type introspect` (catches plugin errors)
 //  3. `expo-doctor` (dependency compatibility)
 //  4. `expo export --platform ios --platform android` bundling dry-run is skipped in CI when too slow; set EXPO_VALIDATE_EXPORT=1 to enable
+//  5. `expo prebuild --no-install` (native project generation) is opt-in: set EXPO_VALIDATE_PREBUILD=1
 import { execFileSync, spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -60,5 +61,13 @@ if (process.env.EXPO_VALIDATE_EXPORT === '1') {
     ['expo', 'export', '--platform', 'ios', '--output-dir', '.expo-export-check', '--no-minify'],
     { stdio: 'inherit' },
   );
+}
+
+if (process.env.EXPO_VALIDATE_PREBUILD === '1') {
+  // Generates the native projects (config plugins, Kotlin module, widgets) without installing pods/gradle deps.
+  console.log('→ expo prebuild (android + ios, no install)');
+  run('npx', ['expo', 'prebuild', '--platform', 'all', '--no-install', '--clean'], {
+    stdio: 'inherit',
+  });
 }
 console.log('✓ expo validation passed');

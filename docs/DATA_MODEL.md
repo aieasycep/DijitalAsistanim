@@ -76,7 +76,7 @@ All timestamps are `timestamptz` in UTC; the user's IANA timezone lives in `prof
 
 - `search_memory(query, count, embedding?, contact?)` — semantic when an embedding is passed, else Turkish FTS (`websearch_to_tsquery('turkish')` + unaccent).
 - `increment_usage(counter, amount)`, `my_entitlement()`, `resolve_insight(id, status, feedback?)`, `delete_my_history(days?)`, `person_open_loops(contact)`.
-- `internal.rate_limit_hit`, `internal.expire_approvals`, `internal.run_retention_cleanup`, `internal.upsert_contact`, `internal.invoke_function` (pg_cron → Edge Functions via pg_net).
+- `internal.rate_limit_hit`, `internal.expire_approvals`, `internal.run_retention_cleanup`, `internal.upsert_contact`, `internal.invoke_function` (pg_cron → Edge Functions via pg_net). The `internal` schema is not exposed through PostgREST; edge functions reach the first four through same-signature, service-role-only `public.*` wrappers (`rate_limit_hit`, `expire_approvals`, `run_retention_cleanup`, `upsert_contact`; migration 0010).
 
 ## Cron (pg_cron → `cron-dispatch`)
 

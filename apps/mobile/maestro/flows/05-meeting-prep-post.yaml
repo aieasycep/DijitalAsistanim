@@ -3,6 +3,8 @@ appId: ${APP_ID}
 tags: [critical, flow-f]
 ---
 - runFlow: ../subflows/ensure-signed-in.yaml
+# Meeting Prep is a Pro feature; the demo user starts on the free plan.
+- runFlow: ../subflows/ensure-pro.yaml
 - tapOn:
     text: 'Hazırlan'
 - extendedWaitUntil:

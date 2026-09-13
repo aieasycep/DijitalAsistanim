@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { qk } from '@da/api-client';
 import type { FormatCtx } from '@da/i18n';
 import { Badge, Button, Card, ListRow, Text, useTheme, useToast } from '@da/ui';
 import { useFormatCtx } from '@/features/flow/useFormatCtx';
+import { paywallBenefits } from '@/features/paywall/paywallCopy';
 import { SettingsRowLink } from '@/features/settings/SettingsRowLink';
 import { SettingsScreen } from '@/features/settings/SettingsScreen';
 import { SettingsSection } from '@/features/settings/SettingsSection';
@@ -80,8 +81,8 @@ export default function SubscriptionScreen() {
     if (!ok) toast.show({ message: t('paywall.unavailable'), icon: 'info' });
   };
 
-  const benefitsRaw = t('paywall.benefits', { returnObjects: true });
-  const benefits: string[] = Array.isArray(benefitsRaw) ? benefitsRaw.map(String) : [];
+  // The Android notification benefit is appended only on Android — never advertised on iOS.
+  const benefits = paywallBenefits(t, Platform.OS);
   const expiry = entitlement.expiresAt ? formatLongDate(entitlement.expiresAt, ctx) : null;
   const renews = entitlement.source === 'revenuecat' && !entitlement.isTrial;
   const sourceKey = entitlement.source;

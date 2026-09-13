@@ -1,8 +1,12 @@
 {
   "CFBundleDisplayName": "Dijital Asistan",
-  "NSCalendarsFullAccessUsageDescription": "Takvimini okuyarak gününü ve çakışmaları anlayabiliriz.",
-  "NSContactsUsageDescription": "Önemli kişileri rehberinden seçebilmen için. İsteğe bağlıdır.",
-  "NSMicrophoneUsageDescription": "Sesli soru sorabilmen için.",
-  "NSCameraUsageDescription": "Belge veya afişleri yakalayıp analiz edebilmek için.",
-  "NSPhotoLibraryUsageDescription": "Ekran görüntülerini analiz edebilmek için."
+  "NSCalendarsFullAccessUsageDescription": "Takvimini okuyarak gününü, çakışmaları ve toplantı hazırlıklarını anlayabiliriz. Etkinlikler yalnızca sen onaylayınca oluşturulur.",
+  "NSCalendarsWriteOnlyAccessUsageDescription": "Onayladığın etkinlikleri takvimine ekleyebilmek için.",
+  "NSRemindersFullAccessUsageDescription": "Onayladığın hatırlatıcıları Anımsatıcılar uygulamasına ekleyebilmek için.",
+  "NSContactsUsageDescription": "Önemli kişileri (VIP) rehberinden seçebilmen için. İsteğe bağlıdır.",
+  "NSMicrophoneUsageDescription": "Sesli soru sorabilmen ve toplantı sonrası not alabilmen için.",
+  "NSSpeechRecognitionUsageDescription": "Sesli sorularını cihaz üzerinde yazıya dökmek için.",
+  "NSCameraUsageDescription": "Belge, ekran görüntüsü veya etkinlik afişini yakalayıp analiz edebilmek için.",
+  "NSPhotoLibraryUsageDescription": "Ekran görüntüsü veya fotoğrafları yakalayıp analiz edebilmek için.",
+  "NSFaceIDUsageDescription": "Hesabına hızlı ve güvenli erişim için."
 }

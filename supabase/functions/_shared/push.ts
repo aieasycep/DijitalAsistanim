@@ -121,7 +121,10 @@ export async function sendPush(
     alreadySent: new Set<string>(),
     options: {
       channelId: androidChannelId(payload.category),
-      interruptionLevel: iosInterruptionLevel(payload.category, false),
+      interruptionLevel: iosInterruptionLevel(
+        payload.category,
+        getEnv().push.timeSensitiveEntitlement,
+      ),
       ...(opts.badge !== undefined ? { badge: opts.badge } : {}),
     },
   });

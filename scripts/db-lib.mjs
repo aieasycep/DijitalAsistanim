@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const ADMIN_URL =
-  process.env.DATABASE_URL ?? 'postgresql://postgres@127.0.0.1:54329/postgres';
+  process.env.DATABASE_URL ??
+  process.env.SUPABASE_DB_URL ??
+  'postgresql://postgres@127.0.0.1:54329/postgres';
 
 export function dbNameFromUrl(url) {
   return new URL(url).pathname.replace(/^\//, '') || 'postgres';

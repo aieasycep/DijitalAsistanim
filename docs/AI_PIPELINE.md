@@ -77,8 +77,8 @@ meeting prep, assistant, capture analysis, reply drafts — all through the same
 ## Cost controls
 
 Heuristics first · batching · hash dedupe · small/large tiers · per-call input cap (`AI_MAX_INPUT_TOKENS_PER_CALL`) ·
-per-user daily budgets (`AI_DAILY_TOKEN_BUDGET_FREE/PRO`) · initial analysis caps deep analysis at 20 threads and
-defers the rest · free-plan assistant/capture quotas (`usage_counters`) · content-free telemetry.
+per-user daily budgets (`AI_DAILY_TOKEN_BUDGET_FREE/PRO`) · initial analysis caps deep analysis at 15 threads per run
+(`DEEP_MAX_PER_RUN`) and defers the rest · free-plan assistant/capture quotas (`usage_counters`) · content-free telemetry.
 
 ## Speech
 
