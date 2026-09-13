@@ -3,13 +3,16 @@
  * through a browser auth session), progressive "Yazma izni ver" (extra scope group on the same account),
  * "Şimdi eşitle", "Birincil yap" and "Kaldır". The demo adapter returns the app callback as its
  * authorization URL, so no consent screen opens there (same convention as `useOAuthConnect`).
+ *
+ * Removing a Microsoft account only deletes our credentials (Graph cannot revoke consent server-side);
+ * the screen then shows the manual-revoke follow-up instead of the plain "removed" toast.
  */
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
 import { qk } from '@da/api-client';
-import type { ConnectedAccount, OAuthStartResponse } from '@da/domain';
+import { consentManageUrlFor, type ConnectedAccount, type OAuthStartResponse } from '@da/domain';
 import { useToast } from '@da/ui';
 import { parseOAuthCallback } from '@/features/onboarding/useOAuthConnect';
 import { useDataSource } from '@/hooks/useDataSource';
@@ -166,13 +169,15 @@ export function useIntegrations() {
     mutationFn: (account: ConnectedAccount) => ds.accounts.disconnect(account.id),
     onMutate: (account) => setBusy({ id: account.id, action: 'remove' }),
     onSettled: () => setBusy(null),
-    onSuccess: async () => {
+    onSuccess: async (_result, account) => {
       await Promise.all([
         invalidateAccounts(),
         queryClient.invalidateQueries({ queryKey: qk.entitlement }),
         ...SYNC_RELATED_KEYS.map((key) => queryClient.invalidateQueries({ queryKey: [...key] })),
       ]);
-      toast.show({ message: t('settings.integrationsScreen.removed'), icon: 'check' });
+      // Providers without server-side revocation get the manual-revoke modal on the screen instead.
+      if (!consentManageUrlFor(account.provider))
+        toast.show({ message: t('settings.integrationsScreen.removed'), icon: 'check' });
     },
     onError: showError,
   });

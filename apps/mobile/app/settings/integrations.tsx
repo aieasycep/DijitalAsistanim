@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import type { ConnectedAccount } from '@da/domain';
+import { consentManageUrlFor, type ConnectedAccount } from '@da/domain';
 import {
   Button,
   ConfirmModal,
@@ -31,11 +31,16 @@ import { useOAuthConnect } from '@/features/onboarding/useOAuthConnect';
 import { useEntitlement } from '@/hooks/useEntitlement';
 import { isDemoMode } from '@/lib/env';
 import { describeError } from '@/lib/errors';
+import { openExternal } from '@/lib/openExternal';
 import { useUiStore } from '@/store/ui';
 
 const DEVICE_PROVIDER_KEY = Platform.OS === 'ios' ? 'apple_calendar' : 'device_calendar';
 
-/** Bağlantılar — connected accounts with status, scopes, reconnect / write access / sync / remove. */
+/**
+ * Bağlantılar — connected accounts with status, scopes, reconnect / write access / sync / remove.
+ * Removing a Microsoft account turns the confirm modal into a follow-up that links to Microsoft's consent
+ * page (Graph cannot revoke consent server-side); Google is revoked by the server.
+ */
 export default function IntegrationsScreen() {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -49,6 +54,8 @@ export default function IntegrationsScreen() {
   const device = useDeviceCalendar();
   const addSheet = useBottomSheet();
   const [removing, setRemoving] = useState<ConnectedAccount | null>(null);
+  /** Removed account whose provider consent must still be revoked by hand (Microsoft). */
+  const [revokeManually, setRevokeManually] = useState<ConnectedAccount | null>(null);
   const [deviceBusy, setDeviceBusy] = useState(false);
   const c = theme.colors;
 
@@ -151,8 +158,28 @@ export default function IntegrationsScreen() {
   const confirmRemove = useCallback(() => {
     if (!removing) return;
     const target = removing;
-    disconnect.mutate(target, { onSettled: () => setRemoving(null) });
+    disconnect.mutate(target, {
+      // Both callbacks land in one render: the same modal switches from "confirm" to "revoke manually".
+      onSuccess: () => {
+        if (consentManageUrlFor(target.provider)) setRevokeManually(target);
+      },
+      onSettled: () => setRemoving(null),
+    });
   }, [removing, disconnect]);
+
+  /** Closes the follow-up first, then opens the consent page (same order as the add sheet → browser). */
+  const openConsentManage = useCallback(async () => {
+    const url = revokeManually ? consentManageUrlFor(revokeManually.provider) : null;
+    setRevokeManually(null);
+    if (!url) return;
+    const ok = await openExternal(url);
+    if (!ok)
+      toast.show({
+        message: t('settings.integrationsScreen.consentOpenFailed'),
+        icon: 'conflict',
+        iconTone: 'critical',
+      });
+  }, [revokeManually, toast, t]);
 
   const locked = offline || connecting !== null || deviceBusy;
 
@@ -268,24 +295,41 @@ export default function IntegrationsScreen() {
         onClose={addSheet.close}
         onPick={(choice) => void onPick(choice)}
       />
+      {/* One modal instance: "confirm removal" becomes "revoke consent by hand" without a second Modal. */}
       <ConfirmModal
-        visible={removing !== null}
-        icon="linkOff"
-        title={
-          removing
-            ? t('settings.integrationsScreen.disconnectTitle', {
-                name: removing.email ?? removing.displayName,
-              })
-            : ''
-        }
-        body={t('settings.integrationsScreen.disconnectBody')}
-        confirmLabel={t('settings.integrationsScreen.remove')}
-        cancelLabel={t('common.cancel')}
-        destructive
-        loading={disconnect.isPending}
-        onConfirm={confirmRemove}
-        onCancel={() => setRemoving(null)}
-        testID="integration-remove-confirm"
+        visible={removing !== null || revokeManually !== null}
+        {...(revokeManually
+          ? {
+              icon: 'key' as const,
+              title: t('settings.integrationsScreen.consentTitle'),
+              body: t('settings.integrationsScreen.consentBody', {
+                name: revokeManually.email ?? revokeManually.displayName,
+              }),
+              confirmLabel: t('settings.integrationsScreen.consentOpen'),
+              cancelLabel: t('settings.integrationsScreen.consentLater'),
+              destructive: false,
+              loading: false,
+              onConfirm: () => void openConsentManage(),
+              onCancel: () => setRevokeManually(null),
+              testID: 'integration-consent',
+              confirmTestID: 'integration-consent-manage',
+            }
+          : {
+              icon: 'linkOff' as const,
+              title: removing
+                ? t('settings.integrationsScreen.disconnectTitle', {
+                    name: removing.email ?? removing.displayName,
+                  })
+                : '',
+              body: t('settings.integrationsScreen.disconnectBody'),
+              confirmLabel: t('settings.integrationsScreen.remove'),
+              cancelLabel: t('common.cancel'),
+              destructive: true,
+              loading: disconnect.isPending,
+              onConfirm: confirmRemove,
+              onCancel: () => setRemoving(null),
+              testID: 'integration-remove-confirm',
+            })}
       />
     </Screen>
   );

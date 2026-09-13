@@ -79,6 +79,18 @@ export interface OAuthStartResponse {
   state: string;
 }
 
+/**
+ * Microsoft Graph has no server-side endpoint to revoke a single app's consent: after a disconnect the
+ * server only deletes our stored credentials, and the user removes the app on this page themselves
+ * (work/school tenants manage apps at https://myapps.microsoft.com). Google is revoked server-side.
+ */
+export const MICROSOFT_CONSENT_MANAGE_URL = 'https://account.live.com/consent/Manage';
+
+/** Page where the user must revoke our access manually after a disconnect; null when the server revokes it. */
+export function consentManageUrlFor(provider: Provider): string | null {
+  return provider === 'microsoft' ? MICROSOFT_CONSENT_MANAGE_URL : null;
+}
+
 // --- Sync ------------------------------------------------------------------
 export interface InitialAnalysisStartRequest {
   windowHours?: number;

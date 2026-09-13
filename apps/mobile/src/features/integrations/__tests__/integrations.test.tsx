@@ -34,6 +34,7 @@ jest.mock('expo-web-browser', () => ({
   openBrowserAsync: jest.fn(async () => ({ type: 'dismiss' })),
   WebBrowserPresentationStyle: { PAGE_SHEET: 'pageSheet' },
 }));
+jest.mock('@/lib/openExternal', () => ({ openExternal: jest.fn(async () => true) }));
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
@@ -53,11 +54,12 @@ jest.mock('expo-router', () => ({
 import { QueryClient } from '@tanstack/react-query';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import type { ConnectedAccount, EntitlementState } from '@da/domain';
-import { FREE_QUOTAS, PRO_QUOTAS } from '@da/domain';
+import { FREE_QUOTAS, MICROSOFT_CONSENT_MANAGE_URL, PRO_QUOTAS } from '@da/domain';
 import IntegrationsScreen from '../../../../app/settings/integrations';
 import DataSourcesScreen from '../../../../app/settings/data-sources';
 import { getTestDataSource, resetTestDataSource } from '@/features/flow/testing/demoSource';
 import { renderWithProviders } from '@/features/flow/testing/renderWithProviders';
+import { openExternal } from '@/lib/openExternal';
 
 import { useSessionStore } from '@/store/session';
 import {
@@ -83,6 +85,15 @@ const ACCOUNT_GMAIL = '00000000-0000-4000-8000-0000000000c1';
 const ACCOUNT_DEVICE = '00000000-0000-4000-8000-0000000000c2';
 
 const FIND_OPTS = { timeout: 5000 };
+const openExternalMock = jest.mocked(openExternal);
+
+/** The confirm modal's "Kaldır" is rendered after every card's own "Kaldır" button. */
+function pressLastRemove(screen: ReturnType<typeof renderWithProviders>): void {
+  const buttons = screen.getAllByText('Kaldır');
+  const confirm = buttons[buttons.length - 1];
+  if (!confirm) throw new Error('confirm button missing');
+  fireEvent.press(confirm);
+}
 
 const PRO: EntitlementState = {
   plan: 'pro',
@@ -137,6 +148,8 @@ describe('Integrations screen', () => {
   beforeEach(() => {
     resetTestDataSource();
     mockPush.mockClear();
+    openExternalMock.mockClear();
+    openExternalMock.mockResolvedValue(true);
     useSessionStore.setState({ preferences: null, entitlement: PRO });
   });
 
@@ -194,13 +207,96 @@ describe('Integrations screen', () => {
     fireEvent.press(screen.getByTestId(`integration-remove-${ACCOUNT_DEVICE}`));
     expect(disconnect).not.toHaveBeenCalled();
     await screen.findByText('Analizler durur; geçmiş özetler 30 gün saklanır.', {}, FIND_OPTS);
-    const confirmButtons = screen.getAllByText('Kaldır');
-    const confirm = confirmButtons[confirmButtons.length - 1];
-    if (!confirm) throw new Error('confirm button missing');
-    fireEvent.press(confirm);
+    pressLastRemove(screen);
     await waitFor(() => expect(disconnect).toHaveBeenCalledWith(ACCOUNT_DEVICE));
     await waitFor(() => expect(screen.queryByTestId(`integration-${ACCOUNT_DEVICE}`)).toBeNull());
     await screen.findByTestId('integrations-device-connect', {}, FIND_OPTS);
+    // Non-Microsoft providers are revoked server-side: plain toast, no consent follow-up.
+    await screen.findByText('Bağlantı kaldırıldı', {}, FIND_OPTS);
+    expect(screen.queryByTestId('integration-consent-manage')).toBeNull();
+    expect(openExternalMock).not.toHaveBeenCalled();
+  });
+
+  it('removes a Google account with the server-side revoke and no consent follow-up', async () => {
+    const disconnect = jest.spyOn(getTestDataSource().accounts, 'disconnect');
+    const screen = renderWithProviders(<IntegrationsScreen />, { queryClient: makeClient() });
+    await screen.findByTestId(`integration-${ACCOUNT_GMAIL}`, {}, FIND_OPTS);
+    fireEvent.press(screen.getByTestId(`integration-remove-${ACCOUNT_GMAIL}`));
+    await screen.findByText('Analizler durur; geçmiş özetler 30 gün saklanır.', {}, FIND_OPTS);
+    pressLastRemove(screen);
+    await waitFor(() => expect(disconnect).toHaveBeenCalledWith(ACCOUNT_GMAIL));
+    await waitFor(() => expect(screen.queryByTestId(`integration-${ACCOUNT_GMAIL}`)).toBeNull());
+    await screen.findByText('Bağlantı kaldırıldı', {}, FIND_OPTS);
+    expect(screen.queryByTestId('integration-consent')).toBeNull();
+    expect(screen.queryByTestId('integration-consent-manage')).toBeNull();
+  });
+
+  /** Adds an Outlook account through the sheet, removes it, and returns it once the follow-up is up. */
+  async function removeFreshOutlook(
+    screen: ReturnType<typeof renderWithProviders>,
+  ): Promise<ConnectedAccount> {
+    await screen.findByTestId(`integration-${ACCOUNT_GMAIL}`, {}, FIND_OPTS);
+    fireEvent.press(screen.getByTestId('integrations-add'));
+    fireEvent.press(await screen.findByTestId('integrations-add-outlook', {}, FIND_OPTS));
+    await screen.findByText('BAĞLI HESAPLAR · 3', {}, FIND_OPTS);
+    const outlook = (await getTestDataSource().accounts.listAccounts()).find(
+      (a) => a.provider === 'microsoft',
+    );
+    if (!outlook) throw new Error('outlook account missing');
+    fireEvent.press(screen.getByTestId(`integration-remove-${outlook.id}`));
+    await screen.findByText('Analizler durur; geçmiş özetler 30 gün saklanır.', {}, FIND_OPTS);
+    expect(screen.queryByTestId('integration-consent-manage')).toBeNull();
+    pressLastRemove(screen);
+    await screen.findByTestId('integration-consent-manage', {}, FIND_OPTS);
+    return outlook;
+  }
+
+  it('asks to revoke Microsoft consent by hand after removing an Outlook account', async () => {
+    const disconnect = jest.spyOn(getTestDataSource().accounts, 'disconnect');
+    const screen = renderWithProviders(<IntegrationsScreen />, { queryClient: makeClient() });
+    const outlook = await removeFreshOutlook(screen);
+    expect(disconnect).toHaveBeenCalledWith(outlook.id);
+
+    // Credentials are gone (card removed) and the same modal now explains the manual step.
+    expect(screen.getByText('Microsoft izni elle kaldırılmalı')).toBeTruthy();
+    expect(
+      screen.getByText(`${outlook.email} bağlantısı kaldırıldı ve erişim bilgilerin silindi.`, {
+        exact: false,
+      }),
+    ).toBeTruthy();
+    expect(screen.queryByTestId(`integration-${outlook.id}`)).toBeNull();
+    expect(screen.queryByTestId('integration-remove-confirm')).toBeNull();
+    expect(screen.queryByText('Bağlantı kaldırıldı')).toBeNull();
+
+    fireEvent.press(screen.getByTestId('integration-consent-manage'));
+    await waitFor(() =>
+      expect(openExternalMock).toHaveBeenCalledWith(MICROSOFT_CONSENT_MANAGE_URL),
+    );
+    expect(MICROSOFT_CONSENT_MANAGE_URL).toBe('https://account.live.com/consent/Manage');
+    await waitFor(() => expect(screen.queryByTestId('integration-consent-manage')).toBeNull());
+  });
+
+  it('lets the user postpone the Microsoft consent step without opening anything', async () => {
+    const screen = renderWithProviders(<IntegrationsScreen />, { queryClient: makeClient() });
+    await removeFreshOutlook(screen);
+    fireEvent.press(screen.getByText('Daha sonra'));
+    await waitFor(() => expect(screen.queryByTestId('integration-consent-manage')).toBeNull());
+    expect(openExternalMock).not.toHaveBeenCalled();
+    expect(screen.getByText('BAĞLI HESAPLAR · 2')).toBeTruthy();
+  });
+
+  it('reports when the Microsoft consent page cannot be opened', async () => {
+    openExternalMock.mockResolvedValue(false);
+    const screen = renderWithProviders(<IntegrationsScreen />, { queryClient: makeClient() });
+    await removeFreshOutlook(screen);
+    fireEvent.press(screen.getByTestId('integration-consent-manage'));
+    await screen.findByText(
+      'Sayfa açılamadı. Tarayıcıda account.live.com/consent/Manage adresine git.',
+      {},
+      FIND_OPTS,
+    );
+    expect(openExternalMock).toHaveBeenCalledWith(MICROSOFT_CONSENT_MANAGE_URL);
+    expect(screen.queryByTestId('integration-consent-manage')).toBeNull();
   });
 
   it('gates "Hesap Ekle" behind the paywall for free users with a mail account', async () => {
