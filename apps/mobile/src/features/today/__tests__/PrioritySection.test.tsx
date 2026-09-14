@@ -32,7 +32,10 @@ describe('PrioritySection', () => {
     renderWithProviders(<PrioritySection insights={insights} ctx={ctx} />);
     expect(screen.getByText('ÖNCELİKLERİN')).toBeTruthy();
     expect(screen.getByText('5 konu')).toBeTruthy();
-    expect(screen.getAllByTestId(/^priority-card-/)).toHaveLength(5);
+    // Card roots only — the complete/more/action controls carry `priority-card-<id>-…` ids.
+    expect(
+      screen.getAllByTestId(/^priority-card-(?!.*(?:-complete|-more)$)(?!.*-action-)/),
+    ).toHaveLength(5);
   });
 
   it('renders nothing when there are no insights', () => {

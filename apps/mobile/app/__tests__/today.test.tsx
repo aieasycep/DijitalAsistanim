@@ -111,7 +111,10 @@ describe('Today screen', () => {
     expect(screen.getByTestId('today-screen')).toBeTruthy();
     expect(await screen.findByTestId('today-hero-cta')).toBeTruthy();
     expect(screen.getByTestId('today-hero-listen')).toBeTruthy();
-    const cards = await screen.findAllByTestId(/^priority-card-/);
+    // Card roots only — the complete/more/action controls carry `priority-card-<id>-…` ids.
+    const cards = await screen.findAllByTestId(
+      /^priority-card-(?!.*(?:-complete|-more)$)(?!.*-action-)/,
+    );
     expect(cards.length).toBeGreaterThan(0);
     expect(cards.length).toBeLessThanOrEqual(5);
     expect(screen.getByText('ÖNCELİKLERİN')).toBeTruthy();
