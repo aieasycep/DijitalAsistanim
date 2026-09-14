@@ -28,10 +28,6 @@ on:
   push:
     branches: [main, 'claude/**']
 
-concurrency:
-  group: apk-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
@@ -47,6 +43,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    # Job-level so that a push without [apk] (whose job is skipped) does not cancel a running build.
+    concurrency:
+      group: apk-${{ github.ref }}
+      cancel-in-progress: true
     env:
       CI: '1'
       EXPO_NO_TELEMETRY: '1'
