@@ -42,6 +42,15 @@ eas submit --platform ios / android
 - Before `eas submit`, fill `submit.production.ios.ascAppId` / `appleTeamId` in `apps/mobile/eas.json` (EAS cannot read
   them from env) and point `submit.production.android.serviceAccountKeyPath` at the Play service-account JSON.
 
+### Demo APK without EAS (GitHub Actions)
+
+`.github/workflows/android-apk.yml` builds a standalone demo APK on a GitHub-hosted runner: `expo prebuild` →
+Gradle `assembleRelease` (`APP_ENV=preview`, `EXPO_PUBLIC_DATA_MODE=demo`, arm64-v8a + armeabi-v7a, debug keystore).
+Start it from **Actions → Android APK (demo) → Run workflow** (optional `demo_now` pins the demo clock) or push a
+commit whose message contains `[apk]`. The APK is attached to the run as the `dijital-asistan-demo-apk` artifact
+(kept 14 days); install it with "unknown sources" allowed. It is an internal build only — store builds keep using
+the EAS `production` profile and real signing.
+
 - Environment variables per profile live in EAS (`eas env`) or `apps/mobile/.env`: all `EXPO_PUBLIC_*` values plus
   `APP_ENV`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `APPLE_TEAM_ID`, `IOS_APP_GROUP`.
 - Native code (Android NotificationListener module, widgets, share extension) is compiled by EAS during prebuild;

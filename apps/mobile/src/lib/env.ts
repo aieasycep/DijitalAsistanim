@@ -15,7 +15,16 @@ const pub = (key: string): string | undefined => {
   return v && v.length > 0 ? v : undefined;
 };
 
-export const IS_PRODUCTION = Boolean(extra.isProduction) || process.env.NODE_ENV === 'production';
+/**
+ * A production build is the store build: APP_ENV=production / the EAS `production` profile, embedded by
+ * app.config.ts as `extra.isProduction`. Release-configured internal builds (EAS `preview` / `demo`, the
+ * Android APK workflow) bundle with NODE_ENV=production as well, so NODE_ENV is only the fallback when the
+ * embedded config is unavailable.
+ */
+export const IS_PRODUCTION =
+  typeof extra.isProduction === 'boolean'
+    ? extra.isProduction
+    : process.env.NODE_ENV === 'production';
 
 export const env = {
   dataMode:

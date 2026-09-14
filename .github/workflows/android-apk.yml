@@ -1,0 +1,113 @@
+name: Android APK (demo)
+
+# Builds a standalone Android APK in demo mode on a GitHub-hosted runner (no EAS account, no backend):
+# Expo prebuild → Gradle assembleRelease (debug keystore, arm64-v8a + armeabi-v7a).
+# Runs on demand (Actions → "Android APK (demo)" → Run workflow) or on any push whose commit message
+# contains "[apk]". The APK is attached to the run as the `dijital-asistan-demo-apk` artifact.
+# Not a store build: the production profile stays on EAS with real signing (docs/DEPLOYMENT.md).
+
+on:
+  workflow_dispatch:
+    inputs:
+      demo_now:
+        description: 'Pin the demo clock (ISO instant, e.g. 2026-09-05T06:41:00Z). Empty = device time.'
+        required: false
+        default: ''
+      demo_timezone:
+        description: 'IANA timezone used with demo_now.'
+        required: false
+        default: 'Europe/Istanbul'
+  push:
+    branches: [main, 'claude/**']
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PNPM_VERSION: 10.33.0
+  NODE_VERSION: 22
+  JAVA_VERSION: 17
+  ANDROID_NDK_VERSION: 27.1.12297006
+
+jobs:
+  apk:
+    name: Build demo APK
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      # Internal build in demo mode: app.config.ts embeds isProduction=false, the bundle inlines the demo flag.
+      APP_ENV: preview
+      EXPO_PUBLIC_DATA_MODE: demo
+      EXPO_PUBLIC_DEMO_NOW: ${{ github.event.inputs.demo_now }}
+      EXPO_PUBLIC_DEMO_TIMEZONE: ${{ github.event.inputs.demo_now != '' && github.event.inputs.demo_timezone || '' }}
+      # No Sentry credentials on the runner: sentry.gradle skips the source-map upload.
+      SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;${{ env.ANDROID_NDK_VERSION }}'
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate the native Android project (config plugins, Kotlin module, widgets)
+        working-directory: apps/mobile
+        run: pnpm exec expo prebuild --platform android --no-install
+
+      - name: Build the release APK (demo data, debug keystore)
+        working-directory: apps/mobile/android
+        run: |
+          printf '\norg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g\n' >> gradle.properties
+          ./gradlew :app:assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Collect the APK
+        id: collect
+        run: |
+          set -euo pipefail
+          out="dist/dijital-asistan-demo-${GITHUB_SHA::7}.apk"
+          mkdir -p dist
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "$out"
+          size=$(du -h "$out" | cut -f1)
+          sha=$(sha256sum "$out" | cut -d' ' -f1)
+          echo "file=$out" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Demo APK"
+            echo
+            echo "| File | Size | SHA-256 |"
+            echo "| --- | --- | --- |"
+            echo "| \`$(basename "$out")\` | $size | \`$sha\` |"
+            echo
+            echo "Download the **dijital-asistan-demo-apk** artifact from this run, unzip it and install the APK"
+            echo "on the phone (allow installs from unknown sources). Demo mode: sign in with any e-mail and any"
+            echo "6-digit code; no backend is contacted."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dijital-asistan-demo-apk
+          path: ${{ steps.collect.outputs.file }}
+          retention-days: 14
+          if-no-files-found: error

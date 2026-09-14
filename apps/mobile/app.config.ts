@@ -219,7 +219,8 @@ const config = (_ctx: ConfigContext): ExpoConfig => ({
       {
         photosPermission: 'Ekran görüntüsü veya fotoğrafları yakalayıp analiz edebilmek için.',
         cameraPermission: 'Belge veya afişleri yakalayıp analiz edebilmek için.',
-        microphonePermission: false,
+        // `false` would block RECORD_AUDIO for the whole app (voice questions, post-meeting notes).
+        microphonePermission: 'Sesli soru sorabilmen ve toplantı sonrası not alabilmen için.',
       },
     ],
     [
