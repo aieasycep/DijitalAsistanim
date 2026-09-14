@@ -1,7 +1,7 @@
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { IconName } from '@da/design-tokens';
 import type { SourceRef, SourceType } from '@da/domain';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, useUiLabels } from '../theme/ThemeProvider';
 import { Icon } from './Icon';
 import { Pressable } from './Pressable';
 import { Text } from './Text';
@@ -34,7 +34,7 @@ export interface SourceLineProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** "Gmail · Ahmet Yılmaz · 08:42" — tapping opens the source detail. */
+/** "Gmail · Ahmet Yılmaz · 08:42" — tapping opens the source detail (announced with `labels.openSource`). */
 export function SourceLine({
   source,
   timeLabel,
@@ -44,6 +44,7 @@ export function SourceLine({
   style,
 }: SourceLineProps) {
   const theme = useTheme();
+  const labels = useUiLabels();
   const color = tone === 'onGradient' ? theme.colors.onGradientMuted : theme.colors.inkTertiary;
   const parts = [source.label, source.person, timeLabel].filter((p): p is string => Boolean(p));
   const text = parts.join(' · ');
@@ -60,7 +61,7 @@ export function SourceLine({
     <Pressable
       onPress={() => onPress(source)}
       accessibilityRole="link"
-      accessibilityLabel={`Kaynağı aç: ${text}`}
+      accessibilityLabel={labels.openSource ? `${labels.openSource}: ${text}` : text}
       pressScale={1}
       style={styles.pressable}
     >

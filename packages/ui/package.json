@@ -11,7 +11,7 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo 'ui components are tested from apps/mobile (jest-expo)'"
+    "test": "vitest run --passWithNoTests"
   },
   "peerDependencies": {
     "expo-haptics": "*",

@@ -1,5 +1,6 @@
 // Theme
 export * from './theme/ThemeProvider';
+export * from './theme/labels';
 export * from './theme/haptics';
 // Primitives
 export * from './primitives/Text';

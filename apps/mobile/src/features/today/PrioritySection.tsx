@@ -73,29 +73,36 @@ export function PrioritySection({
         label={title ?? t('today.priorities')}
         meta={meta === undefined ? t('today.prioritiesCount', { count: visible.length }) : meta}
       />
-      {visible.map((insight, index) => (
-        <PriorityCard
-          key={insight.id}
-          insight={insight}
-          badgeLabel={t(`badges.${insight.badge}`)}
-          timeLabel={insightTimeLabel(insight, ctx)}
-          sourceTimeLabel={formatRelativeLabel(insight.source.timestamp, ctx)}
-          sourceIcon={sourceIconFor(insight)}
-          onPress={onPress}
-          onComplete={readOnly ? undefined : onComplete}
-          onSnooze={readOnly ? undefined : onSnooze}
-          onMore={readOnly ? undefined : onMore}
-          onAction={readOnly ? undefined : onAction}
-          onSource={onSource}
-          swipeEnabled={!readOnly}
-          completeLabel={t('common.done')}
-          snoozeLabel={t('common.postpone')}
-          completeAccessibilityLabel={t('a11y.complete')}
-          moreAccessibilityLabel={t('a11y.more')}
-          lowConfidenceLabel={t('assistant.uncertain')}
-          testID={testIDFor ? testIDFor(insight, index) : `${testIDPrefix}-${insight.id}`}
-        />
-      ))}
+      {visible.map((insight, index) => {
+        const cardTestID = testIDFor ? testIDFor(insight, index) : `${testIDPrefix}-${insight.id}`;
+        return (
+          <PriorityCard
+            key={insight.id}
+            insight={insight}
+            badgeLabel={t(`badges.${insight.badge}`)}
+            timeLabel={insightTimeLabel(insight, ctx)}
+            sourceTimeLabel={formatRelativeLabel(insight.source.timestamp, ctx)}
+            sourceIcon={sourceIconFor(insight)}
+            onPress={onPress}
+            onComplete={readOnly ? undefined : onComplete}
+            onSnooze={readOnly ? undefined : onSnooze}
+            onMore={readOnly ? undefined : onMore}
+            onAction={readOnly ? undefined : onAction}
+            onSource={onSource}
+            readOnly={readOnly}
+            swipeEnabled={!readOnly}
+            completeLabel={t('common.done')}
+            snoozeLabel={t('common.postpone')}
+            completeAccessibilityLabel={t('a11y.complete')}
+            moreAccessibilityLabel={t('a11y.more')}
+            lowConfidenceLabel={t('assistant.uncertain')}
+            testID={cardTestID}
+            completeTestID={`${cardTestID}-complete`}
+            moreTestID={`${cardTestID}-more`}
+            actionTestID={(action) => `${cardTestID}-action-${action.id}`}
+          />
+        );
+      })}
     </View>
   );
 }

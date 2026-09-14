@@ -292,7 +292,7 @@ describe('VIP screen', () => {
     await waitFor(async () =>
       expect((await ds.people.listVips()).some((v) => v.displayName === 'Burak Tan')).toBe(true),
     );
-    await screen.findByText('3 kişi', {}, FIND_OPTS);
+    await screen.findByText('3 KİŞİ', {}, FIND_OPTS);
   });
 });
 

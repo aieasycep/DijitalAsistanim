@@ -55,13 +55,26 @@ export interface PriorityCardProps {
   onSource?: (source: SourceRef) => void;
   /** Swipe right = complete · swipe left = snooze. Disabled automatically under reduced motion. */
   swipeEnabled?: boolean;
-  completeLabel?: string;
-  snoozeLabel?: string;
-  completeAccessibilityLabel?: string;
-  moreAccessibilityLabel?: string;
-  lowConfidenceLabel?: string;
+  /**
+   * Presentation only (onboarding preview): hides the complete/more buttons and the action chips and
+   * disables swiping, instead of rendering permanently disabled controls.
+   */
+  readOnly?: boolean;
+  /** Swipe-reveal copy behind the card (right = complete, left = snooze). */
+  completeLabel: string;
+  snoozeLabel: string;
+  /** Accessible names of the check / more icon buttons. */
+  completeAccessibilityLabel: string;
+  moreAccessibilityLabel: string;
+  /** Caption shown when `insight.isLowConfidence`. */
+  lowConfidenceLabel: string;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  /** testIDs of the check / more icon buttons (ROUTES.md: `priority-complete-<id>`, `priority-more-<id>`). */
+  completeTestID?: string;
+  moreTestID?: string;
+  /** testID of each action chip (ROUTES.md: `priority-action-<id>-<actionId>`). */
+  actionTestID?: (action: InsightAction) => string;
 }
 
 /**
@@ -82,13 +95,17 @@ export function PriorityCard({
   onAction,
   onSource,
   swipeEnabled = true,
-  completeLabel = 'Tamamlandı',
-  snoozeLabel = 'Ertele',
-  completeAccessibilityLabel = 'Tamamlandı olarak işaretle',
-  moreAccessibilityLabel = 'Diğer seçenekler',
-  lowConfidenceLabel = 'Kaynakta kesinleşmiyor',
+  readOnly = false,
+  completeLabel,
+  snoozeLabel,
+  completeAccessibilityLabel,
+  moreAccessibilityLabel,
+  lowConfidenceLabel,
   style,
   testID,
+  completeTestID,
+  moreTestID,
+  actionTestID,
 }: PriorityCardProps) {
   const theme = useTheme();
   const { reducedMotion, hapticsEnabled } = useThemeContext();
@@ -96,7 +113,7 @@ export function PriorityCard({
   const done = completed ?? insight.status === 'completed';
   const canComplete = Boolean(onComplete) && !done;
   const canSnooze = Boolean(onSnooze) && !done;
-  const swipeActive = swipeEnabled && !reducedMotion && (canComplete || canSnooze);
+  const swipeActive = swipeEnabled && !readOnly && !reducedMotion && (canComplete || canSnooze);
   const successColor = c.success;
   const warningColor = c.warning;
 
@@ -206,30 +223,34 @@ export function PriorityCard({
             {timeLabel}
           </Text>
         </View>
-        <View style={styles.headerRight}>
-          <IconButton
-            icon="complete"
-            filled={done}
-            variant="plain"
-            size={36}
-            iconSize={theme.sizes.cardActionIcon}
-            color={done ? c.success : c.inkDisabled}
-            accessibilityLabel={completeAccessibilityLabel}
-            accessibilityState={{ checked: done }}
-            onPress={handleComplete}
-            disabled={!onComplete}
-          />
-          <IconButton
-            icon="more"
-            variant="plain"
-            size={36}
-            iconSize={theme.sizes.cardActionIcon}
-            color={c.inkDisabled}
-            accessibilityLabel={moreAccessibilityLabel}
-            onPress={onMore ? () => onMore(insight) : undefined}
-            disabled={!onMore}
-          />
-        </View>
+        {readOnly ? null : (
+          <View style={styles.headerRight}>
+            <IconButton
+              icon="complete"
+              filled={done}
+              variant="plain"
+              size={36}
+              iconSize={theme.sizes.cardActionIcon}
+              color={done ? c.success : c.inkDisabled}
+              accessibilityLabel={completeAccessibilityLabel}
+              accessibilityState={{ checked: done }}
+              onPress={handleComplete}
+              disabled={!onComplete}
+              testID={completeTestID}
+            />
+            <IconButton
+              icon="more"
+              variant="plain"
+              size={36}
+              iconSize={theme.sizes.cardActionIcon}
+              color={c.inkDisabled}
+              accessibilityLabel={moreAccessibilityLabel}
+              onPress={onMore ? () => onMore(insight) : undefined}
+              disabled={!onMore}
+              testID={moreTestID}
+            />
+          </View>
+        )}
       </View>
       <Text
         variant="h3"
@@ -258,7 +279,7 @@ export function PriorityCard({
           </Text>
         </View>
       ) : null}
-      {actions.length > 0 && !done ? (
+      {actions.length > 0 && !done && !readOnly ? (
         <View style={styles.actions}>
           {actions.map((action, index) => (
             <Pressable
@@ -269,6 +290,7 @@ export function PriorityCard({
               accessibilityLabel={action.label}
               hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
               style={styles.action}
+              testID={actionTestID?.(action)}
             >
               <Text
                 variant="action"

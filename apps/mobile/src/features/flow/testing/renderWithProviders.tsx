@@ -3,9 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, type RenderOptions } from '@testing-library/react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { setI18n } from 'react-i18next';
+import { setI18n, useTranslation } from 'react-i18next';
 import { createI18n } from '@da/i18n';
 import { ThemeProvider, ToastProvider } from '@da/ui';
+import { uiLabelsFor } from '@/lib/uiLabels';
 
 /** Binds the shared i18next instance (Turkish) to react-i18next for the test run. */
 export function setupTestI18n(locale: 'tr' | 'en' = 'tr'): void {
@@ -28,16 +29,19 @@ export function renderWithProviders(
 ) {
   const { queryClient = createTestQueryClient(), ...rest } = options;
   setupTestI18n();
-  const wrapper = ({ children }: { children: ReactElement }) => (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider forceScheme="light">
-            <ToastProvider>{children}</ToastProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
-  );
-  return { queryClient, ...render(ui, { wrapper, ...rest }) };
+  const Wrapper = ({ children }: { children: ReactElement }) => {
+    const { t } = useTranslation();
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider forceScheme="light" locale="tr" labels={uiLabelsFor(t)}>
+              <ToastProvider>{children}</ToastProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    );
+  };
+  return { queryClient, ...render(ui, { wrapper: Wrapper, ...rest }) };
 }

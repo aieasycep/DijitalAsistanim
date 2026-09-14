@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { palette } from '@da/design-tokens';
@@ -333,6 +334,9 @@ export default function WelcomeScreen() {
       style={[styles.root, { backgroundColor: index === 0 ? palette.dawn0 : c.background }]}
       testID="welcome-screen"
     >
+      {/* Page 0 paints the dawn gradient under the status bar in both themes; later pages use the
+          themed background, so the root layout's status bar style takes over again. */}
+      {index === 0 ? <StatusBar style="light" /> : null}
       <View style={[styles.topRow, { paddingTop: insets.top + 10 }]}>
         {!last ? (
           <Button

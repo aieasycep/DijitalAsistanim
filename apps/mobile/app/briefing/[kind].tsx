@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { qk } from '@da/api-client';
@@ -14,7 +15,7 @@ import {
   type Feature,
   type UserPreferences,
 } from '@da/domain';
-import { formatDateRange, formatShortDate, formatTime, type FormatCtx } from '@da/i18n';
+import { formatDateRange, formatTime, type FormatCtx } from '@da/i18n';
 import {
   BottomSheet,
   Button,
@@ -40,9 +41,12 @@ import { describeError } from '@/lib/errors';
 import { formatCtx } from '@/lib/i18n';
 import { captureError } from '@/lib/monitoring';
 import { useSessionStore, selectFirstName } from '@/store/session';
+import { useUiStore } from '@/store/ui';
 import { useOpenSource } from '@/features/source/openSource';
 import { BriefingSections } from '@/features/briefing/BriefingSections';
 import { BriefingShare, weeklyShareText } from '@/features/briefing/BriefingShare';
+import { OfflineNotice } from '@/features/flow/ScreenStates';
+import { formatDateKey, todayKey } from '@/features/plan/dates';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 
 const GRADIENT: Record<BriefingKind, GradientName> = {
@@ -87,6 +91,7 @@ export default function BriefingScreen() {
   const id = typeof params.id === 'string' && params.id.length > 0 ? params.id : null;
   const firstName = useSessionStore(selectFirstName);
   const preferences = useSessionStore((s) => s.preferences);
+  const offline = useUiStore((s) => s.offline);
   const { isPro, isLoading: entitlementLoading, gate } = useEntitlement();
   const { openSource } = useOpenSource();
   const carrySheet = useBottomSheet();
@@ -263,18 +268,16 @@ export default function BriefingScreen() {
     );
   }
 
+  // `forDate` is a calendar date key, so it is formatted UTC-anchored (never shifted by the timezone).
+  const dateLabel = upper(formatDateKey(briefing?.forDate ?? todayKey(ctx), ctx), ctx.locale);
   const kicker = (() => {
     switch (kind) {
       case 'morning':
-        return t('briefing.morningKicker', {
-          date: upper(formatShortDate(briefing?.forDate ?? new Date(), ctx), ctx.locale),
-        });
+        return t('briefing.morningKicker', { date: dateLabel });
       case 'midday':
         return t('briefing.middayKicker');
       case 'evening':
-        return t('briefing.eveningKicker', {
-          date: upper(formatShortDate(briefing?.forDate ?? new Date(), ctx), ctx.locale),
-        });
+        return t('briefing.eveningKicker', { date: dateLabel });
       default:
         return t('briefing.weeklyKicker', {
           range: briefing?.weekly
@@ -336,7 +339,7 @@ export default function BriefingScreen() {
           variant="dark"
           size="lg"
           fullWidth
-          disabled={Boolean(briefing.closedAt)}
+          disabled={Boolean(briefing.closedAt) || offline}
           loading={closeDay.isPending}
           onPress={openCarrySheet}
           testID="briefing-close-day"
@@ -347,6 +350,8 @@ export default function BriefingScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: c.background }]} testID="briefing-screen">
+      {/* The gradient header is dark in both themes, so the status bar is always light here. */}
+      <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={{ paddingBottom: (footer ? 96 : 24) + insets.bottom }}
         showsVerticalScrollIndicator={false}
@@ -362,6 +367,7 @@ export default function BriefingScreen() {
               { paddingHorizontal: theme.layout.screenPaddingH, gap: theme.layout.sectionGapLarge },
             ]}
           >
+            <OfflineNotice onRetry={() => void query.refetch()} retrying={query.isRefetching} />
             {query.isPending ? (
               <View style={styles.loading}>
                 <Skeleton width="100%" height={18} radius={6} />
@@ -388,8 +394,8 @@ export default function BriefingScreen() {
                     ? t('briefing.notReadyBody', { time: scheduledTime })
                     : t('briefing.notReadyBodyGeneric')
                 }
-                actionLabel={kind !== 'weekly' ? t('briefing.regenerate') : undefined}
-                onAction={kind !== 'weekly' ? () => regenerate.mutate() : undefined}
+                actionLabel={kind !== 'weekly' && !offline ? t('briefing.regenerate') : undefined}
+                onAction={kind !== 'weekly' && !offline ? () => regenerate.mutate() : undefined}
                 secondaryLabel={t('common.back')}
                 onSecondary={() => router.back()}
                 testID="briefing-empty"
@@ -489,6 +495,7 @@ export default function BriefingScreen() {
               size="md"
               fullWidth
               loading={closeDay.isPending}
+              disabled={offline}
               onPress={() =>
                 briefing &&
                 closeDay.mutate({
@@ -502,7 +509,7 @@ export default function BriefingScreen() {
               label={t('briefing.closeWithout')}
               variant="ghostSecondary"
               size="ghost"
-              disabled={closeDay.isPending}
+              disabled={closeDay.isPending || offline}
               onPress={() =>
                 briefing && closeDay.mutate({ briefingId: briefing.id, carryOverInsightIds: [] })
               }

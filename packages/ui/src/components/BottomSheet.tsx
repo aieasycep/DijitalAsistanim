@@ -19,7 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette, type IconName } from '@da/design-tokens';
-import { useTheme, useThemeContext } from '../theme/ThemeProvider';
+import { useTheme, useThemeContext, useUiLabels } from '../theme/ThemeProvider';
 import { haptic } from '../theme/haptics';
 import { Icon } from '../primitives/Icon';
 import { Pressable } from '../primitives/Pressable';
@@ -42,6 +42,7 @@ export interface BottomSheetProps {
   children?: ReactNode;
   /** Pinned below the content (e.g. a full-width CTA). */
   footer?: ReactNode;
+  /** Accessible name of the scrim close target — defaults to `labels.close` from ThemeProvider. */
   closeLabel?: string;
   dismissOnScrim?: boolean;
   swipeToClose?: boolean;
@@ -60,7 +61,7 @@ export function BottomSheet({
   subtitle,
   children,
   footer,
-  closeLabel = 'Kapat',
+  closeLabel,
   dismissOnScrim = true,
   swipeToClose = true,
   contentStyle,
@@ -68,6 +69,7 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const theme = useTheme();
   const { reducedMotion, hapticsEnabled } = useThemeContext();
+  const labels = useUiLabels();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
@@ -138,7 +140,7 @@ export function BottomSheet({
             onPress={dismissOnScrim ? onClose : undefined}
             disabled={!dismissOnScrim}
             accessibilityRole="button"
-            accessibilityLabel={closeLabel}
+            accessibilityLabel={(closeLabel ?? labels.close) || undefined}
             pressScale={1}
             ensureTouchTarget={false}
           />

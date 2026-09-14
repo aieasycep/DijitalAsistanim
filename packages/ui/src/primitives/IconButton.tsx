@@ -13,6 +13,8 @@ export interface IconButtonProps extends Omit<PressableProps, 'style' | 'childre
   filled?: boolean;
   color?: string;
   style?: StyleProp<ViewStyle>;
+  /** Forwarded to the underlying Pressable (Maestro / RNTL). */
+  testID?: string;
 }
 
 /** Circular icon button (back 36 · mic 40 primary · overlay chips on gradients). */
@@ -25,6 +27,7 @@ export function IconButton({
   filled,
   color,
   style,
+  testID,
   ...rest
 }: IconButtonProps) {
   const theme = useTheme();
@@ -61,6 +64,7 @@ export function IconButton({
           : null,
         style,
       ]}
+      testID={testID}
       {...rest}
     >
       <Icon name={icon} size={iconSize} color={fg} filled={filled} />

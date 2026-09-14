@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -191,6 +192,8 @@ export default function AnalysisScreen() {
       ]}
       testID="analysis-screen"
     >
+      {/* Night gradient in both themes → the status bar is always light on this screen. */}
+      <StatusBar style="light" />
       <View style={styles.center}>
         <Ring active={!failed} />
         <Text

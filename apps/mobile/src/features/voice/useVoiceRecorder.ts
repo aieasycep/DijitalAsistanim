@@ -30,7 +30,8 @@ export interface VoiceRecorderHandle {
   durationSec: number;
   /** Live input level 0..1 (Reanimated shared value) for `<Waveform live level={…}>`. */
   level: SharedValue<number>;
-  start: () => Promise<boolean>;
+  /** Resolves to the status after the attempt (`'recording'` when it started) — never read `status` right after. */
+  start: () => Promise<VoiceRecorderStatus>;
   stop: () => Promise<VoiceRecording | null>;
   cancel: () => Promise<void>;
   transcribe: (recording: VoiceRecording) => Promise<TranscribeResult>;
@@ -52,24 +53,20 @@ export function useVoiceRecorder(): VoiceRecorderHandle {
     };
   }, []);
 
-  const start = useCallback(async (): Promise<boolean> => {
+  const start = useCallback(async (): Promise<VoiceRecorderStatus> => {
     const outcome = await voiceRecorder.start();
-    switch (outcome) {
-      case 'started':
-        setStatus('recording');
-        return true;
-      case 'permissionDenied':
-        setStatus('denied');
-        return false;
-      case 'unsupported':
-        setStatus('unavailable');
-        return false;
-      case 'failed':
-        setStatus('error');
-        return false;
-      case 'busy':
-        return false;
-    }
+    // 'busy' means a recording is already running: leave the state alone.
+    if (outcome === 'busy') return 'recording';
+    const next: VoiceRecorderStatus =
+      outcome === 'started'
+        ? 'recording'
+        : outcome === 'permissionDenied'
+          ? 'denied'
+          : outcome === 'unsupported'
+            ? 'unavailable'
+            : 'error';
+    setStatus(next);
+    return next;
   }, []);
 
   const stop = useCallback(async (): Promise<VoiceRecording | null> => {

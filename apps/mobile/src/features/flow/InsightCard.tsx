@@ -59,6 +59,13 @@ export const InsightCard = memo(function InsightCard({
       moreAccessibilityLabel={t('a11y.more')}
       lowConfidenceLabel={t('assistant.uncertain')}
       testID={testID}
+      {...(testID
+        ? {
+            completeTestID: `${testID}-complete`,
+            moreTestID: `${testID}-more`,
+            actionTestID: (action: InsightAction) => `${testID}-action-${action.id}`,
+          }
+        : {})}
     />
   );
 });

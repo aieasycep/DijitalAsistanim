@@ -15,10 +15,12 @@ export interface ProGateProps {
   body?: string;
   /** Kicker next to the PRO badge ("ÖĞLE NABZI"). */
   kicker?: string;
-  badgeLabel?: string;
-  ctaLabel?: string;
+  /** Localized tier badge (i18n `pro`). */
+  badgeLabel: string;
+  /** Upgrade CTA copy. */
+  ctaLabel: string;
   onUpgrade: () => void;
-  /** "Şimdi değil" — snoozes the gate. */
+  /** "Not now" — snoozes the gate; rendered only when both `onDismiss` and `dismissLabel` are given. */
   dismissLabel?: string;
   onDismiss?: () => void;
   /** Blurred placeholder rows hinting at the locked content (default 2, 0 to hide). */
@@ -30,17 +32,17 @@ export interface ProGateProps {
 
 /**
  * Renders `children` for Pro users; otherwise a compact locked card (PRO badge · title · body ·
- * blurred placeholder rows · tonal "Pro'ya Geç"). Free features are never locked — gate only Pro content.
+ * blurred placeholder rows · tonal upgrade CTA). Free features are never locked — gate only Pro content.
  */
 export function ProGate({
   isPro,
   title,
   body,
   kicker,
-  badgeLabel = 'PRO',
-  ctaLabel = "Pro'ya Geç",
+  badgeLabel,
+  ctaLabel,
   onUpgrade,
-  dismissLabel = 'Şimdi değil',
+  dismissLabel,
   onDismiss,
   placeholderRows = 2,
   children,
@@ -107,7 +109,7 @@ export function ProGate({
           onPress={onUpgrade}
           style={styles.cta}
         />
-        {onDismiss ? (
+        {onDismiss && dismissLabel ? (
           <Button label={dismissLabel} variant="ghostSecondary" size="sm" onPress={onDismiss} />
         ) : null}
       </View>

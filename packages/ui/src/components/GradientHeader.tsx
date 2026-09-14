@@ -3,7 +3,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { GradientName } from '@da/design-tokens';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, useUiLabels } from '../theme/ThemeProvider';
 import { IconButton } from '../primitives/IconButton';
 import { Text } from '../primitives/Text';
 import { gradientProps } from '../utils/gradient';
@@ -18,8 +18,10 @@ export interface GradientHeaderProps {
   /** lg 32/38 (briefing greeting) · md 30/36 */
   titleSize?: 'lg' | 'md';
   onBack?: () => void;
+  /** Accessible name of the back button — defaults to `labels.back` from ThemeProvider. */
   backLabel?: string;
   onShare?: () => void;
+  /** Accessible name of the share button — defaults to `labels.share` from ThemeProvider. */
   shareLabel?: string;
   /** Replaces the share button on the right. */
   rightElement?: ReactNode;
@@ -46,9 +48,9 @@ export function GradientHeader({
   subtitle,
   titleSize = 'lg',
   onBack,
-  backLabel = 'Geri',
+  backLabel,
   onShare,
-  shareLabel = 'Paylaş',
+  shareLabel,
   rightElement,
   overlap = 28,
   children,
@@ -58,6 +60,7 @@ export function GradientHeader({
   testID,
 }: GradientHeaderProps) {
   const theme = useTheme();
+  const labels = useUiLabels();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
   const hasTopRow = Boolean(onBack || onShare || rightElement);
@@ -85,7 +88,7 @@ export function GradientHeader({
                 variant="onGradient"
                 size={36}
                 iconSize={20}
-                accessibilityLabel={backLabel}
+                accessibilityLabel={backLabel ?? labels.back}
                 onPress={onBack}
               />
             ) : (
@@ -99,7 +102,7 @@ export function GradientHeader({
                   variant="onGradient"
                   size={36}
                   iconSize={20}
-                  accessibilityLabel={shareLabel}
+                  accessibilityLabel={shareLabel ?? labels.share}
                   onPress={onShare}
                 />
               ) : (

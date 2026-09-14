@@ -1,11 +1,12 @@
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { IconName } from '@da/design-tokens';
 import type { LifeEvent, LifeEventType } from '@da/domain';
-import { useTheme } from '../theme/ThemeProvider';
+import { useLocale, useTheme } from '../theme/ThemeProvider';
 import { Card } from '../primitives/Card';
 import { Icon } from '../primitives/Icon';
 import { Pressable } from '../primitives/Pressable';
 import { Text } from '../primitives/Text';
+import { localeUpperCase } from '../utils/text';
 
 /** Icon tile glyph per life-event category (design: package_2 · flight · restaurant · receipt_long · autorenew · shield). */
 export const LIFE_ICON: Record<LifeEventType, IconName> = {
@@ -17,16 +18,6 @@ export const LIFE_ICON: Record<LifeEventType, IconName> = {
   security: 'security',
 };
 
-/** Default Turkish category kickers — override with the `kicker` prop for i18n. */
-export const LIFE_KICKER: Record<LifeEventType, string> = {
-  shipment: 'KARGO',
-  flight: 'UÇUŞ',
-  reservation: 'REZERVASYON',
-  payment: 'ÖDEME',
-  subscription: 'ABONELİK',
-  security: 'GÜVENLİK',
-};
-
 export interface LifeCardAction {
   /** Action kind reported back through `onAction` ("track", "check_in", "remind", "pay"…). */
   kind: string;
@@ -35,8 +26,8 @@ export interface LifeCardAction {
 
 export interface LifeCardProps {
   event: LifeEvent;
-  /** Category kicker override (defaults to LIFE_KICKER[event.type]). */
-  kicker?: string;
+  /** Localized category kicker (e.g. `t(\`badges.${event.type}\`)`); rendered upper-cased for the UI locale. */
+  kicker: string;
   /** Right-aligned time caption ("Bugün", "Yarın", "10 Eyl") — formatted by the caller. */
   timeLabel?: string | null;
   /** Title override (defaults to event.title). */
@@ -68,11 +59,13 @@ export function LifeCard({
   testID,
 }: LifeCardProps) {
   const theme = useTheme();
+  const locale = useLocale();
   const c = theme.colors;
   const security = event.type === 'security';
   const tileBg = security ? c.criticalSoft : c.surface2;
   const tileFg = security ? c.criticalText : c.inkSecondary;
-  const kickerText = kicker ?? LIFE_KICKER[event.type];
+  // Upper-cased in JS (not via textTransform) so a Turkish "i" becomes "İ" regardless of the device locale.
+  const kickerText = localeUpperCase(kicker, locale);
   const titleText = title ?? event.title;
   const done = event.status === 'done';
   const actions = [primaryAction, secondaryAction].filter((a): a is LifeCardAction => Boolean(a));
@@ -81,7 +74,7 @@ export function LifeCard({
     <Card
       onPress={onPress ? () => onPress(event) : undefined}
       accessibilityLabel={
-        accessibilityLabel ?? `${kickerText} · ${titleText}${meta ? ` · ${meta}` : ''}`
+        accessibilityLabel ?? `${kicker} · ${titleText}${meta ? ` · ${meta}` : ''}`
       }
       style={[done ? styles.done : null, style]}
       testID={testID}
@@ -157,7 +150,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  kicker: { letterSpacing: 0.88, textTransform: 'uppercase', flexShrink: 1 },
+  kicker: { letterSpacing: 0.88, flexShrink: 1 },
   title: { marginTop: 4 },
   meta: { marginTop: 2 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 8 },

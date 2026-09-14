@@ -14,7 +14,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { motion } from '@da/design-tokens';
-import { useTheme, useThemeContext } from '../theme/ThemeProvider';
+import { useTheme, useThemeContext, useUiLabels } from '../theme/ThemeProvider';
 
 export interface SkeletonProps {
   width?: DimensionValue;
@@ -23,10 +23,11 @@ export interface SkeletonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** Shimmer 1.6 s at real card dimensions (design: "gerçek kart ölçülerinde"). */
+/** Shimmer 1.6 s at real card dimensions (design: "gerçek kart ölçülerinde"). Announced with `labels.loading`. */
 export function Skeleton({ width = '100%', height = 14, radius, style }: SkeletonProps) {
   const theme = useTheme();
   const { reducedMotion } = useThemeContext();
+  const labels = useUiLabels();
   const p = useSharedValue(0);
   useEffect(() => {
     if (reducedMotion) return;
@@ -41,7 +42,7 @@ export function Skeleton({ width = '100%', height = 14, radius, style }: Skeleto
   }));
   return (
     <Animated.View
-      accessibilityLabel="Yükleniyor"
+      accessibilityLabel={labels.loading || undefined}
       accessibilityRole="progressbar"
       style={[
         {

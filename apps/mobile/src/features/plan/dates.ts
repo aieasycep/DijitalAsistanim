@@ -43,6 +43,18 @@ export function weekdayShort(key: string, locale: FormatCtx['locale']): string {
     .replace('.', '');
 }
 
+/**
+ * "13 Eyl" / "13 Sept" for a calendar date key (e.g. a briefing's `forDate`). The key is a date, not
+ * an instant, so it is formatted in UTC — `formatShortDate` would shift it a day west of UTC.
+ */
+export function formatDateKey(key: string, ctx: Pick<FormatCtx, 'locale'>): string {
+  return new Intl.DateTimeFormat(ctx.locale === 'tr' ? 'tr-TR' : 'en-GB', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(keyToDate(key));
+}
+
 /** "5 Eylül Cumartesi" style header for a date key. */
 export function dayHeader(key: string, locale: FormatCtx['locale']): string {
   const d = keyToDate(key);

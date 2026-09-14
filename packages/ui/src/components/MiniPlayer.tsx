@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { palette } from '@da/design-tokens';
-import { useTheme, useThemeContext } from '../theme/ThemeProvider';
+import { useTheme, useThemeContext, useUiLabels } from '../theme/ThemeProvider';
 import { Icon } from '../primitives/Icon';
 import { IconButton } from '../primitives/IconButton';
 import { Pressable } from '../primitives/Pressable';
@@ -24,6 +24,7 @@ export interface MiniPlayerProps {
   onClose?: () => void;
   /** Tap on the title/progress area (open the full player). */
   onPress?: () => void;
+  /** Accessible names of the controls — default to `labels.play` / `labels.pause` / `labels.close` (ThemeProvider). */
   playLabel?: string;
   pauseLabel?: string;
   closeLabel?: string;
@@ -43,9 +44,9 @@ export function MiniPlayer({
   onToggle,
   onClose,
   onPress,
-  playLabel = 'Oynat',
-  pauseLabel = 'Duraklat',
-  closeLabel = 'Kapat',
+  playLabel,
+  pauseLabel,
+  closeLabel,
   accessibilityLabel,
   bottomOffset,
   style,
@@ -53,6 +54,8 @@ export function MiniPlayer({
 }: MiniPlayerProps) {
   const theme = useTheme();
   const { reducedMotion } = useThemeContext();
+  const labels = useUiLabels();
+  const toggleLabel = playing ? (pauseLabel ?? labels.pause) : (playLabel ?? labels.play);
   const progress = clamp01(durationSec > 0 ? positionSec / durationSec : 0);
   const p = useSharedValue(progress);
 
@@ -83,7 +86,7 @@ export function MiniPlayer({
       <Pressable
         onPress={onToggle}
         accessibilityRole="button"
-        accessibilityLabel={playing ? pauseLabel : playLabel}
+        accessibilityLabel={toggleLabel || undefined}
         accessibilityState={{ selected: playing }}
         hapticOnPress="light"
         style={[styles.play, { backgroundColor: palette.white }]}
@@ -120,7 +123,7 @@ export function MiniPlayer({
           size={40}
           iconSize={20}
           color="rgba(255,255,255,0.7)"
-          accessibilityLabel={closeLabel}
+          accessibilityLabel={closeLabel ?? labels.close}
           onPress={onClose}
           style={styles.close}
         />

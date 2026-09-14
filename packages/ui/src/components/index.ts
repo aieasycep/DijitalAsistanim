@@ -13,7 +13,6 @@ export * from './ConfirmModal';
 export * from './SegmentedControl';
 export * from './TextField';
 export * from './SearchBar';
-export * from './ChatInput';
 export * from './ListGroup';
 export * from './GradientHeader';
 export * from './MiniPlayer';

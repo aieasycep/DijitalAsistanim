@@ -9,6 +9,7 @@ import { sansWeight } from '../utils/typography';
 export interface OfflineBannerProps {
   /** "Çevrimdışı · Son analiz 09:40" — formatted by the caller. */
   text: string;
+  /** Retry action — rendered only when both `onRetry` and `retryLabel` are given (no default copy). */
   retryLabel?: string;
   onRetry?: () => void;
   /** Shows a spinner in place of the retry label. */
@@ -19,10 +20,10 @@ export interface OfflineBannerProps {
   testID?: string;
 }
 
-/** Thin offline bar with wifi_off 18 + 13px text and an optional "Yenile" action. Not dismissible. */
+/** Thin offline bar with wifi_off 18 + 13px text and an optional retry action. Not dismissible. */
 export function OfflineBanner({
   text,
-  retryLabel = 'Yenile',
+  retryLabel,
   onRetry,
   retrying = false,
   variant = 'ink',
@@ -57,7 +58,7 @@ export function OfflineBanner({
       <Text variant="small" color={textColor} style={styles.text} numberOfLines={2}>
         {text}
       </Text>
-      {onRetry ? (
+      {onRetry && retryLabel ? (
         retrying ? (
           <ActivityIndicator size="small" color={actionColor} accessibilityLabel={retryLabel} />
         ) : (

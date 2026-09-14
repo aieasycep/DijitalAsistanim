@@ -64,6 +64,8 @@ export function ListRow({
 
   const body = (
     <View
+      // Static rows keep their ids/labels too (pressable rows carry them on the Pressable wrapper).
+      {...(!onPress ? { testID, accessibilityLabel } : {})}
       style={[
         styles.row,
         {

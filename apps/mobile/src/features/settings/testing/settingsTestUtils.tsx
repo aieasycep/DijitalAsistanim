@@ -8,11 +8,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, type RenderOptions } from '@testing-library/react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { setI18n } from 'react-i18next';
+import { setI18n, useTranslation } from 'react-i18next';
 import { createDemoDataSource, type DataSource } from '@da/api-client';
 import { FREE_QUOTAS, PRO_QUOTAS, type EntitlementState } from '@da/domain';
 import { createI18n } from '@da/i18n';
 import { ThemeProvider, ToastProvider } from '@da/ui';
+import { uiLabelsFor } from '@/lib/uiLabels';
 import { useSessionStore } from '@/store/session';
 
 export const SETTINGS_TEST_NOW = '2026-09-05T06:41:00Z';
@@ -82,6 +83,7 @@ export function createTestQueryClient(): QueryClient {
 
 function ThemedProviders({ children, client }: { children: ReactNode; client: QueryClient }) {
   const preferences = useSessionStore((s) => s.preferences);
+  const { t } = useTranslation();
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -90,6 +92,8 @@ function ThemedProviders({ children, client }: { children: ReactNode; client: Qu
             preference={preferences?.theme ?? 'system'}
             reducedMotion={preferences?.reducedMotion ?? false}
             hapticsEnabled={preferences?.hapticsEnabled ?? true}
+            locale={preferences?.locale ?? 'tr'}
+            labels={uiLabelsFor(t)}
           >
             <ToastProvider>{children}</ToastProvider>
           </ThemeProvider>

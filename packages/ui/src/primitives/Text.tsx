@@ -1,7 +1,8 @@
 import { forwardRef, useMemo } from 'react';
 import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'react-native';
 import { fontFamilies, type TypeToken } from '@da/design-tokens';
-import { useTheme } from '../theme/ThemeProvider';
+import { useLocale, useTheme } from '../theme/ThemeProvider';
+import { localeUpperCase, plainTextChildren } from '../utils/text';
 
 export type TextTone =
   | 'ink'
@@ -42,6 +43,12 @@ export function fontFor(family: 'sans' | 'serif', weight: string, italic = false
   return fontFamilies.sansRegular;
 }
 
+/**
+ * Themed text. Tokens that carry `textTransform: 'uppercase'` (kicker, aiLabel) are upper-cased in JS for
+ * the ThemeProvider `locale` when the children are plain strings/numbers — React Native's native transform
+ * uses the *device* locale and turns a Turkish "i" into "I" instead of "İ". Nested element children keep
+ * the native transform.
+ */
 export const Text = forwardRef<RNText, TextProps>(function Text(
   {
     variant = 'body',
@@ -57,6 +64,16 @@ export const Text = forwardRef<RNText, TextProps>(function Text(
   ref,
 ) {
   const theme = useTheme();
+  const locale = useLocale();
+  const token = theme.typography[variant];
+  const nativeTransform: TextStyle['textTransform'] =
+    'textTransform' in token ? token.textTransform : undefined;
+  const plain = nativeTransform === 'uppercase' ? plainTextChildren(children) : null;
+  const useNativeTransform = plain === null;
+  const content = useMemo(
+    () => (plain === null ? null : localeUpperCase(plain, locale)),
+    [plain, locale],
+  );
   const computed = useMemo<TextStyle>(() => {
     const t = theme.typography[variant];
     const toneColor: Record<TextTone, string> = {
@@ -82,10 +99,10 @@ export const Text = forwardRef<RNText, TextProps>(function Text(
       fontWeight: t.fontWeight,
       color: color ?? toneColor[tone],
       textAlign: align,
-      textTransform: 'textTransform' in t ? t.textTransform : undefined,
+      textTransform: useNativeTransform ? nativeTransform : undefined,
       fontVariant: tabular ? ['tabular-nums'] : undefined,
     };
-  }, [theme, variant, tone, color, align, tabular]);
+  }, [theme, variant, tone, color, align, tabular, nativeTransform, useNativeTransform]);
 
   return (
     <RNText
@@ -94,7 +111,7 @@ export const Text = forwardRef<RNText, TextProps>(function Text(
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       {...rest}
     >
-      {children}
+      {content ?? children}
     </RNText>
   );
 });

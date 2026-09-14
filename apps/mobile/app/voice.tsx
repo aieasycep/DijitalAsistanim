@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useMutation } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +12,7 @@ import {
   Button,
   Icon,
   IconButton,
+  OfflineBanner,
   Pressable,
   Text,
   Waveform,
@@ -26,6 +28,7 @@ import { useEntitlement } from '@/hooks/useEntitlement';
 import { trackScreen } from '@/lib/analytics';
 import { describeError } from '@/lib/errors';
 import { openAppSettings } from '@/services/handoff';
+import { useUiStore } from '@/store/ui';
 
 type Phase = 'idle' | 'recording' | 'transcribing' | 'asking' | 'answered';
 
@@ -39,6 +42,7 @@ export default function VoiceScreen() {
   const { gate } = useEntitlement();
   const { refreshPending } = useApprovalFlow();
   const params = useLocalSearchParams<{ contactId?: string }>();
+  const offline = useUiStore((s) => s.offline);
   const recorder = useVoiceRecorder();
   const [phase, setPhase] = useState<Phase>('idle');
   const [transcript, setTranscript] = useState('');
@@ -115,8 +119,8 @@ export default function VoiceScreen() {
     if (phase === 'asking' || phase === 'transcribing') return;
     setNotice(null);
     setAnswer(null);
-    const ok = await recorder.start();
-    if (ok) {
+    const status = await recorder.start();
+    if (status === 'recording') {
       void haptic('medium', hapticsEnabled);
       setPhase('recording');
     }
@@ -132,19 +136,24 @@ export default function VoiceScreen() {
     });
   }, [router, transcript, params.contactId]);
 
+  const busy = phase === 'asking' || phase === 'transcribing';
+  // Asking needs the network (STT + assistant); recording is blocked offline, typing stays available.
+  const recordDisabled = busy || (offline && phase !== 'recording');
   const statusLine =
     recorder.status === 'denied'
       ? t('assistant.voice.permissionTitle')
       : phase === 'recording'
         ? t('assistant.voice.listening')
-        : phase === 'transcribing' || phase === 'asking'
+        : busy
           ? t('assistant.voice.processing')
-          : phase === 'answered'
-            ? t('assistant.voice.tapToSpeak')
+          : offline
+            ? t('common.offline')
             : t('assistant.voice.tapToSpeak');
 
   return (
     <View style={styles.root} testID="voice-screen">
+      {/* Night gradient in both themes → the status bar is always light on this screen. */}
+      <StatusBar style="light" />
       <LinearGradient {...nightGradientProps(theme)} style={StyleSheet.absoluteFill} />
       <View style={[styles.top, { paddingTop: insets.top + 8 }]}>
         <Text variant="kicker" color={muted}>
@@ -163,20 +172,31 @@ export default function VoiceScreen() {
         contentContainerStyle={[styles.stage, { paddingBottom: insets.bottom + 24 }]}
         keyboardShouldPersistTaps="handled"
       >
+        {offline ? (
+          <OfflineBanner
+            text={t('assistant.voice.offline')}
+            style={styles.offline}
+            testID="voice-offline"
+          />
+        ) : null}
         <Pressable
           onPress={() => void toggleRecording()}
           accessibilityRole="button"
           accessibilityLabel={phase === 'recording' ? t('a11y.stopRecording') : t('a11y.record')}
-          accessibilityState={{ busy: phase === 'asking' || phase === 'transcribing' }}
-          disabled={phase === 'asking' || phase === 'transcribing'}
+          accessibilityState={{ busy }}
+          disabled={recordDisabled}
           pressScale={0.96}
-          style={[styles.orbOuter, { backgroundColor: theme.colors.onGradientChip }]}
+          style={[
+            styles.orbOuter,
+            { backgroundColor: theme.colors.onGradientChip },
+            offline && phase !== 'recording' ? styles.dimmed : null,
+          ]}
           testID="voice-record"
         >
           <View style={[styles.orbInner, { backgroundColor: theme.colors.onGradientChipStrong }]}>
             <View style={[styles.orbCore, { backgroundColor: white }]}>
               <Icon
-                name={recorder.status === 'denied' ? 'offline' : 'mic'}
+                name={recorder.status === 'denied' || offline ? 'offline' : 'mic'}
                 size={36}
                 color={theme.gradients.night.stops[1]}
                 filled={phase === 'recording'}
@@ -269,7 +289,12 @@ export default function VoiceScreen() {
                 onPress={() => submit(example)}
                 accessibilityRole="button"
                 accessibilityLabel={example}
-                style={[styles.chip, { backgroundColor: theme.colors.onGradientChip }]}
+                disabled={offline}
+                style={[
+                  styles.chip,
+                  { backgroundColor: theme.colors.onGradientChip },
+                  offline ? styles.dimmed : null,
+                ]}
                 testID={`voice-example-${i}`}
               >
                 <Text variant="chip" color={white}>
@@ -329,6 +354,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  offline: { alignSelf: 'stretch', marginBottom: 0 },
+  dimmed: { opacity: 0.5 },
   transcript: { maxWidth: 300 },
   answer: { alignSelf: 'stretch', gap: 8 },
   approvals: { gap: 8, marginTop: 4 },

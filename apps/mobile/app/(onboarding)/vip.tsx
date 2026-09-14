@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { qk } from '@da/api-client';
@@ -21,9 +21,11 @@ import {
   useTheme,
   useToast,
 } from '@da/ui';
+import { ListSkeleton, OfflineNotice, QueryErrorState } from '@/features/flow/ScreenStates';
 import { useDataSource } from '@/hooks/useDataSource';
 import { describeError } from '@/lib/errors';
 import { pickDeviceContact, primaryEmail, requestContactsPermission } from '@/services/contacts';
+import { useUiStore } from '@/store/ui';
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const SEARCH_LIMIT = 20;
@@ -46,6 +48,7 @@ export default function VipScreen() {
   const ds = useDataSource();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const offline = useUiStore((s) => s.offline);
   const [query, setQuery] = useState('');
   const [emailForm, setEmailForm] = useState(false);
   const [name, setName] = useState('');
@@ -57,6 +60,8 @@ export default function VipScreen() {
   const contactsQuery = useQuery({
     queryKey: qk.contacts(debounced),
     queryFn: () => ds.people.listContacts({ query: debounced || undefined, limit: SEARCH_LIMIT }),
+    // Keep the previous results on screen while a new search term is fetched.
+    placeholderData: keepPreviousData,
   });
   const vipsQuery = useQuery({ queryKey: qk.vips, queryFn: () => ds.people.listVips() });
   const vips = useMemo(() => vipsQuery.data ?? [], [vipsQuery.data]);
@@ -146,6 +151,9 @@ export default function VipScreen() {
     return debounced ? list : list.slice(0, SUGGESTED_LIMIT);
   }, [contactsQuery.data, vipContactIds, debounced]);
 
+  const refetchAll = () => void Promise.all([contactsQuery.refetch(), vipsQuery.refetch()]);
+  const mutating = add.isPending || remove.isPending;
+
   return (
     <Screen
       scroll
@@ -189,6 +197,10 @@ export default function VipScreen() {
       }
       testID="vip-screen"
     >
+      <OfflineNotice
+        onRetry={refetchAll}
+        retrying={contactsQuery.isRefetching || vipsQuery.isRefetching}
+      />
       <Text variant="display" accessibilityRole="header">
         {t('onboarding.vip.title')}
       </Text>
@@ -210,6 +222,7 @@ export default function VipScreen() {
           variant="surface"
           size="sm"
           icon="person"
+          disabled={offline || mutating}
           onPress={() => void fromAddressBook()}
           testID="vip-contacts"
         />
@@ -218,6 +231,7 @@ export default function VipScreen() {
           variant="surface"
           size="sm"
           icon="mail"
+          disabled={offline}
           onPress={() => setEmailForm((v) => !v)}
           testID="vip-add-email"
         />
@@ -252,6 +266,7 @@ export default function VipScreen() {
             label={t('onboarding.vip.add')}
             size="sm"
             loading={add.isPending}
+            disabled={offline}
             onPress={submitEmail}
             testID="vip-email-save"
           />
@@ -275,6 +290,7 @@ export default function VipScreen() {
                     size={36}
                     iconSize={18}
                     color={c.inkTertiary}
+                    disabled={offline || mutating}
                     accessibilityLabel={t('onboarding.vip.remove')}
                     onPress={() => remove.mutate(vip)}
                     testID={`vip-remove-${vip.id}`}
@@ -290,7 +306,15 @@ export default function VipScreen() {
         <ListGroupTitle
           label={debounced ? t('onboarding.vip.results') : t('onboarding.vip.suggested')}
         />
-        {candidates.length > 0 ? (
+        {contactsQuery.isPending ? (
+          <ListSkeleton count={3} testID="vip-contacts-loading" />
+        ) : contactsQuery.isError ? (
+          <QueryErrorState
+            error={contactsQuery.error}
+            onRetry={() => void contactsQuery.refetch()}
+            testID="vip-contacts-error"
+          />
+        ) : candidates.length > 0 ? (
           <ListGroup>
             {candidates.map((contact, index) => (
               <ListRow
@@ -301,6 +325,7 @@ export default function VipScreen() {
                   <Avatar name={contact.displayName} imageUrl={contact.avatarUrl} size={40} />
                 }
                 trailing={<Icon name="add" size={20} color={c.primary} />}
+                disabled={offline || mutating}
                 onPress={() => addContact(contact)}
                 accessibilityHint={t('onboarding.vip.add')}
                 testID={`vip-contact-${index}`}
@@ -309,7 +334,7 @@ export default function VipScreen() {
           </ListGroup>
         ) : (
           <Text variant="small" tone="tertiary" style={styles.empty}>
-            {contactsQuery.isPending ? t('common.loading') : t('onboarding.vip.noResults')}
+            {t('onboarding.vip.noResults')}
           </Text>
         )}
         <Text variant="caption" tone="tertiary" style={styles.note}>

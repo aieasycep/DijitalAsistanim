@@ -36,6 +36,12 @@
     "learnMore": "Daha fazla",
     "openSource": "Kaynağı Gör",
     "sourceUnavailable": "Bu kaynağın açılabilir bir bağlantısı yok.",
+    "clear": "Temizle",
+    "play": "Oynat",
+    "pause": "Duraklat",
+    "profile": "Profil",
+    "conflict": "Çakışma",
+    "approvalCenter": "Onay Merkezi",
     "whyImportant": "Neden önemli?",
     "notImportant": "Önemli değil",
     "showMore": "Bunu daha sık göster",
@@ -210,7 +216,9 @@
       "weeklyTitle": "Haftalık Özet",
       "unavailable": "Sesli brifing şu an hazırlanamadı.",
       "chapter": "Bölüm {{index}}",
-      "nothingPlaying": "Şu an çalan bir brifing yok."
+      "nothingPlaying": "Şu an çalan bir brifing yok.",
+      "metaShort": "{{duration}} · {{chapter}}",
+      "loadFailedBody": "Bağlantını kontrol edip tekrar dene."
     },
     "generateFailed": "Brifing şu an hazırlanamadı.",
     "regenerate": "Yeniden Hazırla",
@@ -512,7 +520,8 @@
       "transcribeFailed": "Sesi anlayamadım. Tekrar dener misin?",
       "typeInstead": "Yazarak sor",
       "answer": "YANIT",
-      "noStt": "Ses tanıma şu an kullanılamıyor. Yazarak sorabilirsin."
+      "noStt": "Ses tanıma şu an kullanılamıyor. Yazarak sorabilirsin.",
+      "offline": "Çevrimdışısın. Sesli soru için bağlantı gerekiyor; yazarak devam edebilirsin."
     },
     "newChat": "Yeni sohbet",
     "threads": "Sohbetler",
@@ -604,7 +613,8 @@
     "pastTime": "Seçtiğin zaman geçmişte kaldı.",
     "whyDefault": "Hatırlatıcı istedin: {{time}}",
     "loadFailed": "Öneriler yüklenemedi.",
-    "dueLabel": "Son tarih {{time}}"
+    "dueLabel": "Son tarih {{time}}",
+    "offlineHint": "Çevrimdışı — hatırlatıcıyı bağlantı gelince ayarlayabilirsin."
   },
   "approvals": {
     "title": "Onay Bekleyenler",

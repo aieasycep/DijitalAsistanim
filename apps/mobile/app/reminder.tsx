@@ -23,6 +23,7 @@ import { useFormatCtx } from '@/features/flow/useFormatCtx';
 import { DateTimePickerPanel, roundToInterval } from '@/features/reminders/DateTimePickerSheet';
 import { useDataSource } from '@/hooks/useDataSource';
 import { getPermissionStatus, type NotificationPermission } from '@/services/notifications';
+import { useUiStore } from '@/store/ui';
 
 type TargetType = NonNullable<Reminder['targetType']>;
 
@@ -64,6 +65,7 @@ export default function ReminderSheetScreen() {
   const router = useRouter();
   const ds = useDataSource();
   const ctx = useFormatCtx();
+  const offline = useUiStore((s) => s.offline);
   const { requestApproval, isCreating } = useApprovalFlow();
   const params = useLocalSearchParams<{
     targetType?: string;
@@ -125,7 +127,7 @@ export default function ReminderSheetScreen() {
       : (chosen?.reason ?? null);
   const customPast = active === 'custom' && Boolean(custom?.past);
   const picking = picker !== null;
-  const canConfirm = target !== null && chosenAt !== null && !customPast && !isCreating;
+  const canConfirm = target !== null && chosenAt !== null && !customPast && !isCreating && !offline;
 
   const close = () => {
     setVisible(false);
@@ -164,18 +166,22 @@ export default function ReminderSheetScreen() {
     if (approval) router.replace({ pathname: '/approvals/[id]', params: { id: approval.id } });
   };
 
+  // "Now" comes from the format context so a pinned clock (tests, demo) stays deterministic.
   const openPicker = () => {
-    const now = Date.now();
+    const now = ctx.now ?? new Date();
     const base = custom
       ? new Date(custom.at)
       : roundToInterval(
-          dueAt && Date.parse(dueAt) > now ? new Date(dueAt) : new Date(now + HOUR_MS),
+          dueAt && Date.parse(dueAt) > now.getTime()
+            ? new Date(dueAt)
+            : new Date(now.getTime() + HOUR_MS),
         );
-    setPicker({ draft: base, min: new Date(now) });
+    setPicker({ draft: base, min: now });
   };
   const confirmPicker = () => {
     if (!picker) return;
-    setCustom({ at: picker.draft.toISOString(), past: picker.draft.getTime() <= Date.now() });
+    const now = ctx.now ?? new Date();
+    setCustom({ at: picker.draft.toISOString(), past: picker.draft.getTime() <= now.getTime() });
     setSelected('custom');
     setPicker(null);
   };
@@ -217,6 +223,11 @@ export default function ReminderSheetScreen() {
       {permission === 'denied' ? (
         <Text variant="caption" tone="tertiary" align="center" testID="reminder-permission-hint">
           {t('reminder.permissionBody')}
+        </Text>
+      ) : null}
+      {offline ? (
+        <Text variant="caption" tone="tertiary" align="center" testID="reminder-offline-hint">
+          {t('reminder.offlineHint')}
         </Text>
       ) : null}
       <Button
@@ -262,13 +273,15 @@ export default function ReminderSheetScreen() {
               <Skeleton key={i} height={16} width={i % 2 ? '60%' : '80%'} />
             ))}
           </View>
-        ) : query.isError || !target ? (
+        ) : query.isError ? (
           <ErrorState
             message={t('reminder.loadFailed')}
             retryLabel={t('common.retry')}
-            onRetry={target ? () => void query.refetch() : undefined}
+            onRetry={() => void query.refetch()}
             testID="reminder-error"
           />
+        ) : !target ? (
+          <ErrorState message={t('reminder.loadFailed')} testID="reminder-error" />
         ) : (
           <>
             <ListGroup padding={{ vertical: 0, horizontal: 0 }} style={styles.group}>

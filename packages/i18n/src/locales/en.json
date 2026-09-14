@@ -36,6 +36,12 @@
     "learnMore": "Learn more",
     "openSource": "View source",
     "sourceUnavailable": "This source has no link that can be opened.",
+    "clear": "Clear",
+    "play": "Play",
+    "pause": "Pause",
+    "profile": "Profile",
+    "conflict": "Conflict",
+    "approvalCenter": "Approval Center",
     "whyImportant": "Why important?",
     "notImportant": "Not important",
     "showMore": "Show this more often",
@@ -210,7 +216,9 @@
       "weeklyTitle": "Weekly Review",
       "unavailable": "The audio briefing couldn't be prepared right now.",
       "chapter": "Chapter {{index}}",
-      "nothingPlaying": "No briefing is playing right now."
+      "nothingPlaying": "No briefing is playing right now.",
+      "metaShort": "{{duration}} · {{chapter}}",
+      "loadFailedBody": "Check your connection and try again."
     },
     "generateFailed": "The briefing couldn't be prepared right now.",
     "regenerate": "Regenerate",
@@ -512,7 +520,8 @@
       "transcribeFailed": "I couldn't understand that. Try again?",
       "typeInstead": "Type instead",
       "answer": "ANSWER",
-      "noStt": "Speech recognition is unavailable right now. You can type your question."
+      "noStt": "Speech recognition is unavailable right now. You can type your question.",
+      "offline": "You're offline. Voice questions need a connection; you can type instead."
     },
     "newChat": "New chat",
     "threads": "Chats",
@@ -604,7 +613,8 @@
     "pastTime": "That time has already passed.",
     "whyDefault": "You asked to be reminded: {{time}}",
     "loadFailed": "Couldn't load suggestions.",
-    "dueLabel": "Due {{time}}"
+    "dueLabel": "Due {{time}}",
+    "offlineHint": "Offline — you can set the reminder once you're back online."
   },
   "approvals": {
     "title": "Pending approvals",

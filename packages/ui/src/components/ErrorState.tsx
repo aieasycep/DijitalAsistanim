@@ -5,45 +5,38 @@ import { Icon } from '../primitives/Icon';
 import { Pressable } from '../primitives/Pressable';
 import { Text } from '../primitives/Text';
 
-export interface ErrorStateProps {
-  /** "Bu kart yüklenemedi." */
+interface ErrorStateBaseProps {
+  /** Localized error body, formatted by the caller. */
   message: string;
+  /** Retry action — rendered only when both `onRetry` and `retryLabel` are given (no default copy). */
   onRetry?: () => void;
   retryLabel?: string;
-  /** inline: card-level row · full: centred EmptyState with the error tile. */
-  variant?: 'inline' | 'full';
-  /** Headline for the full variant. */
-  title?: string;
   secondaryLabel?: string;
   onSecondary?: () => void;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
-/** Readable, single-action error: coral error icon + 13px text + "Tekrar dene" link (inline) or a full-screen calm panel. */
-export function ErrorState({
-  message,
-  onRetry,
-  retryLabel = 'Tekrar dene',
-  variant = 'inline',
-  title = 'Bir şeyler ters gitti.',
-  secondaryLabel,
-  onSecondary,
-  style,
-  testID,
-}: ErrorStateProps) {
+/** inline: card-level row · full: centred EmptyState with the error tile — the full variant needs a headline. */
+export type ErrorStateProps = ErrorStateBaseProps &
+  ({ variant: 'full'; title: string } | { variant?: 'inline'; title?: string });
+
+/** Readable, single-action error: coral error icon + 13px text + retry link (inline) or a full-screen calm panel. */
+export function ErrorState(props: ErrorStateProps) {
+  const { message, onRetry, retryLabel, secondaryLabel, onSecondary, style, testID } = props;
   const theme = useTheme();
   const c = theme.colors;
+  const retry = onRetry && retryLabel ? { onRetry, retryLabel } : null;
 
-  if (variant === 'full') {
+  if (props.variant === 'full') {
     return (
       <EmptyState
         icon="conflict"
         tone="error"
-        title={title}
+        title={props.title}
         body={message}
-        actionLabel={onRetry ? retryLabel : undefined}
-        onAction={onRetry}
+        actionLabel={retry?.retryLabel}
+        onAction={retry?.onRetry}
         secondaryLabel={secondaryLabel}
         onSecondary={onSecondary}
         style={style}
@@ -71,16 +64,16 @@ export function ErrorState({
       <Icon name="conflict" size={20} color={c.criticalText} />
       <View style={styles.texts}>
         <Text variant="small">{message}</Text>
-        {onRetry ? (
+        {retry ? (
           <Pressable
-            onPress={onRetry}
+            onPress={retry.onRetry}
             accessibilityRole="button"
-            accessibilityLabel={retryLabel}
+            accessibilityLabel={retry.retryLabel}
             hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
             style={styles.retry}
           >
             <Text variant="chip" color={c.primaryText}>
-              {retryLabel}
+              {retry.retryLabel}
             </Text>
           </Pressable>
         ) : null}

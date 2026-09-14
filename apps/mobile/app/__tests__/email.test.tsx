@@ -127,7 +127,7 @@ describe('Reply composer', () => {
     for (const tone of ['short', 'professional', 'friendly', 'detailed'])
       expect(screen.getByTestId(`reply-tone-${tone}`)).toBeTruthy();
     fireEvent.press(screen.getByTestId('reply-tone-friendly'));
-    await waitFor(() => expect(screen.getByText('AI TASLAĞI · Samimi')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('AI TASLAĞI · SAMİMİ')).toBeTruthy());
     await waitFor(
       () =>
         expect(screen.getByTestId('reply-approve').props.accessibilityState?.disabled).toBe(false),

@@ -1,5 +1,5 @@
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, useUiLabels } from '../theme/ThemeProvider';
 import { Card } from '../primitives/Card';
 import { Pressable } from '../primitives/Pressable';
 import { Text } from '../primitives/Text';
@@ -17,7 +17,7 @@ export interface CalendarRowCardProps {
   actionLabel?: string;
   onAction?: () => void;
   onPress?: () => void;
-  /** Coral 3px stripe on the left edge. */
+  /** Coral 3px stripe on the left edge; `labels.conflict` (ThemeProvider) is appended to the accessible name. */
   conflict?: boolean;
   done?: boolean;
   accessibilityLabel?: string;
@@ -41,10 +41,12 @@ export function CalendarRowCard({
   testID,
 }: CalendarRowCardProps) {
   const theme = useTheme();
+  const labels = useUiLabels();
   const c = theme.colors;
+  const conflictSuffix = conflict && labels.conflict ? ` · ${labels.conflict}` : '';
   const label =
     accessibilityLabel ??
-    `${hour}:${minute} · ${title}${meta ? ` · ${meta}` : ''}${conflict ? ' · Çakışma' : ''}`;
+    `${hour}:${minute} · ${title}${meta ? ` · ${meta}` : ''}${conflictSuffix}`;
   return (
     <Card
       padding={{ vertical: 14, horizontal: 16 }}

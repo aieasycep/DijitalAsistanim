@@ -8,7 +8,7 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, useUiLabels } from '../theme/ThemeProvider';
 import { Button } from '../primitives/Button';
 import { Icon } from '../primitives/Icon';
 import { IconButton } from '../primitives/IconButton';
@@ -22,23 +22,26 @@ export interface SearchBarProps {
   /** Submit from the keyboard search key. */
   onSubmit?: (text: string) => void;
   onClear?: () => void;
-  /** Shows a text "Vazgeç" button next to the pill while focused (or always with `showCancel`). */
+  /** Text button next to the pill — rendered only when both `onCancel` and `cancelLabel` are given. */
   onCancel?: () => void;
-  showCancel?: boolean;
   cancelLabel?: string;
+  /** Always show the cancel button (otherwise only while focused). */
+  showCancel?: boolean;
+  /** Accessible name of the clear (×) button — defaults to `labels.clear` from ThemeProvider. */
   clearLabel?: string;
-  placeholder?: string;
+  placeholder: string;
   autoFocus?: boolean;
   editable?: boolean;
   returnKeyType?: ReturnKeyTypeOptions;
-  accessibilityLabel?: string;
+  /** Accessible name of the input. */
+  accessibilityLabel: string;
   onFocus?: TextInputProps['onFocus'];
   onBlur?: TextInputProps['onBlur'];
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
-/** 44px pill search field: search 18 tertiary · "Hafızada ara…" · clear (×) when there is text · optional cancel. */
+/** 44px pill search field: search 18 tertiary · placeholder · clear (×) when there is text · optional cancel. */
 export const SearchBar = forwardRef<TextInput, SearchBarProps>(function SearchBar(
   {
     value,
@@ -47,13 +50,13 @@ export const SearchBar = forwardRef<TextInput, SearchBarProps>(function SearchBa
     onClear,
     onCancel,
     showCancel,
-    cancelLabel = 'Vazgeç',
-    clearLabel = 'Temizle',
-    placeholder = 'Hafızada ara…',
+    cancelLabel,
+    clearLabel,
+    placeholder,
     autoFocus = false,
     editable = true,
     returnKeyType = 'search',
-    accessibilityLabel = 'Ara',
+    accessibilityLabel,
     onFocus,
     onBlur,
     style,
@@ -62,6 +65,7 @@ export const SearchBar = forwardRef<TextInput, SearchBarProps>(function SearchBa
   ref,
 ) {
   const theme = useTheme();
+  const labels = useUiLabels();
   const c = theme.colors;
   const [focused, setFocused] = useState(false);
   const cancelVisible = showCancel ?? (focused && Boolean(onCancel));
@@ -113,7 +117,7 @@ export const SearchBar = forwardRef<TextInput, SearchBarProps>(function SearchBa
             size={36}
             iconSize={18}
             color={c.inkTertiary}
-            accessibilityLabel={clearLabel}
+            accessibilityLabel={clearLabel ?? labels.clear}
             onPress={() => {
               onChangeText('');
               onClear?.();
@@ -122,7 +126,7 @@ export const SearchBar = forwardRef<TextInput, SearchBarProps>(function SearchBa
           />
         ) : null}
       </View>
-      {cancelVisible && onCancel ? (
+      {cancelVisible && onCancel && cancelLabel ? (
         <Button label={cancelLabel} variant="ghostSecondary" size="ghost" onPress={onCancel} />
       ) : null}
     </View>

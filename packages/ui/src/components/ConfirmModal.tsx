@@ -13,7 +13,7 @@ export interface ConfirmModalProps {
   title: string;
   body?: string;
   confirmLabel: string;
-  cancelLabel?: string;
+  cancelLabel: string;
   /** Coral confirm button + critical icon tile — only for irreversible actions. */
   destructive?: boolean;
   onConfirm: () => void;
@@ -32,7 +32,7 @@ export function ConfirmModal({
   title,
   body,
   confirmLabel,
-  cancelLabel = 'Vazgeç',
+  cancelLabel,
   destructive = false,
   onConfirm,
   onCancel,

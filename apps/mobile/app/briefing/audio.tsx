@@ -1,16 +1,34 @@
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { qk } from '@da/api-client';
 import { palette } from '@da/design-tokens';
-import { formatShortDate, type FormatCtx } from '@da/i18n';
-import { EmptyState, Icon, IconButton, Pressable, Text, Waveform, useTheme } from '@da/ui';
-import { formatCtx } from '@/lib/i18n';
-import { useSessionStore } from '@/store/session';
+import type { Briefing } from '@da/domain';
+import type { FormatCtx } from '@da/i18n';
+import {
+  EmptyState,
+  ErrorState,
+  Icon,
+  IconButton,
+  Pressable,
+  Text,
+  Waveform,
+  useTheme,
+} from '@da/ui';
+import { OfflineNotice } from '@/features/flow/ScreenStates';
+import { formatDateKey } from '@/features/plan/dates';
+import { useDataSource } from '@/hooks/useDataSource';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { describeError } from '@/lib/errors';
+import { formatCtx } from '@/lib/i18n';
 import { SEEK_STEP_SEC } from '@/services/audio';
+import { useSessionStore } from '@/store/session';
+import { useUiStore } from '@/store/ui';
 
 /** "m:ss" for positions and durations. */
 export function formatClock(totalSeconds: number): string {
@@ -20,17 +38,33 @@ export function formatClock(totalSeconds: number): string {
   return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
+/** A briefing the briefing screen already fetched (by kind, by id or weekly) — saves a round trip. */
+function cachedBriefing(queryClient: QueryClient, id: string): Briefing | undefined {
+  const byId = queryClient.getQueryData<Briefing>(qk.briefingById(id));
+  if (byId) return byId;
+  for (const prefix of ['briefing', 'weekly']) {
+    for (const [, data] of queryClient.getQueriesData<Briefing | null>({ queryKey: [prefix] })) {
+      if (data?.id === id) return data;
+    }
+  }
+  return undefined;
+}
+
 /** Full audio player (night gradient): waveform, progress, ±15 s, speed pill, chapter list. */
 export default function AudioScreen() {
   const theme = useTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const ds = useDataSource();
+  const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ id?: string }>();
   const preferences = useSessionStore((s) => s.preferences);
+  const offline = useUiStore((s) => s.offline);
   const {
     state: audio,
     loading,
+    error: playerError,
     load,
     toggle,
     seekBack,
@@ -39,6 +73,8 @@ export default function AudioScreen() {
     jumpToChapter,
   } = useAudioPlayer();
   const requestedRef = useRef<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [failedId, setFailedId] = useState<string | null>(null);
   const c = theme.colors;
 
   const ctx: FormatCtx = formatCtx({
@@ -46,61 +82,127 @@ export default function AudioScreen() {
     ...(preferences?.timezone ? { timezone: preferences.timezone } : {}),
   });
 
-  // Opened for a briefing that is not loaded yet (deep link / cold start): load and start it once.
+  // The briefing behind the narration: its `forDate` and `kind` drive the meta line and the title.
   const requestedId = typeof params.id === 'string' && params.id.length > 0 ? params.id : null;
-  const [failedId, setFailedId] = useState<string | null>(null);
+  const briefingId = requestedId ?? audio.briefingId;
+  const briefingQuery = useQuery({
+    queryKey: qk.briefingById(briefingId ?? 'none'),
+    queryFn: () => ds.briefings.getBriefingById(briefingId as string),
+    enabled: briefingId !== null,
+    initialData: () => (briefingId ? cachedBriefing(queryClient, briefingId) : undefined),
+    staleTime: 5 * 60_000,
+  });
+  const briefing = briefingQuery.data ?? null;
+  const fetchedId = briefing?.id ?? null;
+  const fetchedKind = briefing?.kind ?? null;
+
+  // Opened for a briefing that is not loaded yet (deep link / cold start): once the briefing is known,
+  // load its narration with the kind-specific title and start it. Waits for connectivity when offline.
   useEffect(() => {
-    if (!requestedId || requestedId === audio.briefingId || requestedRef.current === requestedId)
-      return;
+    if (!requestedId || fetchedId !== requestedId || !fetchedKind) return;
+    if (requestedId === audio.briefingId || requestedRef.current === requestedId) return;
+    if (offline) return;
     requestedRef.current = requestedId;
-    let cancelled = false;
-    void load(requestedId, { title: t('briefing.audio.morningTitle'), autoplay: true }).then(
+    void load(requestedId, { title: t(`briefing.audio.${fetchedKind}Title`), autoplay: true }).then(
       (ok) => {
-        if (!cancelled && !ok) setFailedId(requestedId);
+        if (!ok) setFailedId(requestedId);
       },
     );
-    return () => {
-      cancelled = true;
-    };
-  }, [requestedId, audio.briefingId, load, t]);
+  }, [requestedId, fetchedId, fetchedKind, audio.briefingId, load, t, offline, attempt]);
+
+  const retryLoad = () => {
+    setFailedId(null);
+    requestedRef.current = null;
+    if (briefingQuery.isError) void briefingQuery.refetch();
+    else setAttempt((n) => n + 1);
+  };
+
+  const loadFailed =
+    requestedId !== null &&
+    requestedId !== audio.briefingId &&
+    (failedId === requestedId || briefingQuery.isError);
+  // A deep-linked briefing is still on its way: keep the player chrome instead of the empty state.
+  const pendingLoad = requestedId !== null && requestedId !== audio.briefingId && !loadFailed;
+  const waitingForNetwork = pendingLoad && offline && !loading;
 
   const progress =
     audio.durationSec > 0 ? Math.min(1, Math.max(0, audio.positionSec / audio.durationSec)) : 0;
   const chapter = audio.chapters[audio.chapterIndex] ?? audio.chapters[0];
-  const meta = loading
-    ? t('common.preparing')
-    : t('briefing.audio.meta', {
-        date: formatShortDate(new Date(), ctx),
-        duration: formatClock(audio.durationSec),
-        chapter: chapter?.title ?? t('briefing.audio.chapter', { index: audio.chapterIndex + 1 }),
-      });
+  const chapterLabel =
+    chapter?.title ?? t('briefing.audio.chapter', { index: audio.chapterIndex + 1 });
+  const dateLabel = briefing ? formatDateKey(briefing.forDate, ctx) : null;
+  const meta =
+    loading || pendingLoad
+      ? t('common.preparing')
+      : dateLabel
+        ? t('briefing.audio.meta', {
+            date: dateLabel,
+            duration: formatClock(audio.durationSec),
+            chapter: chapterLabel,
+          })
+        : t('briefing.audio.metaShort', {
+            duration: formatClock(audio.durationSec),
+            chapter: chapterLabel,
+          });
+  const kindTitle = fetchedKind ? t(`briefing.audio.${fetchedKind}Title`) : null;
+  const title = kindTitle ?? (pendingLoad ? t('common.preparing') : audio.title);
 
-  // A deep-linked briefing is still on its way: keep the player chrome instead of the empty state.
-  const pendingLoad =
-    Boolean(requestedId) && requestedId !== audio.briefingId && failedId !== requestedId;
-
-  if (!audio.briefingId && !pendingLoad) {
-    return (
-      <View
-        style={[styles.root, { backgroundColor: c.background, paddingTop: insets.top + 12 }]}
-        testID="audio-screen"
-      >
-        <View style={[styles.topRow, { paddingHorizontal: theme.layout.screenPaddingH }]}>
-          <IconButton
-            icon="expandMore"
-            accessibilityLabel={t('a11y.close')}
-            onPress={() => router.back()}
-            testID="audio-close"
-          />
-        </View>
-        <EmptyState
-          icon="listen"
-          title={t('briefing.audio.nothingPlaying')}
-          actionLabel={t('common.back')}
-          onAction={() => router.back()}
-          testID="audio-empty"
+  const panel = (content: React.ReactNode) => (
+    <View
+      style={[styles.root, { backgroundColor: c.background, paddingTop: insets.top + 12 }]}
+      testID="audio-screen"
+    >
+      <View style={[styles.topRow, { paddingHorizontal: theme.layout.screenPaddingH }]}>
+        <IconButton
+          icon="expandMore"
+          accessibilityLabel={t('a11y.close')}
+          onPress={() => router.back()}
+          testID="audio-close"
         />
       </View>
+      {content}
+    </View>
+  );
+
+  if (loadFailed || waitingForNetwork) {
+    const failure = briefingQuery.isError ? briefingQuery.error : playerError;
+    return panel(
+      <View style={[styles.panelBody, { paddingHorizontal: theme.layout.screenPaddingH }]}>
+        <OfflineNotice onRetry={retryLoad} retrying={briefingQuery.isRefetching || loading} />
+        {loadFailed ? (
+          <ErrorState
+            variant="full"
+            title={t('briefing.audio.unavailable')}
+            message={failure ? describeError(failure, t).title : t('briefing.audio.loadFailedBody')}
+            retryLabel={t('common.retry')}
+            onRetry={retryLoad}
+            secondaryLabel={t('common.back')}
+            onSecondary={() => router.back()}
+            testID="audio-error"
+          />
+        ) : (
+          <EmptyState
+            icon="offline"
+            title={t('errors.offline')}
+            body={t('common.noNetworkAction')}
+            actionLabel={t('common.back')}
+            onAction={() => router.back()}
+            testID="audio-offline"
+          />
+        )}
+      </View>,
+    );
+  }
+
+  if (!audio.briefingId && !pendingLoad) {
+    return panel(
+      <EmptyState
+        icon="listen"
+        title={t('briefing.audio.nothingPlaying')}
+        actionLabel={t('common.back')}
+        onAction={() => router.back()}
+        testID="audio-empty"
+      />,
     );
   }
 
@@ -116,6 +218,8 @@ export default function AudioScreen() {
       ]}
       testID="audio-screen"
     >
+      {/* Night gradient in both themes → the status bar is always light on this screen. */}
+      <StatusBar style="light" />
       <View style={[styles.topRow, { paddingHorizontal: theme.layout.screenPaddingH }]}>
         <IconButton
           icon="expandMore"
@@ -140,10 +244,15 @@ export default function AudioScreen() {
           </Text>
         </Pressable>
       </View>
+      {offline ? (
+        <View style={[styles.notice, { paddingHorizontal: theme.layout.screenPaddingH }]}>
+          <OfflineNotice />
+        </View>
+      ) : null}
 
       <View style={styles.titleBlock}>
         <Text variant="h2" tone="onGradient" align="center" accessibilityRole="header">
-          {audio.title}
+          {title}
         </Text>
         <Text
           variant="secondary"
@@ -169,7 +278,7 @@ export default function AudioScreen() {
       <Waveform
         progress={progress}
         playing={audio.playing}
-        accessibilityLabel={audio.title}
+        accessibilityLabel={title}
         style={styles.waveform}
       />
 
@@ -277,6 +386,8 @@ export default function AudioScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  panelBody: { paddingTop: 12 },
+  notice: { marginTop: 12 },
   speedPill: {
     height: 32,
     paddingHorizontal: 12,

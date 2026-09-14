@@ -98,8 +98,9 @@ export default function PostMeetingScreen() {
         });
       return;
     }
-    const ok = await recorder.start();
-    if (!ok && recorder.status === 'denied')
+    // `start` resolves to the resulting status — the hook's `status` in this closure is stale here.
+    const status = await recorder.start();
+    if (status === 'denied')
       toast.show({
         message: t('assistant.voice.permissionTitle'),
         icon: 'offline',

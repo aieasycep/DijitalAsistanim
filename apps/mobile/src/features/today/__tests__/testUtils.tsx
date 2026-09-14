@@ -8,10 +8,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Reanimated 4's Jest mock pulls in react-native-worklets, whose native entry has no Jest shim of its own.
 jest.mock('react-native-worklets', () => require('react-native-worklets/lib/module/mock'));
 import { render, type RenderOptions } from '@testing-library/react-native';
-import { initReactI18next } from 'react-i18next';
+import { initReactI18next, useTranslation } from 'react-i18next';
 import { createI18n } from '@da/i18n';
 import { ThemeProvider, ToastProvider } from '@da/ui';
 import type { Insight } from '@da/domain';
+import { uiLabelsFor } from '@/lib/uiLabels';
 
 let i18nReady: Promise<unknown> | null = null;
 
@@ -32,9 +33,10 @@ export function createTestQueryClient(): QueryClient {
 }
 
 export function Providers({ children, client }: PropsWithChildren<{ client?: QueryClient }>) {
+  const { t } = useTranslation();
   return (
     <QueryClientProvider client={client ?? createTestQueryClient()}>
-      <ThemeProvider forceScheme="light">
+      <ThemeProvider forceScheme="light" locale="tr" labels={uiLabelsFor(t)}>
         <ToastProvider>{children}</ToastProvider>
       </ThemeProvider>
     </QueryClientProvider>

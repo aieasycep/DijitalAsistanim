@@ -29,6 +29,7 @@ export interface SegmentedControlProps<K extends string = string> {
   accessibilityLabel?: string;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** Track testID; each option Pressable gets `${testID}-${option.key}`. */
   testID?: string;
 }
 
@@ -112,6 +113,7 @@ export function SegmentedControl<K extends string = string>({
             pressScale={1}
             ensureTouchTarget={false}
             style={[styles.segment, { height: theme.sizes.segmentHeight }]}
+            testID={testID ? `${testID}-${option.key}` : undefined}
           >
             <Text variant="chip" color={selected ? c.ink : c.inkSecondary} numberOfLines={1}>
               {option.label}

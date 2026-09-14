@@ -125,7 +125,7 @@ describe('Priority rules screen', () => {
         "Senin yazdığın açık kurallar. Her zaman AI'ın kendi öğrendiklerinin önüne geçer.",
       ),
     ).toBeTruthy();
-    expect(screen.getByText('2 kural')).toBeTruthy();
+    expect(screen.getByText('2 KURAL')).toBeTruthy();
     fireEvent.press(screen.getByTestId('rules-ai-link'));
     expect(mockPush).toHaveBeenCalledWith('/settings/ai-personalization');
   });
@@ -146,7 +146,7 @@ describe('Priority rules screen', () => {
     const created = (await ds.rules.listRules()).find((r) => r.type === 'keyword_high');
     expect(created?.label).toBe('fatura · Her zaman önemli');
     expect(created?.position).toBe(2);
-    await screen.findByText('3 kural', {}, FIND_OPTS);
+    await screen.findByText('3 KURAL', {}, FIND_OPTS);
   });
 
   it('reorders with the arrows and toggles a rule off', async () => {

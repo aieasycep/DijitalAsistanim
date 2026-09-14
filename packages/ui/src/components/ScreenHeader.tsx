@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { IconName } from '@da/design-tokens';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, useUiLabels } from '../theme/ThemeProvider';
 import { Avatar } from '../primitives/Avatar';
 import { IconButton } from '../primitives/IconButton';
 import { Pressable } from '../primitives/Pressable';
@@ -12,6 +12,7 @@ export interface ScreenHeaderAvatar {
   name: string;
   imageUrl?: string | null;
   onPress?: () => void;
+  /** Accessible name of the avatar button — defaults to `labels.profile · name` from ThemeProvider. */
   accessibilityLabel?: string;
 }
 
@@ -24,12 +25,14 @@ export interface ScreenHeaderProps {
   /** Optional 14px line under a sub-page title ("3 işlem onayını bekliyor …"). */
   subtitle?: string;
   onBack?: () => void;
+  /** Accessible name of the back button — defaults to `labels.back` from ThemeProvider. */
   backLabel?: string;
   /** arrow_back (push) · close (modal) · expand_more (audio player collapse) */
   backIcon?: Extract<IconName, 'back' | 'close' | 'expandMore'>;
   /** Right-side node (context chip such as "18 dk", header pill…). */
   right?: ReactNode;
   avatar?: ScreenHeaderAvatar;
+  /** Approvals pill — rendered only when `approvalLabel` (formatted, e.g. "2 approvals") is given and the count is > 0. */
   approvalCount?: number;
   approvalLabel?: string;
   onApprovals?: () => void;
@@ -48,11 +51,11 @@ export function ScreenHeader({
   kicker,
   subtitle,
   onBack,
-  backLabel = 'Geri',
+  backLabel,
   backIcon = 'back',
   right,
   avatar,
-  approvalCount = 0,
+  approvalCount,
   approvalLabel,
   onApprovals,
   tone = 'default',
@@ -60,6 +63,7 @@ export function ScreenHeader({
   testID,
 }: ScreenHeaderProps) {
   const theme = useTheme();
+  const labels = useUiLabels();
   const onGradient = tone === 'onGradient';
   const kickerTone = onGradient ? 'onGradientMuted' : 'tertiary';
   const titleTone = onGradient ? 'onGradient' : 'ink';
@@ -71,7 +75,7 @@ export function ScreenHeader({
           {onBack ? (
             <IconButton
               icon={backIcon}
-              accessibilityLabel={backLabel}
+              accessibilityLabel={backLabel ?? labels.back}
               variant={onGradient ? 'onGradient' : 'surface'}
               size={36}
               iconSize={20}
@@ -135,13 +139,18 @@ export function ScreenHeader({
       </View>
       <View style={styles.rootRight}>
         {right}
-        <ApprovalBadge count={approvalCount} label={approvalLabel} onPress={onApprovals} />
+        {approvalLabel ? (
+          <ApprovalBadge count={approvalCount ?? 0} label={approvalLabel} onPress={onApprovals} />
+        ) : null}
         {avatar ? (
           avatar.onPress ? (
             <Pressable
               onPress={avatar.onPress}
               accessibilityRole="button"
-              accessibilityLabel={avatar.accessibilityLabel ?? `Profil · ${avatar.name}`}
+              accessibilityLabel={
+                avatar.accessibilityLabel ??
+                (labels.profile ? `${labels.profile} · ${avatar.name}` : avatar.name)
+              }
               style={styles.avatarPress}
             >
               <Avatar
