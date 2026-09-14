@@ -218,6 +218,7 @@
       "chapter": "Chapter {{index}}",
       "nothingPlaying": "No briefing is playing right now.",
       "metaShort": "{{duration}} · {{chapter}}",
+      "progress": "Playback progress",
       "loadFailedBody": "Check your connection and try again."
     },
     "generateFailed": "The briefing couldn't be prepared right now.",

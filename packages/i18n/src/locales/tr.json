@@ -218,6 +218,7 @@
       "chapter": "Bölüm {{index}}",
       "nothingPlaying": "Şu an çalan bir brifing yok.",
       "metaShort": "{{duration}} · {{chapter}}",
+      "progress": "Dinleme ilerlemesi",
       "loadFailedBody": "Bağlantını kontrol edip tekrar dene."
     },
     "generateFailed": "Brifing şu an hazırlanamadı.",

@@ -285,7 +285,9 @@ export default function AudioScreen() {
       <View style={[styles.progress, { paddingHorizontal: theme.layout.screenPaddingH }]}>
         <View
           style={styles.track}
+          accessible
           accessibilityRole="progressbar"
+          accessibilityLabel={t('briefing.audio.progress')}
           accessibilityValue={{ min: 0, max: 100, now: Math.round(progress * 100) }}
         >
           <View style={[styles.fill, { width: `${Math.round(progress * 100)}%` }]} />
