@@ -5,10 +5,18 @@ name: Android APK (demo)
 # Runs on demand (Actions → "Android APK (demo)" → Run workflow) or on any push whose commit message
 # contains "[apk]". The APK is attached to the run as the `dijital-asistan-demo-apk` artifact.
 # Not a store build: the production profile stays on EAS with real signing (docs/DEPLOYMENT.md).
+# By default the Android NotificationListenerService is left out (ANDROID_NOTIFICATION_LISTENER=0):
+# Play Protect blocks sideloaded APKs that declare one, with no user override. Tick
+# `notification_listener` only for installs over `adb install`, which are exempt.
 
 on:
   workflow_dispatch:
     inputs:
+      notification_listener:
+        description: 'Include the NotificationListenerService (install over adb only; Play Protect blocks sideloading it).'
+        type: boolean
+        required: false
+        default: false
       demo_now:
         description: 'Pin the demo clock (ISO instant, e.g. 2026-09-05T06:41:00Z). Empty = device time.'
         required: false
@@ -47,6 +55,7 @@ jobs:
       EXPO_PUBLIC_DATA_MODE: demo
       EXPO_PUBLIC_DEMO_NOW: ${{ github.event.inputs.demo_now }}
       EXPO_PUBLIC_DEMO_TIMEZONE: ${{ github.event.inputs.demo_now != '' && github.event.inputs.demo_timezone || '' }}
+      ANDROID_NOTIFICATION_LISTENER: ${{ github.event.inputs.notification_listener == 'true' && '1' || '0' }}
       # No Sentry credentials on the runner: sentry.gradle skips the source-map upload.
       SENTRY_DISABLE_AUTO_UPLOAD: 'true'
     steps:
@@ -87,7 +96,13 @@ jobs:
         id: collect
         run: |
           set -euo pipefail
-          out="dist/dijital-asistan-demo-${GITHUB_SHA::7}.apk"
+          suffix=""
+          listener="not included: installs from a browser, WhatsApp or a file manager; the Telefon Bildirimleri feature is hidden in this build"
+          if [ "$ANDROID_NOTIFICATION_LISTENER" = "1" ]; then
+            suffix="-listener"
+            listener="included: install with \`adb install\` (Play Protect blocks sideloading it)"
+          fi
+          out="dist/dijital-asistan-demo-${GITHUB_SHA::7}${suffix}.apk"
           mkdir -p dist
           cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "$out"
           size=$(du -h "$out" | cut -f1)
@@ -103,6 +118,8 @@ jobs:
             echo "Download the **dijital-asistan-demo-apk** artifact from this run, unzip it and install the APK"
             echo "on the phone (allow installs from unknown sources). Demo mode: sign in with any e-mail and any"
             echo "6-digit code; no backend is contacted."
+            echo
+            echo "Notification listener service: $listener."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4

@@ -51,6 +51,12 @@ commit whose message contains `[apk]`. The APK is attached to the run as the `di
 (kept 14 days); install it with "unknown sources" allowed. It is an internal build only — store builds keep using
 the EAS `production` profile and real signing.
 
+The APK is built with `ANDROID_NOTIFICATION_LISTENER=0` by default: Google Play Protect blocks APKs installed from a
+browser, a messaging app or a file manager when they declare a `NotificationListenerService`, and the dialog has no
+"install anyway". Without the service the "Telefon Bildirimleri" feature is hidden (as on iOS). Tick the
+`notification_listener` input only for installs over `adb install`, which Play Protect does not block. The EAS
+`preview` and `demo` profiles set the same switch; `development` and `production` keep the service.
+
 - Environment variables per profile live in EAS (`eas env`) or `apps/mobile/.env`: all `EXPO_PUBLIC_*` values plus
   `APP_ENV`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `APPLE_TEAM_ID`, `IOS_APP_GROUP`.
 - Native code (Android NotificationListener module, widgets, share extension) is compiled by EAS during prebuild;

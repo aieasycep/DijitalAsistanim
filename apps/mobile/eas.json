@@ -32,13 +32,17 @@
       "extends": "base",
       "distribution": "internal",
       "channel": "preview",
-      "env": { "APP_ENV": "preview" },
+      "env": { "APP_ENV": "preview", "ANDROID_NOTIFICATION_LISTENER": "0" },
       "android": { "buildType": "apk" }
     },
     "demo": {
       "extends": "preview",
       "channel": "demo",
-      "env": { "APP_ENV": "preview", "EXPO_PUBLIC_DATA_MODE": "demo" },
+      "env": {
+        "APP_ENV": "preview",
+        "EXPO_PUBLIC_DATA_MODE": "demo",
+        "ANDROID_NOTIFICATION_LISTENER": "0"
+      },
       "android": { "buildType": "apk" }
     },
     "production": {

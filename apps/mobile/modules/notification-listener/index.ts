@@ -11,6 +11,7 @@
  *  - Nothing is persisted on disk by the service: accepted items live in a bounded in-memory queue
  *    until JS subscribes with `addNotificationListener`.
  */
+import Constants from 'expo-constants';
 import type { EventSubscription } from 'expo-modules-core';
 import { NotificationListenerNative } from './src/NotificationListenerModule';
 import type {
@@ -37,7 +38,18 @@ const UNSUPPORTED: Unsupported = { supported: false };
 const SUPPORTED: ListenerResult = { supported: true };
 const NOOP_SUBSCRIPTION: EventSubscription = { remove: () => undefined };
 
-const native = NotificationListenerNative;
+/**
+ * Build-time switch mirrored from app.config.ts (`ANDROID_NOTIFICATION_LISTENER=0` →
+ * `extra.androidNotificationListener: false`): sideloadable internal/demo APKs are built without the
+ * listener service in their manifest, because Play Protect blocks sideloaded apps that declare one.
+ * Such builds report `supported: false` exactly like iOS, so the feature never shows a dead toggle.
+ */
+function serviceDeclared(): boolean {
+  const extra = (Constants.expoConfig?.extra ?? {}) as { androidNotificationListener?: boolean };
+  return extra.androidNotificationListener !== false;
+}
+
+const native = serviceDeclared() ? NotificationListenerNative : null;
 
 function safeBoolean(read: () => boolean): boolean {
   try {
@@ -56,7 +68,7 @@ function normalizePackages(packages: readonly string[]): string[] {
   return [...seen];
 }
 
-/** `true` only on Android with the native module linked. */
+/** `true` only on Android with the native module linked and the listener service in the manifest. */
 export function isSupported(): boolean {
   return native !== null;
 }

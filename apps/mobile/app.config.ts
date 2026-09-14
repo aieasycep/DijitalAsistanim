@@ -27,6 +27,14 @@ const UNIVERSAL_HOSTS = env(
 const IS_PRODUCTION =
   process.env.APP_ENV === 'production' || process.env.EAS_BUILD_PROFILE === 'production';
 const VERSION = env('APP_VERSION', '1.0.0');
+/**
+ * Android NotificationListenerService switch. Google Play Protect blocks APKs installed from browsers,
+ * messaging apps or file managers when they declare a notification listener (no user override), so
+ * sideloadable internal/demo APKs are built with ANDROID_NOTIFICATION_LISTENER=0: the service stays out
+ * of the manifest and the app hides the feature (`extra.androidNotificationListener`). Store builds and
+ * `adb install` builds keep the default (1).
+ */
+const ANDROID_NOTIFICATION_LISTENER = env('ANDROID_NOTIFICATION_LISTENER', '1') !== '0';
 
 const config = (_ctx: ConfigContext): ExpoConfig => ({
   name: APP_NAME,
@@ -296,7 +304,7 @@ const config = (_ctx: ConfigContext): ExpoConfig => ({
         url: 'https://sentry.io/',
       },
     ],
-    './modules/notification-listener/app.plugin.js',
+    ...(ANDROID_NOTIFICATION_LISTENER ? ['./modules/notification-listener/app.plugin.js'] : []),
     './plugins/withAndroidNotificationChannels.js',
     './plugins/withAppleTeamId.js',
   ],
@@ -307,6 +315,7 @@ const config = (_ctx: ConfigContext): ExpoConfig => ({
     appleTeamId: APPLE_TEAM_ID,
     universalHosts: UNIVERSAL_HOSTS,
     isProduction: IS_PRODUCTION,
+    androidNotificationListener: ANDROID_NOTIFICATION_LISTENER,
   },
   updates: { enabled: false },
   runtimeVersion: { policy: 'appVersion' },
