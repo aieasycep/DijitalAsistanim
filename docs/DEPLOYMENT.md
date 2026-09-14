@@ -23,6 +23,10 @@ supabase functions deploy              # deploys every folder in supabase/functi
   ```
   (or store `functions_url` / `internal_secret` in Vault — `internal.setting()` reads Vault first).
 - Enable Auth providers (Apple, Google, Azure, Email OTP) and add redirect URLs (docs/OAUTH_SETUP.md).
+- E-mail sign-in is a 6-digit code (`signInWithOtp` + `verifyOtp`, `otp_length = 6`): in **Auth → Email Templates →
+  Magic Link** the body must contain `{{ .Token }}` — the default template only carries `{{ .ConfirmationURL }}`, which
+  the app cannot use. Supabase's built-in sender is rate-limited to a few e-mails per hour; configure custom SMTP
+  (Auth → SMTP) before inviting more testers.
 - Storage buckets are created by migration `…0008_storage.sql`.
 - Verify: `node scripts/validate-migrations.mjs` and `node scripts/db-test.mjs` against a fresh Postgres (CI does this).
 
@@ -42,20 +46,28 @@ eas submit --platform ios / android
 - Before `eas submit`, fill `submit.production.ios.ascAppId` / `appleTeamId` in `apps/mobile/eas.json` (EAS cannot read
   them from env) and point `submit.production.android.serviceAccountKeyPath` at the Play service-account JSON.
 
-### Demo APK without EAS (GitHub Actions)
+### APKs without EAS (GitHub Actions)
 
-`.github/workflows/android-apk.yml` builds standalone demo APKs on GitHub-hosted runners: `expo prebuild` → Gradle
-`assembleRelease` (`APP_ENV=preview`, `EXPO_PUBLIC_DATA_MODE=demo`, arm64-v8a + armeabi-v7a, debug keystore). Start
-it from **Actions → Android APK (demo) → Run workflow** (optional `demo_now` pins the demo clock) or push a commit
-whose message contains `[apk]`. Two artifacts are attached to the run (kept 14 days); they are internal builds only —
-store builds keep using the EAS `production` profile and real signing.
+`.github/workflows/android-apk.yml` builds standalone APKs on GitHub-hosted runners: `expo prebuild` → Gradle
+`assembleRelease` (`APP_ENV=preview`, arm64-v8a + armeabi-v7a, debug keystore). Start it from **Actions → Android APK
+(demo) → Run workflow** or push a commit whose message contains `[apk]` (pushes always build demo mode). Two artifacts
+are attached to the run (kept 14 days); they are internal builds only — store builds keep using the EAS `production`
+profile and real signing.
 
-- `dijital-asistan-demo-apk` — built with `ANDROID_NOTIFICATION_LISTENER=0`. Google Play Protect blocks APKs
+- `data_mode` = `demo` (default): built-in fixtures, no backend; optional `demo_now` pins the demo clock.
+- `data_mode` = `supabase`: the app talks to your Supabase project. Before the first run add, under **Settings →
+  Secrets and variables → Actions**, the repository variable `EXPO_PUBLIC_SUPABASE_URL` and the secret
+  `EXPO_PUBLIC_SUPABASE_ANON_KEY` (optional variables `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` /
+  `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` enable native Google sign-in; e-mail code sign-in needs nothing else).
+
+Artifacts (`<mode>` = `demo` or `supabase`):
+
+- `dijital-asistan-<mode>-apk` — built with `ANDROID_NOTIFICATION_LISTENER=0`. Google Play Protect blocks APKs
   installed from a browser, a messaging app or a file manager when they declare a `NotificationListenerService`, and
   the dialog has no "install anyway"; this variant leaves the service out, so it installs from anywhere with "unknown
   sources" allowed. The "Telefon Bildirimleri" feature is hidden in it (as on iOS).
-- `dijital-asistan-demo-apk-listener` — with the service, to test that feature. Install it over USB, which Play
-  Protect does not block:
+- `dijital-asistan-<mode>-apk-listener` — with the service, to test that feature. Install it over USB, which Play
+  Protect does not block (or with Play Protect app scanning switched off in the Play Store):
 
 ```bash
 # phone: Settings → Developer options → USB debugging on; computer: Android platform-tools on PATH
@@ -65,6 +77,21 @@ adb install -r dijital-asistan-demo-<sha>-listener.apk
 
 The EAS `preview` and `demo` profiles set the same switch; `development` and `production` keep the service (store
 installs are never blocked).
+
+### First real-data test (staging, no EAS)
+
+1. Supabase: create a project, then `supabase link`, `supabase db push`, `supabase secrets set`, `supabase functions
+deploy` and the two `alter database` settings from section 1. Minimum secrets: `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `INTERNAL_FUNCTION_SECRET`, `TOKEN_ENCRYPTION_KEY`, `GOOGLE_OAUTH_CLIENT_ID`,
+   `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `AI_PROVIDER` + `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY`).
+2. Supabase Auth: enable Email, put `{{ .Token }}` in the Magic Link template (above).
+3. Google Cloud: OAuth consent screen in **Testing** with your Gmail address as a test user (restricted Gmail scopes
+   work for test users without verification), enable the Gmail, Calendar and Tasks APIs, create the web client with
+   the two redirect URIs from docs/OAUTH_SETUP.md.
+4. GitHub: add `EXPO_PUBLIC_SUPABASE_URL` (variable) and `EXPO_PUBLIC_SUPABASE_ANON_KEY` (secret), run the workflow
+   with `data_mode = supabase`, install `dijital-asistan-supabase-apk-listener`.
+5. In the app: sign in with the e-mail code, connect Gmail from onboarding, let the 72-hour analysis run (it runs on the
+   server; the `initial-analysis-status` function reports progress), then check Today, Flow and the briefings.
 
 - Environment variables per profile live in EAS (`eas env`) or `apps/mobile/.env`: all `EXPO_PUBLIC_*` values plus
   `APP_ENV`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `APPLE_TEAM_ID`, `IOS_APP_GROUP`.
