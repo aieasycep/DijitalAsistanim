@@ -1,22 +1,18 @@
 name: Android APK (demo)
 
-# Builds a standalone Android APK in demo mode on a GitHub-hosted runner (no EAS account, no backend):
-# Expo prebuild → Gradle assembleRelease (debug keystore, arm64-v8a + armeabi-v7a).
-# Runs on demand (Actions → "Android APK (demo)" → Run workflow) or on any push whose commit message
-# contains "[apk]". The APK is attached to the run as the `dijital-asistan-demo-apk` artifact.
+# Builds standalone Android APKs in demo mode on GitHub-hosted runners (no EAS account, no backend):
+# Expo prebuild → Gradle assembleRelease (debug keystore, arm64-v8a + armeabi-v7a), two variants in parallel:
+#   sideload — without the Android NotificationListenerService (ANDROID_NOTIFICATION_LISTENER=0). Installs from
+#              a browser, WhatsApp or a file manager. Play Protect blocks sideloaded APKs that declare a
+#              notification listener, with no user override, so "Telefon Bildirimleri" is hidden in this one.
+#   listener — with the service, for `adb install` (exempt from that block), to test the feature.
+# Runs on demand (Actions → "Android APK (demo)" → Run workflow) or on any push whose commit message contains
+# "[apk]". Artifacts: `dijital-asistan-demo-apk` and `dijital-asistan-demo-apk-listener`.
 # Not a store build: the production profile stays on EAS with real signing (docs/DEPLOYMENT.md).
-# By default the Android NotificationListenerService is left out (ANDROID_NOTIFICATION_LISTENER=0):
-# Play Protect blocks sideloaded APKs that declare one, with no user override. Tick
-# `notification_listener` only for installs over `adb install`, which are exempt.
 
 on:
   workflow_dispatch:
     inputs:
-      notification_listener:
-        description: 'Include the NotificationListenerService (install over adb only; Play Protect blocks sideloading it).'
-        type: boolean
-        required: false
-        default: false
       demo_now:
         description: 'Pin the demo clock (ISO instant, e.g. 2026-09-05T06:41:00Z). Empty = device time.'
         required: false
@@ -39,14 +35,18 @@ env:
 
 jobs:
   apk:
-    name: Build demo APK
+    name: Build demo APK (${{ matrix.variant }})
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')
     runs-on: ubuntu-latest
     timeout-minutes: 75
-    # Job-level so that a push without [apk] (whose job is skipped) does not cancel a running build;
-    # the variant is part of the key so a listener build never cancels the sideload-friendly one.
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [sideload, listener]
+    # A newer build of the same variant on the same branch supersedes the running one. Runs whose job is
+    # skipped (no [apk] in the message) get a unique key so they never cancel a build in progress.
     concurrency:
-      group: apk-${{ github.ref }}-${{ github.event.inputs.notification_listener == 'true' && 'listener' || 'default' }}
+      group: apk-${{ github.ref }}-${{ matrix.variant }}-${{ (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')) && 'build' || github.run_id }}
       cancel-in-progress: true
     env:
       CI: '1'
@@ -56,7 +56,8 @@ jobs:
       EXPO_PUBLIC_DATA_MODE: demo
       EXPO_PUBLIC_DEMO_NOW: ${{ github.event.inputs.demo_now }}
       EXPO_PUBLIC_DEMO_TIMEZONE: ${{ github.event.inputs.demo_now != '' && github.event.inputs.demo_timezone || '' }}
-      ANDROID_NOTIFICATION_LISTENER: ${{ github.event.inputs.notification_listener == 'true' && '1' || '0' }}
+      VARIANT: ${{ matrix.variant }}
+      ANDROID_NOTIFICATION_LISTENER: ${{ matrix.variant == 'listener' && '1' || '0' }}
       # No Sentry credentials on the runner: sentry.gradle skips the source-map upload.
       SENTRY_DISABLE_AUTO_UPLOAD: 'true'
     steps:
@@ -98,34 +99,36 @@ jobs:
         run: |
           set -euo pipefail
           suffix=""
-          listener="not included: installs from a browser, WhatsApp or a file manager; the Telefon Bildirimleri feature is hidden in this build"
-          if [ "$ANDROID_NOTIFICATION_LISTENER" = "1" ]; then
+          listener="not included: install from a browser, WhatsApp or a file manager; the Telefon Bildirimleri feature is hidden in this build"
+          if [ "$VARIANT" = "listener" ]; then
             suffix="-listener"
             listener="included: install with \`adb install\` (Play Protect blocks sideloading it)"
           fi
+          artifact="dijital-asistan-demo-apk${suffix}"
           out="dist/dijital-asistan-demo-${GITHUB_SHA::7}${suffix}.apk"
           mkdir -p dist
           cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "$out"
           size=$(du -h "$out" | cut -f1)
           sha=$(sha256sum "$out" | cut -d' ' -f1)
           echo "file=$out" >> "$GITHUB_OUTPUT"
+          echo "artifact=$artifact" >> "$GITHUB_OUTPUT"
           {
-            echo "## Demo APK"
+            echo "## Demo APK ($VARIANT)"
             echo
             echo "| File | Size | SHA-256 |"
             echo "| --- | --- | --- |"
             echo "| \`$(basename "$out")\` | $size | \`$sha\` |"
             echo
-            echo "Download the **dijital-asistan-demo-apk** artifact from this run, unzip it and install the APK"
-            echo "on the phone (allow installs from unknown sources). Demo mode: sign in with any e-mail and any"
-            echo "6-digit code; no backend is contacted."
+            echo "Download the **$artifact** artifact from this run, unzip it and install the APK on the phone"
+            echo "(allow installs from unknown sources). Demo mode: sign in with any e-mail and any 6-digit code;"
+            echo "no backend is contacted."
             echo
             echo "Notification listener service: $listener."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dijital-asistan-demo-apk
+          name: ${{ steps.collect.outputs.artifact }}
           path: ${{ steps.collect.outputs.file }}
           retention-days: 14
           if-no-files-found: error

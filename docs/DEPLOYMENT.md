@@ -44,18 +44,18 @@ eas submit --platform ios / android
 
 ### Demo APK without EAS (GitHub Actions)
 
-`.github/workflows/android-apk.yml` builds a standalone demo APK on a GitHub-hosted runner: `expo prebuild` →
-Gradle `assembleRelease` (`APP_ENV=preview`, `EXPO_PUBLIC_DATA_MODE=demo`, arm64-v8a + armeabi-v7a, debug keystore).
-Start it from **Actions → Android APK (demo) → Run workflow** (optional `demo_now` pins the demo clock) or push a
-commit whose message contains `[apk]`. The APK is attached to the run as the `dijital-asistan-demo-apk` artifact
-(kept 14 days); install it with "unknown sources" allowed. It is an internal build only — store builds keep using
-the EAS `production` profile and real signing.
+`.github/workflows/android-apk.yml` builds standalone demo APKs on GitHub-hosted runners: `expo prebuild` → Gradle
+`assembleRelease` (`APP_ENV=preview`, `EXPO_PUBLIC_DATA_MODE=demo`, arm64-v8a + armeabi-v7a, debug keystore). Start
+it from **Actions → Android APK (demo) → Run workflow** (optional `demo_now` pins the demo clock) or push a commit
+whose message contains `[apk]`. Two artifacts are attached to the run (kept 14 days); they are internal builds only —
+store builds keep using the EAS `production` profile and real signing.
 
-The APK is built with `ANDROID_NOTIFICATION_LISTENER=0` by default: Google Play Protect blocks APKs installed from a
-browser, a messaging app or a file manager when they declare a `NotificationListenerService`, and the dialog has no
-"install anyway". Without the service the "Telefon Bildirimleri" feature is hidden (as on iOS). To test that
-feature on a phone, run the workflow with `notification_listener` ticked (artifact `…-listener.apk`) and install it
-over USB, which Play Protect does not block:
+- `dijital-asistan-demo-apk` — built with `ANDROID_NOTIFICATION_LISTENER=0`. Google Play Protect blocks APKs
+  installed from a browser, a messaging app or a file manager when they declare a `NotificationListenerService`, and
+  the dialog has no "install anyway"; this variant leaves the service out, so it installs from anywhere with "unknown
+  sources" allowed. The "Telefon Bildirimleri" feature is hidden in it (as on iOS).
+- `dijital-asistan-demo-apk-listener` — with the service, to test that feature. Install it over USB, which Play
+  Protect does not block:
 
 ```bash
 # phone: Settings → Developer options → USB debugging on; computer: Android platform-tools on PATH
