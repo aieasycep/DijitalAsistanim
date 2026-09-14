@@ -53,9 +53,18 @@ the EAS `production` profile and real signing.
 
 The APK is built with `ANDROID_NOTIFICATION_LISTENER=0` by default: Google Play Protect blocks APKs installed from a
 browser, a messaging app or a file manager when they declare a `NotificationListenerService`, and the dialog has no
-"install anyway". Without the service the "Telefon Bildirimleri" feature is hidden (as on iOS). Tick the
-`notification_listener` input only for installs over `adb install`, which Play Protect does not block. The EAS
-`preview` and `demo` profiles set the same switch; `development` and `production` keep the service.
+"install anyway". Without the service the "Telefon Bildirimleri" feature is hidden (as on iOS). To test that
+feature on a phone, run the workflow with `notification_listener` ticked (artifact `…-listener.apk`) and install it
+over USB, which Play Protect does not block:
+
+```bash
+# phone: Settings → Developer options → USB debugging on; computer: Android platform-tools on PATH
+adb devices
+adb install -r dijital-asistan-demo-<sha>-listener.apk
+```
+
+The EAS `preview` and `demo` profiles set the same switch; `development` and `production` keep the service (store
+installs are never blocked).
 
 - Environment variables per profile live in EAS (`eas env`) or `apps/mobile/.env`: all `EXPO_PUBLIC_*` values plus
   `APP_ENV`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `APPLE_TEAM_ID`, `IOS_APP_GROUP`.

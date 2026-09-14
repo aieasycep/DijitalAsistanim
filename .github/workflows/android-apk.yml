@@ -43,9 +43,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')
     runs-on: ubuntu-latest
     timeout-minutes: 75
-    # Job-level so that a push without [apk] (whose job is skipped) does not cancel a running build.
+    # Job-level so that a push without [apk] (whose job is skipped) does not cancel a running build;
+    # the variant is part of the key so a listener build never cancels the sideload-friendly one.
     concurrency:
-      group: apk-${{ github.ref }}
+      group: apk-${{ github.ref }}-${{ github.event.inputs.notification_listener == 'true' && 'listener' || 'default' }}
       cancel-in-progress: true
     env:
       CI: '1'
