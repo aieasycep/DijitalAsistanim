@@ -5,7 +5,6 @@
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { CalendarEvent, Commitment, FreeBlock, PlanDay, TaskItem } from '@da/domain';
 import { formatDuration, formatTime } from '@da/i18n';
@@ -18,13 +17,11 @@ import {
   ListRow,
   Text,
   useTheme,
-  useToast,
 } from '@da/ui';
-import { useDataSource } from '@/hooks/useDataSource';
 import { useEntitlement } from '@/hooks/useEntitlement';
-import { describeError } from '@/lib/errors';
 import { useFormatCtx } from '../flow/useFormatCtx';
 import { minutesBetween } from './dates';
+import { useCompleteTask } from './usePlanActions';
 
 type Row =
   | { kind: 'event'; at: string; event: CalendarEvent }
@@ -43,25 +40,10 @@ export function PlanTimeline({ day, compact = false }: PlanTimelineProps) {
   const theme = useTheme();
   const router = useRouter();
   const ctx = useFormatCtx();
-  const ds = useDataSource();
-  const toast = useToast();
-  const queryClient = useQueryClient();
   const { gate } = useEntitlement();
   const now = (ctx.now ?? new Date()).getTime();
-
-  const completeTask = useMutation({
-    mutationFn: (input: { id: string; completed: boolean }) =>
-      ds.plan.completeTask(input.id, input.completed),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['plan'] }),
-        queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-        queryClient.invalidateQueries({ queryKey: ['today'] }),
-      ]);
-    },
-    onError: (e) =>
-      toast.show({ message: describeError(e, t).title, icon: 'conflict', iconTone: 'critical' }),
-  });
+  // Optimistic + offline-queued (see usePlanActions).
+  const completeTask = useCompleteTask();
 
   const conflictEventIds = useMemo(
     () => new Set(day.conflicts.flatMap((c) => [c.eventA.id, c.eventB.id])),

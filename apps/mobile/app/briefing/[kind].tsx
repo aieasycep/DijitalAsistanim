@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCloseDay, type CloseDayInput } from '@/features/today/useCloseDay';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -134,28 +135,26 @@ export default function BriefingScreen() {
     }
   }, [briefing, ds]);
 
-  const closeDay = useMutation({
-    mutationFn: (input: { briefingId: string; carryOverInsightIds: string[] }) =>
-      ds.briefings.closeDay(input),
-    onSuccess: async (closed) => {
-      queryClient.setQueryData(queryKey, closed);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['today'] }),
-        queryClient.invalidateQueries({ queryKey: ['briefing'] }),
-      ]);
-      carrySheet.close();
-      toast.show({
-        message: t('briefing.readyForTomorrowDone', {
-          time: preferences?.briefing.morningTime ?? '08:00',
-        }),
-        icon: 'bedtime',
-        iconTone: 'success',
-      });
-      router.back();
-    },
-    onError: (e) =>
-      toast.show({ message: describeError(e, t).title, icon: 'warning', iconTone: 'critical' }),
-  });
+  // "Yarına Hazırım" goes through the offline queue; the hook owns cache updates and the queued toast.
+  const closeDay = useCloseDay(queryKey);
+  const finishDay = useCallback(
+    (input: CloseDayInput) =>
+      closeDay.mutate(input, {
+        onSuccess: ({ queued }) => {
+          carrySheet.close();
+          if (!queued)
+            toast.show({
+              message: t('briefing.readyForTomorrowDone', {
+                time: preferences?.briefing.morningTime ?? '08:00',
+              }),
+              icon: 'bedtime',
+              iconTone: 'success',
+            });
+          router.back();
+        },
+      }),
+    [closeDay, carrySheet, toast, t, preferences, router],
+  );
 
   const carriedItems = (briefing?.items ?? []).filter(
     (i) => i.section === 'carried_over' && i.insightId,
@@ -165,12 +164,12 @@ export default function BriefingScreen() {
   const openCarrySheet = useCallback(() => {
     if (!briefing) return;
     if (carriedItems.length === 0) {
-      closeDay.mutate({ briefingId: briefing.id, carryOverInsightIds: [] });
+      finishDay({ briefingId: briefing.id, carryOverInsightIds: [] });
       return;
     }
     setCarryIds(new Set(carriedItems.map((i) => i.insightId as string)));
     carrySheet.open();
-  }, [briefing, carriedItems, closeDay, carrySheet]);
+  }, [briefing, carriedItems, finishDay, carrySheet]);
 
   const toggleCarry = useCallback((insightId: string) => {
     setCarryIds((current) => {
@@ -498,7 +497,7 @@ export default function BriefingScreen() {
               disabled={offline}
               onPress={() =>
                 briefing &&
-                closeDay.mutate({
+                finishDay({
                   briefingId: briefing.id,
                   carryOverInsightIds: [...selectedCarry],
                 })
@@ -511,7 +510,7 @@ export default function BriefingScreen() {
               size="ghost"
               disabled={closeDay.isPending || offline}
               onPress={() =>
-                briefing && closeDay.mutate({ briefingId: briefing.id, carryOverInsightIds: [] })
+                briefing && finishDay({ briefingId: briefing.id, carryOverInsightIds: [] })
               }
               style={styles.center}
               testID="briefing-carry-none"

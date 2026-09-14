@@ -199,6 +199,23 @@ export function idempotencyKeyFor(mutation: OfflineMutation): string {
   }
 }
 
+/**
+ * What replaces an older entry with the same key. Preference patches accumulate (a theme toggle followed by
+ * a haptics toggle offline must apply both); every other kind is a status set where the newest intent wins.
+ */
+function mergeMutation(existing: OfflineMutation, incoming: OfflineMutation): OfflineMutation {
+  if (existing.kind !== 'preferences_update' || incoming.kind !== 'preferences_update')
+    return incoming;
+  const briefing =
+    existing.patch.briefing && incoming.patch.briefing
+      ? { ...existing.patch.briefing, ...incoming.patch.briefing }
+      : (incoming.patch.briefing ?? existing.patch.briefing);
+  return {
+    kind: 'preferences_update',
+    patch: { ...existing.patch, ...incoming.patch, ...(briefing ? { briefing } : {}) },
+  };
+}
+
 /** Queues a mutation for replay. Same idempotency key → the newer mutation replaces the older entry in place. */
 export function enqueue(
   mutation: OfflineMutation,
@@ -213,7 +230,7 @@ export function enqueue(
     const replaced: OfflineQueueEntry = {
       id: existing?.id ?? nextId(),
       idempotencyKey,
-      mutation,
+      mutation: existing ? mergeMutation(existing.mutation, mutation) : mutation,
       createdAt,
       attempts: 0,
       lastError: null,

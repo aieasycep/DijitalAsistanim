@@ -24,27 +24,21 @@ export function InsightMenuSheet({ insight, onClose }: InsightMenuSheetProps) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const { gate } = useEntitlement();
-  const { dismiss } = useInsightActions();
+  const { dismiss, sendFeedback } = useInsightActions();
   const { openSource } = useOpenSource();
 
-  const feedback = useMutation({
-    mutationFn: (input: { kind: AiFeedbackKind; target: Insight }) =>
-      ds.feed.sendFeedback({
-        kind: input.kind,
-        entityType: input.target.entityType,
-        entityId: input.target.entityId,
-        contactId: input.target.source.personId ?? null,
-      }),
-    onSuccess: (_, input) => {
-      toast.show({
-        message: input.kind === 'show_more' ? t('flow.learnedShowMore') : t('flow.learnedStop'),
-        icon: 'learning',
-        iconTone: 'primary',
-      });
+  // Ranking feedback goes through the offline queue (the hook invalidates feeds and reports queued/errors).
+  const feedback = {
+    mutate: async (input: { kind: AiFeedbackKind; target: Insight }) => {
+      const outcome = await sendFeedback(input.target, input.kind);
+      if (outcome === 'sent')
+        toast.show({
+          message: input.kind === 'show_more' ? t('flow.learnedShowMore') : t('flow.learnedStop'),
+          icon: 'learning',
+          iconTone: 'primary',
+        });
     },
-    onError: (e) =>
-      toast.show({ message: describeError(e, t).title, icon: 'conflict', iconTone: 'critical' }),
-  });
+  };
 
   const makeVip = useMutation({
     mutationFn: async (target: Insight) => {

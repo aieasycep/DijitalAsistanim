@@ -6,6 +6,7 @@ import type { UserPreferences } from '@da/domain';
 import { useToast } from '@da/ui';
 import { useDataSource } from '@/hooks/useDataSource';
 import { describeError } from '@/lib/errors';
+import { queuedToast, runOrQueue } from '@/lib/offlineMutation';
 import { CacheKeys, writeCache } from '@/lib/storage';
 import { useSessionStore } from '@/store/session';
 
@@ -16,6 +17,12 @@ export function applyPreferencesPatch(
   patch: PreferencesPatch,
 ): UserPreferences {
   return { ...prev, ...patch, briefing: { ...prev.briefing, ...(patch.briefing ?? {}) } };
+}
+
+interface SaveResult {
+  preferences: UserPreferences | null;
+  /** The patch waits in the offline queue; `preferences` is the optimistic local copy. */
+  queued: boolean;
 }
 
 export interface UsePreferencesResult {
@@ -34,6 +41,7 @@ export interface UsePreferencesResult {
 /**
  * Single source of truth for `UserPreferences` on the settings screens: reads through TanStack Query,
  * mirrors into the session store (so ThemeProvider / i18n react instantly) and the encrypted cache.
+ * Offline, the patch is queued (`runOrQueue`) and the optimistic copy stays until the queue replays.
  */
 export function usePreferences(): UsePreferencesResult {
   const ds = useDataSource();
@@ -61,16 +69,26 @@ export function usePreferences(): UsePreferencesResult {
   });
 
   const mutation = useMutation({
-    mutationFn: (patch: PreferencesPatch) => ds.profile.updatePreferences(patch),
+    mutationFn: async (patch: PreferencesPatch): Promise<SaveResult> => {
+      const outcome = await runOrQueue(ds, { kind: 'preferences_update', patch }, () =>
+        ds.profile.updatePreferences(patch),
+      );
+      if (!outcome.queued) return { preferences: outcome.value, queued: false };
+      const base = useSessionStore.getState().preferences;
+      return { preferences: base ? applyPreferencesPatch(base, patch) : null, queued: true };
+    },
     onMutate: (patch) => {
       const prev = useSessionStore.getState().preferences;
       if (prev) setPreferences(applyPreferencesPatch(prev, patch));
       return { prev };
     },
-    onSuccess: (updated) => {
-      setPreferences(updated);
-      writeCache(CacheKeys.preferences, updated);
-      qc.setQueryData(qk.preferences, updated);
+    onSuccess: ({ preferences: updated, queued }) => {
+      if (updated) {
+        setPreferences(updated);
+        writeCache(CacheKeys.preferences, updated);
+        qc.setQueryData(qk.preferences, updated);
+      }
+      if (queued) toast.show(queuedToast(t));
     },
     onError: (e, _patch, ctx) => {
       if (ctx?.prev) setPreferences(ctx.prev);
@@ -80,7 +98,11 @@ export function usePreferences(): UsePreferencesResult {
   const { mutateAsync } = mutation;
 
   const update = useCallback(
-    (patch: PreferencesPatch) => mutateAsync(patch).catch(() => undefined),
+    (patch: PreferencesPatch) =>
+      mutateAsync(patch).then(
+        (result) => result.preferences ?? undefined,
+        () => undefined,
+      ),
     [mutateAsync],
   );
 

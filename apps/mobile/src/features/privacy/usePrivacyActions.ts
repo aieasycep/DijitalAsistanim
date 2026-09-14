@@ -1,21 +1,19 @@
 /**
  * Destructive privacy actions and the audit trail:
  *  - deleteHistory → `ds.privacy.deleteHistory`, then every cached query is invalidated;
- *  - deleteAccount → `ds.privacy.deleteAccount({ confirmation })`, then local state is wiped
- *    (`ds.clearLocalState()`, query cache, analytics) and the session store reset so the root
- *    navigator lands on Welcome;
+ *  - deleteAccount → this device's push token is detached first (it needs the live session), then
+ *    `ds.privacy.deleteAccount({ confirmation })`, then the shared sign-out hygiene (`clearLocalSession`:
+ *    store, query cache, offline queue, notifications, store identity, encrypted cache) so the root
+ *    navigator lands on Welcome with nothing of the deleted account left on the device;
  *  - audit logs → `ds.privacy.listAuditLogs` (never contains message bodies).
  */
-import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { qk } from '@da/api-client';
 import { useToast } from '@da/ui';
 import { useDataSource } from '@/hooks/useDataSource';
-import { resetAnalytics } from '@/lib/analytics';
 import { describeError } from '@/lib/errors';
-import { captureError } from '@/lib/monitoring';
-import { useSessionStore } from '@/store/session';
+import { clearLocalSession, detachDeviceFromAccount } from '@/lib/sessionHygiene';
 
 export type DeleteConfirmation = 'SİL' | 'DELETE';
 
@@ -60,22 +58,15 @@ export function useDeleteAccount() {
   const toast = useToast();
   const { t } = useTranslation();
 
-  const wipeLocal = useCallback(async () => {
-    try {
-      await ds.clearLocalState();
-    } catch (e) {
-      captureError(e, { where: 'useDeleteAccount.clearLocalState' });
-    }
-    queryClient.clear();
-    resetAnalytics();
-    useSessionStore.getState().reset();
-  }, [ds, queryClient]);
-
   return useMutation({
-    mutationFn: (confirmation: DeleteConfirmation) => ds.privacy.deleteAccount({ confirmation }),
+    mutationFn: async (confirmation: DeleteConfirmation) => {
+      // The push token can only be detached while the account (and its session) still exists.
+      await detachDeviceFromAccount(ds);
+      await ds.privacy.deleteAccount({ confirmation });
+    },
     onSuccess: async () => {
       toast.show({ message: t('settings.privacyScreen.deleteAccountDone'), icon: 'check' });
-      await wipeLocal();
+      await clearLocalSession(ds, queryClient);
     },
     onError: (e) =>
       toast.show({ message: describeError(e, t).title, icon: 'conflict', iconTone: 'critical' }),

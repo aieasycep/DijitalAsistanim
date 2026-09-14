@@ -8,6 +8,7 @@ import {
   seedSession,
 } from '@/features/settings/testing/settingsTestUtils';
 import * as i18nLib from '@/lib/i18n';
+import { clear as clearOfflineQueue, list, resetOfflineQueueForTests } from '@/lib/offlineQueue';
 import { useSessionStore } from '@/store/session';
 import { useUiStore } from '@/store/ui';
 import LanguageScreen from '../../../../app/settings/language';
@@ -67,6 +68,8 @@ jest.mock('@/hooks/useDataSource', () => ({ useDataSource: () => mockDs }));
 beforeEach(async () => {
   jest.clearAllMocks();
   useUiStore.setState({ offline: false });
+  resetOfflineQueueForTests(() => new Date('2026-09-05T06:41:00Z'));
+  clearOfflineQueue();
   mockDs = makeSettingsDataSource();
   await seedSession(mockDs);
 });
@@ -94,14 +97,31 @@ describe('Language screen', () => {
     expect(jest.mocked(i18nLib.changeLocale)).not.toHaveBeenCalled();
   });
 
-  it('restores the previous language when saving fails', async () => {
+  it('offline: queues the change, keeps the new language and says it will be sent later', async () => {
     mockDs.profile.updatePreferences = async () => {
       throw { code: 'offline', message: 'offline' };
     };
     renderSettings(<LanguageScreen />);
     fireEvent.press(await screen.findByTestId('language-en'));
-    expect(await screen.findByText('Çevrimdışısın.')).toBeTruthy();
+
+    expect(await screen.findByText('Bağlantı gelince gönderilecek.')).toBeTruthy();
+    await waitFor(() => expect(useSessionStore.getState().preferences?.locale).toBe('en'));
+    expect(jest.mocked(i18nLib.changeLocale)).toHaveBeenLastCalledWith('en');
+    expect(list()).toHaveLength(1);
+    expect(list()[0]?.mutation).toEqual({ kind: 'preferences_update', patch: { locale: 'en' } });
+    expect(screen.queryByText('Çevrimdışısın.')).toBeNull();
+  });
+
+  it('restores the previous language when the server rejects the change', async () => {
+    mockDs.profile.updatePreferences = async () => {
+      throw { code: 'internal', message: 'boom' };
+    };
+    renderSettings(<LanguageScreen />);
+    fireEvent.press(await screen.findByTestId('language-en'));
+
+    expect(await screen.findByText('Bir şeyler ters gitti.')).toBeTruthy();
     await waitFor(() => expect(jest.mocked(i18nLib.changeLocale)).toHaveBeenLastCalledWith('tr'));
     expect(useSessionStore.getState().preferences?.locale).toBe('tr');
+    expect(list()).toHaveLength(0);
   });
 });

@@ -31,7 +31,7 @@ export function InsightMenuSheet({
   const queryClient = useQueryClient();
   const toast = useToast();
   const { t } = useTranslation();
-  const { dismiss } = useInsightActions();
+  const { dismiss, sendFeedback } = useInsightActions();
   const { openSource } = useOpenSource();
   const [showReason, setShowReason] = useState(false);
 
@@ -48,28 +48,21 @@ export function InsightMenuSheet({
     ]);
   }, [queryClient]);
 
-  const feedback = useMutation({
-    mutationFn: (input: { kind: AiFeedbackKind; insight: Insight }) =>
-      ds.feed.sendFeedback({
-        kind: input.kind,
-        entityType: 'insight',
-        entityId: input.insight.id,
-        contactId: input.insight.source.personId ?? null,
-      }),
-    onSuccess: async (_result, variables) => {
-      await invalidateFeeds();
-      toast.show({
-        message:
-          variables.kind === 'stop_following'
-            ? t('today.menu.stopFollowingToast')
-            : t('today.menu.showMoreToast'),
-        icon: 'learning',
-        iconTone: 'primary',
-      });
+  // Ranking feedback goes through the offline queue (the hook invalidates feeds and reports queued/errors).
+  const feedback = {
+    mutate: async (input: { kind: AiFeedbackKind; insight: Insight }) => {
+      const outcome = await sendFeedback(input.insight, input.kind);
+      if (outcome === 'sent')
+        toast.show({
+          message:
+            input.kind === 'stop_following'
+              ? t('today.menu.stopFollowingToast')
+              : t('today.menu.showMoreToast'),
+          icon: 'learning',
+          iconTone: 'primary',
+        });
     },
-    onError: (e) =>
-      toast.show({ message: describeError(e, t).title, icon: 'warning', iconTone: 'critical' }),
-  });
+  };
 
   const makeVip = useMutation({
     mutationFn: (target: Insight) =>

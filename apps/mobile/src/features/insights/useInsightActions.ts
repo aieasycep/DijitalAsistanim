@@ -2,25 +2,58 @@
  * Maps an InsightAction (the buttons on a priority card) to what actually happens: navigation,
  * an approval request, a reminder sheet, an internal state change or a hand-off to another app.
  * Every external side effect (mail, calendar, task) goes through an approval — never directly.
+ *
+ * Status writes (complete / dismiss / snooze / feedback) run through `runOrQueue`: offline they are
+ * persisted in the write queue, the card leaves the feed immediately and the server catches up on reconnect.
  */
 import { useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueryClient,
+  type InfiniteData,
+  type QueryClient,
+} from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import type { AiFeedbackKind, Insight, InsightAction } from '@da/domain';
+import type { AiFeedbackKind, FlowResponse, Insight, InsightAction, TodayFeed } from '@da/domain';
 import { haptic, useThemeContext, useToast } from '@da/ui';
 import { useDataSource } from '@/hooks/useDataSource';
 import { useEntitlement } from '@/hooks/useEntitlement';
 import { track } from '@/lib/analytics';
 import { describeError } from '@/lib/errors';
+import { queuedToast, runOrQueue } from '@/lib/offlineMutation';
 import { openExternal } from '@/lib/openExternal';
 import { approvalIdempotencyKey, useApprovalFlow } from '../approvals/useApprovalFlow';
+import { useFormatCtx } from '../flow/useFormatCtx';
+import { isoAtLocal } from '../plan/dates';
 import { useReminderSheet } from '../reminders/useReminderSheet';
 import { useOpenSource } from '../source/openSource';
+
+export type FeedbackOutcome = 'sent' | 'queued' | 'failed';
 
 function payloadString(payload: Record<string, unknown> | undefined, key: string): string | null {
   const v = payload?.[key];
   return typeof v === 'string' && v.length > 0 ? v : null;
+}
+
+/** Offline: a resolved / snoozed insight leaves Today and Flow right away; the next fetch is authoritative. */
+function removeInsightFromFeeds(queryClient: QueryClient, id: string): void {
+  const without = (items: Insight[]) => items.filter((i) => i.id !== id);
+  queryClient.setQueriesData<TodayFeed>({ queryKey: ['today'] }, (prev) =>
+    prev
+      ? {
+          ...prev,
+          priorities: without(prev.priorities),
+          meetings: without(prev.meetings),
+          deadlines: without(prev.deadlines),
+        }
+      : prev,
+  );
+  queryClient.setQueriesData<InfiniteData<FlowResponse>>({ queryKey: ['flow'] }, (prev) =>
+    prev && Array.isArray(prev.pages)
+      ? { ...prev, pages: prev.pages.map((page) => ({ ...page, items: without(page.items) })) }
+      : prev,
+  );
 }
 
 export function useInsightActions() {
@@ -29,6 +62,7 @@ export function useInsightActions() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const { t } = useTranslation();
+  const ctx = useFormatCtx();
   const { hapticsEnabled } = useThemeContext();
   const { gate } = useEntitlement();
   const { requestApproval } = useApprovalFlow();
@@ -43,13 +77,34 @@ export function useInsightActions() {
     ]);
   }, [queryClient]);
 
+  const showError = useCallback(
+    (e: unknown) =>
+      toast.show({ message: describeError(e, t).title, icon: 'warning', iconTone: 'critical' }),
+    [toast, t],
+  );
+
   const resolve = useMutation({
     mutationFn: (input: {
       id: string;
       status: 'completed' | 'dismissed' | 'active';
       feedback?: AiFeedbackKind;
-    }) => ds.feed.resolveInsight(input.id, input.status, input.feedback),
-    onSuccess: async (_insight, variables) => {
+    }) =>
+      runOrQueue(
+        ds,
+        {
+          kind: 'insight_resolve',
+          insightId: input.id,
+          status: input.status,
+          feedback: input.feedback,
+        },
+        () => ds.feed.resolveInsight(input.id, input.status, input.feedback),
+      ),
+    onSuccess: async (outcome, variables) => {
+      if (outcome.queued) {
+        if (variables.status !== 'active') removeInsightFromFeeds(queryClient, variables.id);
+        toast.show(queuedToast(t));
+        return;
+      }
       await invalidateFeeds();
       if (variables.status === 'completed')
         toast.show({ message: t('today.completedToast'), icon: 'check' });
@@ -60,14 +115,48 @@ export function useInsightActions() {
           iconTone: 'primary',
         });
     },
-    onError: (e) =>
-      toast.show({ message: describeError(e, t).title, icon: 'warning', iconTone: 'critical' }),
+    onError: showError,
   });
 
   const snooze = useMutation({
     mutationFn: (input: { id: string; until: string }) =>
-      ds.feed.snoozeInsight(input.id, input.until),
-    onSuccess: invalidateFeeds,
+      runOrQueue(ds, { kind: 'insight_snooze', insightId: input.id, until: input.until }, () =>
+        ds.feed.snoozeInsight(input.id, input.until),
+      ),
+    onSuccess: async (outcome, variables) => {
+      if (outcome.queued) removeInsightFromFeeds(queryClient, variables.id);
+      else await invalidateFeeds();
+      toast.show(
+        outcome.queued ? queuedToast(t) : { message: t('today.carriedOver'), icon: 'schedule' },
+      );
+    },
+    onError: showError,
+  });
+
+  const feedback = useMutation({
+    mutationFn: (input: { insight: Insight; kind: AiFeedbackKind }) =>
+      runOrQueue(
+        ds,
+        {
+          kind: 'feedback',
+          feedbackKind: input.kind,
+          entityType: 'insight',
+          entityId: input.insight.id,
+          contactId: input.insight.source.personId ?? null,
+        },
+        () =>
+          ds.feed.sendFeedback({
+            kind: input.kind,
+            entityType: 'insight',
+            entityId: input.insight.id,
+            contactId: input.insight.source.personId ?? null,
+          }),
+      ),
+    onSuccess: async (outcome) => {
+      if (outcome.queued) toast.show(queuedToast(t));
+      else await invalidateFeeds();
+    },
+    onError: showError,
   });
 
   const complete = useCallback(
@@ -86,15 +175,25 @@ export function useInsightActions() {
     [resolve, hapticsEnabled],
   );
 
+  /** Tomorrow 09:00 in the user's timezone (not the device clock); the toast follows the server's answer. */
   const snoozeUntilTomorrow = useCallback(
     (insight: Insight) => {
-      const d = new Date();
-      d.setDate(d.getDate() + 1);
-      d.setHours(9, 0, 0, 0);
-      snooze.mutate({ id: insight.id, until: d.toISOString() });
-      toast.show({ message: t('today.carriedOver'), icon: 'schedule' });
+      snooze.mutate({ id: insight.id, until: isoAtLocal(ctx, 1, 9) });
     },
-    [snooze, toast, t],
+    [snooze, ctx],
+  );
+
+  /** Ranking feedback ("Bunun gibi daha fazla" / "Bunu takip etme"); callers add their own success copy. */
+  const sendFeedback = useCallback(
+    async (insight: Insight, kind: AiFeedbackKind): Promise<FeedbackOutcome> => {
+      try {
+        const outcome = await feedback.mutateAsync({ insight, kind });
+        return outcome.queued ? 'queued' : 'sent';
+      } catch {
+        return 'failed';
+      }
+    },
+    [feedback],
   );
 
   /** Primary dispatcher for card buttons. Returns true when something happened. */
@@ -246,5 +345,12 @@ export function useInsightActions() {
     ],
   );
 
-  return { runAction, complete, dismiss, snoozeUntilTomorrow, isResolving: resolve.isPending };
+  return {
+    runAction,
+    complete,
+    dismiss,
+    snoozeUntilTomorrow,
+    sendFeedback,
+    isResolving: resolve.isPending,
+  };
 }

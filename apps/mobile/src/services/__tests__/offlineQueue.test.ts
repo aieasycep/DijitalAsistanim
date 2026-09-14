@@ -145,6 +145,36 @@ describe('enqueue', () => {
     resetOfflineQueueForTests(() => new Date(Date.UTC(2026, 8, 20)));
     expect(size()).toBe(0);
   });
+
+  it('accumulates preference patches instead of dropping the earlier offline toggle', () => {
+    enqueue({ kind: 'preferences_update', patch: { theme: 'dark', hapticsEnabled: false } });
+    enqueue({
+      kind: 'preferences_update',
+      patch: { hapticsEnabled: true, briefing: { morningTime: '07:00' } as never },
+    });
+    const merged = enqueue({
+      kind: 'preferences_update',
+      patch: { briefing: { eveningTime: '20:00' } as never },
+    });
+    expect(size()).toBe(1);
+    expect(merged.mutation).toEqual({
+      kind: 'preferences_update',
+      patch: {
+        theme: 'dark',
+        hapticsEnabled: true,
+        briefing: { morningTime: '07:00', eveningTime: '20:00' },
+      },
+    });
+    // A different kind sharing nothing with preferences is untouched.
+    enqueue({ kind: 'insight_resolve', insightId: 'i-1', status: 'completed' });
+    const snoozed = enqueue({
+      kind: 'insight_snooze',
+      insightId: 'i-1',
+      until: '2026-09-06T06:00:00.000Z',
+    });
+    expect(snoozed.mutation.kind).toBe('insight_snooze');
+    expect(size()).toBe(2);
+  });
 });
 
 describe('flush', () => {

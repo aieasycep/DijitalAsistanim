@@ -2,6 +2,7 @@
  * User preferences (`UserPreferences`) shared by the AI personalisation and privacy screens:
  * TanStack cache seeded from the session store, optimistic `updatePreferences` with rollback, and the
  * session store / encrypted cache kept in sync so the rest of the app (theme, briefing…) sees the change.
+ * Offline, the patch is queued (`runOrQueue`) and the optimistic copy stays until the queue replays.
  */
 import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,10 +12,17 @@ import type { UserPreferences } from '@da/domain';
 import { useToast } from '@da/ui';
 import { useDataSource } from '@/hooks/useDataSource';
 import { describeError } from '@/lib/errors';
+import { queuedToast, runOrQueue } from '@/lib/offlineMutation';
 import { CacheKeys, writeCache } from '@/lib/storage';
 import { useSessionStore } from '@/store/session';
 
 export type PreferencePatch = Partial<Omit<UserPreferences, 'userId' | 'createdAt' | 'updatedAt'>>;
+
+interface SaveResult {
+  preferences: UserPreferences | null;
+  /** The patch waits in the offline queue; `preferences` is the optimistic local copy. */
+  queued: boolean;
+}
 
 export function usePreferences() {
   const ds = useDataSource();
@@ -32,7 +40,16 @@ export function usePreferences() {
   });
 
   const mutation = useMutation({
-    mutationFn: (patch: PreferencePatch) => ds.profile.updatePreferences(patch),
+    mutationFn: async (patch: PreferencePatch): Promise<SaveResult> => {
+      const outcome = await runOrQueue(ds, { kind: 'preferences_update', patch }, () =>
+        ds.profile.updatePreferences(patch),
+      );
+      if (!outcome.queued) return { preferences: outcome.value, queued: false };
+      const base =
+        queryClient.getQueryData<UserPreferences>(qk.preferences) ??
+        useSessionStore.getState().preferences;
+      return { preferences: base ? { ...base, ...patch } : null, queued: true };
+    },
     onMutate: async (patch) => {
       await queryClient.cancelQueries({ queryKey: qk.preferences });
       const previous = queryClient.getQueryData<UserPreferences>(qk.preferences);
@@ -44,14 +61,17 @@ export function usePreferences() {
       if (context?.previous) queryClient.setQueryData(qk.preferences, context.previous);
       toast.show({ message: describeError(e, t).title, icon: 'conflict', iconTone: 'critical' });
     },
-    onSuccess: (updated) => {
-      queryClient.setQueryData(qk.preferences, updated);
-      setPreferences(updated);
-      try {
-        writeCache(CacheKeys.preferences, updated);
-      } catch {
-        // The encrypted cache is best-effort; the server copy is authoritative.
+    onSuccess: ({ preferences: updated, queued }) => {
+      if (updated) {
+        queryClient.setQueryData(qk.preferences, updated);
+        setPreferences(updated);
+        try {
+          writeCache(CacheKeys.preferences, updated);
+        } catch {
+          // The encrypted cache is best-effort; the server copy is authoritative.
+        }
       }
+      if (queued) toast.show(queuedToast(t));
     },
   });
 
@@ -59,7 +79,7 @@ export function usePreferences() {
   const update = useCallback(
     async (patch: PreferencePatch): Promise<UserPreferences | null> => {
       try {
-        return await mutateAsync(patch);
+        return (await mutateAsync(patch)).preferences;
       } catch {
         return null;
       }

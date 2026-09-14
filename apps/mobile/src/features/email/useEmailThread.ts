@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { qk } from '@da/api-client';
 import type { ConnectedAccount, EmailDetailResponse, SourceRef } from '@da/domain';
 import { useDataSource } from '@/hooks/useDataSource';
+import { runOrQueue } from '@/lib/offlineMutation';
 
 export type MailProvider = 'gmail' | 'outlook';
 
@@ -29,7 +30,10 @@ export function threadSourceRef(detail: EmailDetailResponse, provider: MailProvi
   };
 }
 
-/** Thread detail + connected accounts (provider, calendar target) + mark-as-read on first open. */
+/**
+ * Thread detail + connected accounts (provider, calendar target) + mark-as-read on first open. Opening a
+ * cached thread offline still marks it read: the write is queued and replayed on reconnect.
+ */
 export function useEmailThread(threadId: string | undefined) {
   const ds = useDataSource();
   const queryClient = useQueryClient();
@@ -51,7 +55,10 @@ export function useEmailThread(threadId: string | undefined) {
   const provider = providerForAccount(account);
 
   const markRead = useMutation({
-    mutationFn: (id: string) => ds.email.markRead(id, true),
+    mutationFn: (id: string) =>
+      runOrQueue(ds, { kind: 'email_mark_read', threadId: id, isRead: true }, () =>
+        ds.email.markRead(id, true),
+      ),
     onSuccess: async (_, id) => {
       queryClient.setQueryData<EmailDetailResponse>(qk.thread(id), (prev) =>
         prev ? { ...prev, thread: { ...prev.thread, isRead: true } } : prev,

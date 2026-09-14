@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCompleteCommitment } from '@/features/plan/usePlanActions';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { qk } from '@da/api-client';
@@ -36,16 +37,14 @@ export default function CommitmentsScreen() {
   const onError = (e: unknown) =>
     toast.show({ message: describeError(e, t).title, icon: 'conflict', iconTone: 'critical' });
 
-  const complete = useMutation({
-    mutationFn: (c: Commitment) => ds.plan.completeCommitment(c.id),
-    onMutate: (c) => setBusyId(c.id),
-    onSettled: () => setBusyId(null),
-    onSuccess: async () => {
-      await invalidate();
-      toast.show({ message: t('commitments.completedToast'), icon: 'check' });
+  // "Tamamlandı" goes through the offline queue (hook owns invalidation, success/queued/error toasts).
+  const completeCommitment = useCompleteCommitment();
+  const complete = {
+    mutate: (c: Commitment) => {
+      setBusyId(c.id);
+      completeCommitment.mutate(c.id, { onSettled: () => setBusyId(null) });
     },
-    onError,
-  });
+  };
   const postpone = useMutation({
     mutationFn: (input: { c: Commitment; until: string }) =>
       ds.plan.postponeCommitment(input.c.id, input.until),
