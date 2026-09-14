@@ -1,6 +1,6 @@
 /**
- * VIP people (`ds.people.listVips/addVip/removeVip`): list, add from the device address book or by e-mail,
- * "her zaman bildir" toggle (optimistic, persisted through `addVip` on the same contact) and removal.
+ * VIP people (`ds.people.listVips/addVip/updateVip/removeVip`): list, add from the device address book or by
+ * e-mail, "her zaman bildir" toggle (optimistic, persisted through `updateVip` on the existing row) and removal.
  * The address book is never uploaded — only the contact the user picks reaches the backend.
  */
 import { useCallback, useMemo, useState } from 'react';
@@ -90,13 +90,7 @@ export function useVips() {
 
   const setNotify = useMutation({
     mutationFn: (input: { vip: VipPerson; notifyAlways: boolean }) =>
-      ds.people.addVip({
-        contactId: input.vip.contactId ?? null,
-        displayName: input.vip.displayName,
-        email: input.vip.email ?? null,
-        relation: input.vip.relation ?? null,
-        notifyAlways: input.notifyAlways,
-      }),
+      ds.people.updateVip(input.vip.id, { notifyAlways: input.notifyAlways }),
     onMutate: async ({ vip, notifyAlways }) => {
       setBusy({ id: vip.id, action: 'notify' });
       await queryClient.cancelQueries({ queryKey: qk.vips });

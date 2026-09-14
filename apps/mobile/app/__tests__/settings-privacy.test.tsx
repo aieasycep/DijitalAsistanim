@@ -248,12 +248,20 @@ describe('VIP screen', () => {
     const screen = renderWithProviders(<VipScreen />, { queryClient: makeClient() });
     await screen.findByTestId(`vip-row-${VIP_MEHMET}`, {}, FIND_OPTS);
     expect(screen.getByText('Mehmet Yılmaz')).toBeTruthy();
+    const updateVip = jest.spyOn(ds.people, 'updateVip');
+    const addVip = jest.spyOn(ds.people, 'addVip');
     fireEvent.press(screen.getByTestId(`vip-notify-${VIP_MEHMET}`));
     await waitFor(async () =>
       expect((await ds.people.listVips()).find((v) => v.id === VIP_MEHMET)?.notifyAlways).toBe(
         false,
       ),
     );
+    // the toggle edits the existing VIP row; re-adding would collide with the unique VIP indexes
+    expect(updateVip).toHaveBeenCalledWith(VIP_MEHMET, { notifyAlways: false });
+    expect(addVip).not.toHaveBeenCalled();
+    expect(await ds.people.listVips()).toHaveLength(1);
+    updateVip.mockRestore();
+    addVip.mockRestore();
     fireEvent.press(screen.getByTestId(`vip-remove-${VIP_MEHMET}`));
     const confirm = await screen.findByText("VIP'den çıkar", {}, FIND_OPTS);
     fireEvent.press(confirm);

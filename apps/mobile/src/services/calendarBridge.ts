@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
 import * as Calendar from 'expo-calendar/legacy';
 import { t } from '@da/i18n';
 import type { DataSource } from '@da/api-client';
-import type { CalendarCreatePayload, CalendarEvent, ConnectedAccount } from '@da/domain';
+import type { CalendarCreatePayload, CalendarEvent } from '@da/domain';
 import { captureError } from '@/lib/monitoring';
 import { detectMeetingProvider, extractMeetingUrl } from './handoff';
 import { toPermissionOutcome, type PermissionOutcome } from './permissions';
@@ -155,19 +155,6 @@ export async function readDeviceEvents(input: ReadDeviceEventsInput): Promise<De
     captureError(e, { where: 'readDeviceEvents' });
     return [];
   }
-}
-
-/** Registers the selected device calendars as a connected account (provider `apple` / `device`). */
-export async function registerDeviceCalendarAccount(
-  ds: DataSource,
-  calendarIds: string[],
-  displayName?: string,
-): Promise<ConnectedAccount> {
-  return ds.accounts.registerDeviceCalendar({
-    provider: deviceProvider(),
-    displayName: displayName ?? deviceCalendarDisplayName(),
-    calendarIds,
-  });
 }
 
 export interface SyncDeviceCalendarOptions {

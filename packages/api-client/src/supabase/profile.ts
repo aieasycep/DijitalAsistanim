@@ -6,7 +6,7 @@ import {
   feedbackToRow,
   notificationPreferencesPatchToRow,
   profilePatchToRow,
-  pushTokenToRow,
+  pushTokenToRpcArgs,
   toNotificationPreferences,
   toProfile,
   toUserPreferences,
@@ -109,14 +109,16 @@ export function createProfileApi(ctx: SupabaseContext): ProfileApi {
         return toNotificationPreferences(row);
       }),
 
+    /**
+     * `push_tokens.token` is globally unique while the Expo token identifies the *install*, not the user: a
+     * second account signing in on the same phone would collide with the first account's row, which RLS
+     * hides from this user. The `register_push_token` RPC (security definer) moves the token to the caller
+     * and upserts the caller's (user_id, device_id) row.
+     */
     registerPushToken: (req) =>
       write(async () => {
-        const userId = await ctx.requireUserId();
-        await exec(
-          pushTokens().upsert(pushTokenToRow(userId, req, ctx.now()), {
-            onConflict: 'user_id,device_id',
-          }),
-        );
+        await ctx.requireUserId();
+        await ctx.rpc<PushTokenRow>('register_push_token', pushTokenToRpcArgs(req));
       }),
 
     unregisterPushToken: (deviceId) =>

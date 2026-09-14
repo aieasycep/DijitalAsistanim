@@ -1,7 +1,8 @@
 /**
  * Device calendar (EventKit / Android provider) for onboarding: request the native permission, register the
  * device calendars as a `apple` / `device` account and upload the next 60 days of events so the backend can
- * reason over them. Nothing is written to the calendar here.
+ * reason over them. Nothing is written to the calendar here. The account is keyed on the per-install device
+ * id (`getDeviceId`), so adding or removing a calendar updates the same account instead of creating another.
  */
 import { useCallback, useState } from 'react';
 import { Linking } from 'react-native';
@@ -16,10 +17,10 @@ import {
   deviceProvider,
   getCalendarPermission,
   listDeviceCalendars,
-  registerDeviceCalendarAccount,
   requestCalendarPermission,
   syncDeviceCalendar,
 } from '@/services/calendarBridge';
+import { getDeviceId } from '@/services/notifications';
 import type { PermissionOutcome } from '@/services/permissions';
 
 export type DeviceCalendarStatus = 'idle' | 'requesting' | 'syncing' | 'granted' | 'denied';
@@ -60,17 +61,25 @@ export function useDeviceCalendar() {
 
   const check = useCallback((): Promise<PermissionOutcome> => getCalendarPermission(), []);
 
+  /** Registers (or re-registers) this install's device calendars as one stable account. */
+  const register = useCallback(
+    async (calendarIds: string[]): Promise<ConnectedAccount> =>
+      ds.accounts.registerDeviceCalendar({
+        provider: deviceProvider(),
+        displayName: deviceCalendarDisplayName(),
+        calendarIds,
+        deviceId: await getDeviceId(),
+      }),
+    [ds],
+  );
+
   /** Permission already granted: register the calendars and upload the event window. */
   const registerAndSync = useCallback(async (): Promise<DeviceCalendarResult> => {
     setStatus('syncing');
     try {
       const calendars = await listDeviceCalendars();
       const calendarIds = calendars.map((c) => c.id);
-      const account = await registerDeviceCalendarAccount(
-        ds,
-        calendarIds,
-        deviceCalendarDisplayName(),
-      );
+      const account = await register(calendarIds);
       const result = await syncDeviceCalendar(ds, account.id, calendarIds, {
         pastDays: PAST_DAYS,
         futureDays: FUTURE_DAYS,
@@ -85,7 +94,7 @@ export function useDeviceCalendar() {
       captureError(e, { where: 'useDeviceCalendar.registerAndSync' });
       throw e;
     }
-  }, [ds, invalidate]);
+  }, [ds, invalidate, register]);
 
   /** Prompts the system dialog; on grant registers + syncs. */
   const request = useCallback(async (): Promise<DeviceCalendarResult> => {
@@ -100,14 +109,10 @@ export function useDeviceCalendar() {
 
   /** Demo mode: registers the device calendar account without touching the native calendar. */
   const registerDemo = useCallback(async (): Promise<ConnectedAccount> => {
-    const account = await ds.accounts.registerDeviceCalendar({
-      provider: deviceProvider(),
-      displayName: deviceCalendarDisplayName(),
-      calendarIds: [],
-    });
+    const account = await register([]);
     await invalidate();
     return account;
-  }, [ds, invalidate]);
+  }, [invalidate, register]);
 
   const openSettings = useCallback(async (): Promise<void> => {
     try {

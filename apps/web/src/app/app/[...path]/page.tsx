@@ -49,7 +49,7 @@ export default async function AppLinkPage({
 }) {
   const { path } = await params;
   const sp = await searchParams;
-  const { t } = await getPageContext(`/app/${path.join('/')}`, sp);
+  const { t } = await getPageContext();
   const target = appPath(path, sp);
   const deepLink = toSchemeUrl(target);
   const isReferral = path[0] === 'referral';

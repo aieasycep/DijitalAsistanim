@@ -107,20 +107,18 @@ function fakeDs(accounts: ConnectedAccount[]) {
 beforeEach(() => jest.clearAllMocks());
 
 describe('deviceCalendarIds', () => {
-  it('reads Supabase-encoded ids and falls back to grantedScopes', () => {
-    expect(deviceCalendarIds(account({ externalAccountId: 'device:cal-b,cal-a' }))).toEqual([
+  it('reads the registered calendar ids from grantedScopes and ignores blanks', () => {
+    expect(deviceCalendarIds(account({ grantedScopes: ['cal-b', '', 'cal-a'] }))).toEqual([
       'cal-b',
       'cal-a',
     ]);
-    expect(deviceCalendarIds(account({ grantedScopes: ['cal-1'] }))).toEqual(['cal-1']);
+    expect(deviceCalendarIds(account({ grantedScopes: [] }))).toEqual([]);
   });
 });
 
 describe('executeDeviceApproval', () => {
   it('creates the event in the registered calendar and reports executed', async () => {
-    const { ds, upsertDeviceEvents } = fakeDs([
-      account({ externalAccountId: 'device:cal-1,cal-2' }),
-    ]);
+    const { ds, upsertDeviceEvents } = fakeDs([account({ grantedScopes: ['cal-1', 'cal-2'] })]);
     const result = await executeDeviceApproval(ds, approval({}));
     expect(result).toEqual({ outcome: 'executed', externalEventId: 'evt-new' });
     expect(Calendar.createEventAsync).toHaveBeenCalledWith(

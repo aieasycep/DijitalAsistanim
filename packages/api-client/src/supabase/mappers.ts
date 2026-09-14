@@ -41,6 +41,7 @@ import type {
 } from '@da/domain';
 import { NOTIFICATION_CATEGORIES } from '@da/domain';
 import type {
+  AccountsApi,
   AndroidNotificationsApi,
   PeopleApi,
   PrivacyApi,
@@ -71,7 +72,6 @@ import type {
   PostMeetingNoteRow,
   PriorityRuleRow,
   ProfileRow,
-  PushTokenRow,
   ReminderRow,
   SubscriptionRow,
   TaskRow,
@@ -261,20 +261,14 @@ export function notificationPreferencesPatchToRow(
   });
 }
 
-export function pushTokenToRow(
-  userId: string,
-  req: RegisterPushTokenRequest,
-  now: Date,
-): Partial<PushTokenRow> {
+/** Arguments of the `register_push_token` RPC (security definer; see migration 0011). */
+export function pushTokenToRpcArgs(req: RegisterPushTokenRequest): Record<string, unknown> {
   return {
-    user_id: userId,
-    token: req.token,
-    platform: req.platform,
-    device_id: req.deviceId,
-    device_name: req.deviceName ?? null,
-    app_version: req.appVersion ?? null,
-    is_active: true,
-    last_seen_at: now.toISOString(),
+    p_token: req.token,
+    p_device_id: req.deviceId,
+    p_platform: req.platform,
+    p_device_name: req.deviceName ?? null,
+    p_app_version: req.appVersion ?? null,
   };
 }
 
@@ -321,18 +315,31 @@ export function toConnectedAccount(row: ConnectedAccountRow): ConnectedAccount {
   };
 }
 
+export type DeviceAccountInput = Parameters<AccountsApi['registerDeviceCalendar']>[0];
+
+/**
+ * External id of a device-calendar account: the stable per-install device id (`device/<id>`), or the
+ * constant `device` when the caller has none. Never derived from the calendar list — adding or removing a
+ * calendar must not create a second account. (`device:` is reserved for the legacy calendar-list encoding.)
+ */
+export function deviceAccountExternalId(deviceId: string | undefined): string {
+  const id = deviceId?.trim();
+  return id ? `device/${id}` : 'device';
+}
+
 export function deviceAccountToRow(
   userId: string,
-  input: { provider: 'apple' | 'device'; displayName: string; calendarIds: string[] },
+  input: DeviceAccountInput,
 ): Partial<ConnectedAccountRow> {
   const provider: Provider = input.provider;
   return {
     user_id: userId,
     provider,
     kinds: ['calendar'],
-    external_account_id: `device:${[...input.calendarIds].sort().join(',')}`,
+    external_account_id: deviceAccountExternalId(input.deviceId),
     display_name: input.displayName,
     status: 'active',
+    granted_scopes: [...new Set(input.calendarIds)].sort(),
     backfill_completed: true,
     deleted_at: null,
   };
@@ -387,6 +394,15 @@ export function vipToRow(userId: string, input: VipInput): Partial<VipPersonRow>
     relation: input.relation ?? null,
     notify_always: input.notifyAlways ?? true,
   };
+}
+
+export type VipPatch = Parameters<PeopleApi['updateVip']>[1];
+
+export function vipPatchToRow(patch: VipPatch): Partial<VipPersonRow> {
+  return compact({
+    notify_always: patch.notifyAlways,
+    relation: patch.relation === undefined ? undefined : patch.relation?.trim() || null,
+  });
 }
 
 // ---------------------------------------------------------------------------

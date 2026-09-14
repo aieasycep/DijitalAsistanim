@@ -15,7 +15,10 @@ interface Props {
 function LangLink({ to, label, ariaLabel, className }: Props) {
   const pathname = usePathname();
   const search = useSearchParams();
-  const query = search.toString();
+  // Drop an explicit `?lang=` so the cookie set by /lang decides the language on the way back.
+  const params = new URLSearchParams(search.toString());
+  params.delete('lang');
+  const query = params.toString();
   const next = query ? `${pathname}?${query}` : pathname;
   return (
     <a

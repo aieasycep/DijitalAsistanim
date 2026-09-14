@@ -1,25 +1,21 @@
+import { REFERRAL_BONUS_DAYS } from '@da/domain';
+import { publicEnv } from '@/lib/env';
 import { en } from './en';
+import { resolveDictionary } from './resolve';
 import { tr } from './tr';
 import { type Dictionary, type Lang } from './types';
 
-export type { Dictionary, Lang, LegalDoc, LegalSection, ScopeRow } from './types';
+export type { Dictionary, FaqItem, Lang, LegalDoc, LegalSection, ScopeRow } from './types';
+export { DEFAULT_LANG, LANG_COOKIE, LANG_HEADER, LANGS, htmlLang, isLang, ogLocale } from './lang';
 
-export const LANGS: readonly Lang[] = ['tr', 'en'];
-export const DEFAULT_LANG: Lang = 'tr';
-export const LANG_COOKIE = 'da_lang';
+const vars = { trialDays: publicEnv.trialDays, referralDays: REFERRAL_BONUS_DAYS };
 
-export function isLang(value: unknown): value is Lang {
-  return value === 'tr' || value === 'en';
-}
+/** Resolved once per process: trial copy applied (or removed) and placeholders filled. */
+const DICTIONARIES: Record<Lang, Dictionary> = {
+  tr: resolveDictionary(tr, vars),
+  en: resolveDictionary(en, vars),
+};
 
 export function getDictionary(lang: Lang): Dictionary {
-  return lang === 'en' ? en : tr;
-}
-
-export function htmlLang(lang: Lang): string {
-  return lang === 'en' ? 'en' : 'tr';
-}
-
-export function ogLocale(lang: Lang): string {
-  return lang === 'en' ? 'en_US' : 'tr_TR';
+  return DICTIONARIES[lang];
 }

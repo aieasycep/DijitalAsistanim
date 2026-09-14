@@ -18,7 +18,8 @@ export const tr: Dictionary = {
     language: 'Dil',
     switchTo: 'English',
     switchToLang: 'en',
-    home: 'Ana sayfa',
+    menu: 'Menü',
+    siteNavigation: 'Site gezinmesi',
   },
   hero: {
     kicker: 'iOS ve Android için kişisel asistan',
@@ -247,8 +248,7 @@ export const tr: Dictionary = {
     annualDetail: 'ayda 124 TL · %38 tasarruf',
     bestValue: 'En Avantajlı',
     perMonthLabel: 'ay',
-    trialNote:
-      '7 gün ücretsiz deneme — mağaza koşullarına bağlı. Deneme bitmeden 24 saat önce hatırlatırız; istediğin zaman iptal edebilirsin.',
+    trialNote: null,
     storeNote:
       'Abonelikler App Store veya Google Play üzerinden alınır ve yönetilir. Fiyatlar KDV dahildir; mağaza yerel para birimine göre farklılık gösterebilir.',
     tableFeature: 'Özellik',
@@ -264,7 +264,7 @@ export const tr: Dictionary = {
       { label: 'Gelişmiş planlama', free: '—', pro: '✓' },
       { label: 'Asistan soruları', free: '10 / gün', pro: '300 / gün' },
     ],
-    ctaPro: 'Pro’yu 7 gün ücretsiz dene',
+    ctaPro: 'Pro’ya geç',
     ctaFree: 'Free ile başla',
     included: 'Free plana dahil',
     proIncludes: [
@@ -298,12 +298,13 @@ export const tr: Dictionary = {
         a: 'Bir mail ve bir takvim bağlantısı, her sabah brifing, günlük 10 asistan sorusu ve mail zekâsının temel kısmı. Kredi kartı gerekmez, süre sınırı yoktur.',
       },
       {
-        q: 'Deneme süresi nasıl işliyor?',
-        a: 'Pro planlar için 7 günlük ücretsiz deneme sunulur; deneme koşulları App Store ve Google Play kurallarına bağlıdır. Deneme bitmeden 24 saat önce hatırlatırız. İptal edersen ücret alınmaz; etmezsen seçtiğin plan başlar.',
+        topic: 'trial',
+        q: 'Ücretsiz deneme var mı?',
+        a: 'Ücretsiz deneme yalnızca App Store veya Google Play’deki Pro ürünü bir tanıtım teklifi içerdiğinde sunulur; varsa süresi ve koşulları satın alma ekranında mağaza tarafından gösterilir. Deneme yoksa Pro’ya doğrudan geçersin; Free plan süresiz ücretsizdir.',
       },
       {
-        q: 'Verilerim uçtan uca şifreli mi?',
-        a: 'Veriler aktarım sırasında (TLS) ve saklanırken şifrelenir; OAuth belirteçleri ayrıca şifrelenir. Özetleri üretebilmek için sunucularımız içeriği işler; bu nedenle uçtan uca şifreleme değildir ve bunu iddia etmeyiz.',
+        q: 'Verilerim nasıl şifreleniyor?',
+        a: 'Veriler aktarım sırasında TLS ile, saklanırken disk düzeyinde şifrelenir; OAuth belirteçleri ayrıca uygulama düzeyinde şifrelenir. Özetleri ve brifingleri üretebilmek için sunucularımız içeriği işler; yani içerik, işleme sırasında sunucularımızda okunabilir durumdadır.',
       },
       {
         q: 'Verilerim yapay zekâ modellerini eğitmek için kullanılıyor mu?',
@@ -314,6 +315,16 @@ export const tr: Dictionary = {
         a: 'Uygulamada Ayarlar → Gizlilik ve Güvenlik → Hesabımı Sil adımını izle. Bağlantı izinleri iptal edilir, tüm veriler ve abonelik eşlemesi 30 gün içinde kalıcı olarak silinir. Dilersen gizlilik@dijitalasistan.app adresine de yazabilirsin.',
       },
     ],
+  },
+  trial: {
+    ctaPro: 'Pro’yu {{trialDays}} gün ücretsiz dene',
+    note: '{{trialDays}} gün ücretsiz deneme; yalnızca ilk abonelikte ve mağaza koşullarına bağlı. İstediğin zaman iptal edebilirsin.',
+    faqAnswer:
+      'Pro planlar için {{trialDays}} günlük ücretsiz deneme sunulur; deneme yalnızca ilk abonelikte geçerlidir ve koşulları App Store ile Google Play kurallarına bağlıdır. Deneme süresi içinde iptal edersen ücret alınmaz; etmezsen seçtiğin plan başlar.',
+    pricingDescription:
+      'Dijital Asistan Free ve Pro planları: 199 TL/ay veya 1.490 TL/yıl, {{trialDays}} gün ücretsiz deneme. Şeffaf karşılaştırma, gizli koşul yok.',
+    billingBullet:
+      'Ücretsiz deneme ({{trialDays}} gün) yalnızca ilk abonelikte ve mağaza koşulları izin verdiğinde sunulur. Deneme süresi içinde iptal edersen ücret alınmaz; iptalin ne kadar önce yapılması gerektiği mağaza kurallarına bağlıdır.',
   },
   finalCta: {
     title: 'Yarın sabah brifingin hazır olsun.',
@@ -351,18 +362,17 @@ export const tr: Dictionary = {
   pricingPage: {
     title: 'Fiyatlandırma',
     description:
-      'Dijital Asistan Free ve Pro planları: 199 TL/ay veya 1.490 TL/yıl, 7 gün ücretsiz deneme. Şeffaf karşılaştırma, gizli koşul yok.',
+      'Dijital Asistan Free ve Pro planları: 199 TL/ay veya 1.490 TL/yıl. Şeffaf karşılaştırma, gizli koşul yok.',
     billingTitle: 'Ödeme, yenileme ve iptal',
     billing: [
       'Pro abonelikleri App Store (iOS) veya Google Play (Android) üzerinden satın alınır; ödeme mağaza hesabından tahsil edilir.',
-      'Ücretsiz deneme yalnızca ilk abonelikte ve mağaza koşulları izin verdiğinde sunulur. Deneme bitmeden en az 24 saat önce iptal edersen ücret alınmaz.',
       'Abonelik, dönem sonunda otomatik yenilenir; iptal etmediğin sürece aynı fiyattan devam eder. Fiyat değişikliklerinde mağaza kuralları gereği önceden bilgilendirilirsin.',
       'İptal ve iade talepleri mağaza politikalarına tabidir: iOS için App Store abonelik ayarları, Android için Google Play abonelikler bölümü. Uygulama içinden “Aboneliği yönet” bağlantısı seni doğru yere götürür.',
       'Pro’dan Free’ye dönersen bağlı hesapların ve verilerin kalır; yalnızca Pro’ya özel özellikler kapanır.',
     ],
     referralTitle: 'Arkadaşını davet et',
     referralBody:
-      'Davet ettiğin kişi ilk brifingini aldığında ikiniz de 14 gün Pro kazanırsınız. Davet bağlantını uygulamada Ayarlar → Arkadaşını Davet Et altında bulabilirsin.',
+      'Davet kodun, son 7 gün içinde açılmış yeni bir hesapta kullanıldığı anda ikiniz de {{referralDays}} gün Pro kazanırsınız. Her hesap yalnızca bir kez kod kullanabilir; bir davet kodu 30 günde en fazla 20 kez kullanılabilir. Davet bağlantını uygulamada Ayarlar → Arkadaşını Davet Et altında bulabilirsin.',
     faqTitle: 'Fiyatlandırma hakkında sık sorulanlar',
   },
   supportPage: {
@@ -380,19 +390,19 @@ export const tr: Dictionary = {
     topics: [
       {
         title: 'Bağlantı kurulamıyor veya süresi doldu',
-        body: 'Ayarlar → Bağlantılar altında ilgili hesabın yanındaki “Yeniden bağlan” seçeneğini kullan. Kurumsal Microsoft hesaplarında yönetici onayı gerekebilir; bu durumda yöneticinden Dijital Asistan uygulamasına izin vermesini iste.',
+        body: 'Ayarlar → Bağlantılar altında ilgili hesabın yanındaki “Bağlantıyı Yenile” seçeneğini kullan. Kurumsal Microsoft hesaplarında yönetici onayı gerekebilir; bu durumda yöneticinden Dijital Asistan uygulamasına izin vermesini iste.',
       },
       {
         title: 'Bildirim gelmiyor',
         body: 'Sistem ayarlarında bildirimlerin açık olduğundan ve uygulama içinde Ayarlar → Bildirimler altında ilgili kategorinin etkin olduğundan emin ol. Sessiz saatler ve “Yalnızca gerçekten önemliyse bildir” ayarı bildirimleri azaltabilir.',
       },
       {
-        title: 'Abonelik, deneme ve iade',
+        title: 'Abonelik ve iade',
         body: 'Abonelikler App Store veya Google Play üzerinden yönetilir. Ayarlar → Abonelik → Aboneliği yönet seni mağazaya götürür. Satın alımını göremiyorsan “Satın alımları geri yükle” seçeneğini dene.',
       },
       {
         title: 'Verilerimi indirmek veya silmek istiyorum',
-        body: 'Ayarlar → Gizlilik ve Güvenlik altında verilerini JSON olarak indirebilir, analiz geçmişini silebilir veya hesabını tamamen kapatabilirsin. Ayrıntılar Veri Silme sayfasında.',
+        body: 'Ayarlar → Gizlilik ve Güvenlik altında Verilerimi İndir ile verilerini JSON olarak alabilir, Geçmişi Sil ile analiz geçmişini silebilir veya Hesabımı Sil ile hesabını tamamen kapatabilirsin. Ayrıntılar Veri Silme sayfasında.',
       },
     ],
     linksTitle: 'Faydalı bağlantılar',
@@ -576,7 +586,7 @@ export const tr: Dictionary = {
     orInstall: 'Uygulama yüklü değil mi?',
     referralTitle: 'Bir arkadaşın seni davet etti.',
     referralBody:
-      'Uygulamayı kurup bu kodu kullandığında ilk brifinginden sonra ikiniz de 14 gün Pro kazanırsınız.',
+      'Uygulamayı kur ve bu kodu kullan: kod kabul edildiği anda ikiniz de {{referralDays}} gün Pro kazanırsınız. Kod yalnızca son 7 gün içinde açılmış hesaplarda ve hesap başına bir kez kullanılabilir.',
     codeLabel: 'Davet kodu',
     autoNote: 'Telefondan açtıysan uygulama otomatik olarak açılmaya çalışılır.',
     backHome: 'Ana sayfaya dön',
@@ -585,6 +595,13 @@ export const tr: Dictionary = {
     title: 'Sayfa bulunamadı.',
     body: 'Aradığın sayfa taşınmış ya da hiç var olmamış olabilir. Ana sayfadan devam edebilirsin.',
     cta: 'Ana sayfaya dön',
+  },
+  errorPage: {
+    kicker: 'Hata',
+    title: 'Bir şeyler ters gitti.',
+    body: 'Sayfa yüklenirken beklenmedik bir hata oluştu. Tekrar deneyebilir ya da ana sayfaya dönebilirsin.',
+    retry: 'Tekrar dene',
+    home: 'Ana sayfaya dön',
   },
   legal: {
     updatedPrefix: 'Son güncelleme',
@@ -700,7 +717,7 @@ export const tr: Dictionary = {
             'OAuth erişim ve yenileme belirteçleri ayrıca uygulama düzeyinde AES-256-GCM ile şifrelenir ve anahtarlar düzenli olarak döndürülür.',
             'Her kullanıcının verisi satır düzeyinde erişim kurallarıyla yalnızca kendisine açıktır.',
             'Belirteç çözme, mail gönderme, takvim yazma ve veri silme gibi kritik işlemler denetim kaydına alınır.',
-            'Hizmet uçtan uca şifreli değildir: özetleri üretebilmek için sunucularımızın içeriği işlemesi gerekir.',
+            'Özetleri üretebilmek için içerik sunucularımızda işlenir: şifreleme aktarım ve saklama katmanlarında uygulanır; işleme sırasında içerik sunucularımız tarafından okunabilir durumdadır.',
           ],
         },
         {
@@ -779,9 +796,9 @@ export const tr: Dictionary = {
           bullets: [
             'Free plan ücretsizdir ve sınırlı özellikler içerir. Pro plan aylık (199 TL / ay) veya yıllık (1.490 TL / yıl) abonelikle sunulur; güncel fiyatlar mağazada gösterilir ve yerel para birimine göre değişebilir.',
             'Pro abonelikleri App Store veya Google Play üzerinden satın alınır; ödeme, yenileme, iptal ve iade işlemleri ilgili mağazanın koşullarına tabidir.',
-            'Uygun olduğunda 7 günlük ücretsiz deneme sunulur (mağaza koşullarına bağlı). Deneme süresi bitmeden en az 24 saat önce iptal edilmezse seçilen plan ücreti tahsil edilir.',
+            'Ücretsiz deneme yalnızca mağazadaki Pro ürünü bir tanıtım teklifi içerdiğinde sunulur; süresi ve koşulları satın alma sırasında mağaza tarafından gösterilir. Deneme süresi içinde iptal edilmezse seçilen plan ücreti mağaza kurallarına göre tahsil edilir.',
             'Abonelik dönem sonunda otomatik yenilenir. İptal, dönem sonuna kadar Pro özelliklerine erişimi etkilemez.',
-            'Davet programı: davet ettiğin kişi ilk brifingini aldığında her iki tarafa 14 gün Pro tanımlanır. Program yılda 6 davetle sınırlıdır; kötüye kullanım halinde haklar iptal edilebilir.',
+            'Davet programı: davet kodun yeni bir hesapta başarıyla kullanıldığında her iki tarafa da anında {{referralDays}} gün Pro tanımlanır; devam eden bir davet bonusun varsa yenisi onun bitiminde başlar. Kod yalnızca son 7 gün içinde açılmış hesaplarda ve hesap başına bir kez kullanılabilir; kendi kodunu kullanamazsın ve daha önce senin hesabınla ilişkilendirilmiş bir cihazdan kod kullanılamaz. Bir davet kodu 30 günlük dönemde en fazla 20 kez kullanılabilir; kötüye kullanım halinde haklar iptal edilebilir.',
           ],
         },
         {
@@ -847,7 +864,7 @@ export const tr: Dictionary = {
         {
           title: 'E-posta ile silme talebi',
           paragraphs: [
-            'Uygulamaya erişemiyorsan, hesabında kayıtlı e-posta adresinden gizlilik@dijitalasistan.app adresine “Hesap silme talebi” konulu bir e-posta gönder. Kimliğini doğrulamak için hesabındaki e-posta adresine bir onay bağlantısı yollarız; onayladıktan sonra silme işlemi başlar.',
+            'Uygulamaya erişemiyorsan, hesabında kayıtlı e-posta adresinden gizlilik@dijitalasistan.app adresine “Hesap silme talebi” konulu bir e-posta gönder. Destek ekibimiz, talebin gerçekten hesabın kayıtlı adresinden geldiğini doğrulamak için bu e-postaya yanıt verir; yanıtınla onayladıktan sonra silme işlemini elle gerçekleştirir ve tamamlandığında aynı yazışma üzerinden sana bildirir. Bu süreçte otomatik bağlantı veya form kullanılmaz.',
           ],
         },
         {
@@ -871,13 +888,13 @@ export const tr: Dictionary = {
         {
           title: 'Ne kadar sürer?',
           paragraphs: [
-            'Silme talebin alındığı anda hesabın devre dışı kalır ve eşitleme durur. Tüm veriler en geç 30 gün içinde kalıcı olarak silinir; yedeklerdeki kopyalar yedekleme döngüsü içinde temizlenir. Silme tamamlandığında e-posta ile bilgilendiriliriz.',
+            'Uygulama içinden sildiğinde hesabın, bağlantı izinlerin ve verilerin aynı anda silinir; eşitleme o anda durur. E-posta ile ilettiğin talepler, destek ekibi talebin kayıtlı e-posta adresinden geldiğini doğruladıktan sonra elle yerine getirilir; genellikle 1–2 iş günü içinde yanıt veririz. Her iki durumda da yedeklerdeki kopyalar yedekleme döngüsü içinde, en geç 30 gün içinde temizlenir.',
           ],
         },
         {
           title: 'Yalnızca geçmişini silmek istersen',
           paragraphs: [
-            'Hesabını kapatmadan analiz geçmişini silebilirsin: Ayarlar → Gizlilik ve Güvenlik → Analiz Geçmişini Sil. Özetler, öncelik kararları ve hafıza dizini silinir; bağlantıların ve ayarların kalır. Ayrıca Veri Saklama altından 30 gün, 90 gün, 1 yıl veya “ben silene kadar” seçeneklerinden birini seçebilirsin.',
+            'Hesabını kapatmadan analiz geçmişini silebilirsin: Ayarlar → Gizlilik ve Güvenlik → Geçmişi Sil. Özetler, öncelik kararları ve hafıza dizini silinir; bağlantıların ve ayarların kalır. Ayrıca Veri Saklama altından 30 gün, 90 gün, 1 yıl veya “ben silene kadar” seçeneklerinden birini seçebilirsin.',
           ],
         },
         {

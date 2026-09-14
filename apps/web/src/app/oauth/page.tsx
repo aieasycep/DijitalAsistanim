@@ -8,7 +8,7 @@ import {
   SparkleIcon,
 } from '@/components/Icons';
 import { getDictionary, type Dictionary, type ScopeRow } from '@/i18n';
-import { getLang, getPageContext, type SearchParams } from '@/i18n/server';
+import { getLang, getPageContext } from '@/i18n/server';
 import { SITE } from '@/lib/env';
 import { pageMetadata } from '@/lib/seo';
 
@@ -73,8 +73,8 @@ function ScopeTable({
 
 const principleIcons = [LockIcon, SparkleIcon, CheckCircleIcon, ShieldIcon] as const;
 
-export default async function OAuthPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { t } = await getPageContext('/oauth', await searchParams);
+export default async function OAuthPage() {
+  const { t } = await getPageContext();
   const o = t.oauthPage;
 
   return (

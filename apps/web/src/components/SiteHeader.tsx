@@ -26,7 +26,7 @@ export function SiteHeader({ t }: { t: Dictionary }) {
     <header className="site-header">
       <div className="container header-row">
         <Logo name={t.meta.siteName} />
-        <nav className="nav-desktop" aria-label={t.nav.home}>
+        <nav className="nav-desktop" aria-label={t.nav.siteNavigation}>
           {links.map((l) => (
             <Link key={l.href} href={l.href} className="nav-link">
               {l.label}
@@ -44,7 +44,7 @@ export function SiteHeader({ t }: { t: Dictionary }) {
             {t.nav.cta}
           </Link>
           <details className="nav-mobile">
-            <summary aria-label={t.nav.home}>
+            <summary aria-label={t.nav.menu}>
               <MenuIcon size={22} />
             </summary>
             <div className="nav-mobile-panel">

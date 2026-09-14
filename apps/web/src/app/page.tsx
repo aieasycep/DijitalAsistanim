@@ -22,7 +22,7 @@ import {
 } from '@/components/Screens';
 import { StoreBadges } from '@/components/StoreBadges';
 import { getDictionary } from '@/i18n';
-import { getLang, getPageContext, type SearchParams } from '@/i18n/server';
+import { getLang, getPageContext } from '@/i18n/server';
 import { ctaHref, hasStoreLinks } from '@/lib/links';
 import { pageMetadata } from '@/lib/seo';
 
@@ -40,12 +40,8 @@ export async function generateMetadata(): Promise<Metadata> {
 const integrationIcon = { mail: MailIcon, calendar: CalendarIcon, tasks: TasksIcon } as const;
 const promiseIcons = [ShieldIcon, CheckCircleIcon, LockIcon, SparkleIcon] as const;
 
-export default async function LandingPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const { t } = await getPageContext('/', await searchParams);
+export default async function LandingPage() {
+  const { t } = await getPageContext();
 
   return (
     <>

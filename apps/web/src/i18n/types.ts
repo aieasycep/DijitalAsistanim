@@ -29,6 +29,13 @@ export interface PriorityCard {
   source: string;
 }
 
+export interface FaqItem {
+  q: string;
+  /** No-trial answer; for `topic: 'trial'` it is replaced by `trial.faqAnswer` when a trial exists. */
+  a: string;
+  topic?: 'trial';
+}
+
 export interface Dictionary {
   meta: {
     siteName: string;
@@ -46,7 +53,10 @@ export interface Dictionary {
     language: string;
     switchTo: string;
     switchToLang: Lang;
-    home: string;
+    /** Accessible name of the mobile menu toggle. */
+    menu: string;
+    /** Accessible name of the site `<nav>`. */
+    siteNavigation: string;
   };
   hero: {
     kicker: string;
@@ -171,7 +181,8 @@ export interface Dictionary {
     annualDetail: string;
     bestValue: string;
     perMonthLabel: string;
-    trialNote: string;
+    /** null in the base dictionaries; `resolveDictionary` fills it from `trial.note` when a trial exists. */
+    trialNote: string | null;
     storeNote: string;
     tableFeature: string;
     rows: { label: string; free: string; pro: string }[];
@@ -183,7 +194,23 @@ export interface Dictionary {
   faq: {
     kicker: string;
     title: string;
-    items: { q: string; a: string }[];
+    items: FaqItem[];
+  };
+  /**
+   * Copy used only when `NEXT_PUBLIC_TRIAL_DAYS` is a positive integer (`{{trialDays}}` is
+   * interpolated). Applied by `resolveDictionary`; never rendered directly.
+   */
+  trial: {
+    /** Replaces `pricing.ctaPro`. */
+    ctaPro: string;
+    /** Fills `pricing.trialNote`. */
+    note: string;
+    /** Replaces the answer of the FAQ item with `topic: 'trial'`. */
+    faqAnswer: string;
+    /** Replaces `pricingPage.description`. */
+    pricingDescription: string;
+    /** Inserted into `pricingPage.billing` after the store-purchase bullet. */
+    billingBullet: string;
   };
   finalCta: {
     title: string;
@@ -286,6 +313,13 @@ export interface Dictionary {
     title: string;
     body: string;
     cta: string;
+  };
+  errorPage: {
+    kicker: string;
+    title: string;
+    body: string;
+    retry: string;
+    home: string;
   };
   legal: {
     updatedPrefix: string;

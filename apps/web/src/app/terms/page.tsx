@@ -2,7 +2,7 @@
 import { type Metadata } from 'next';
 import { LegalDocument } from '@/components/LegalDocument';
 import { getDictionary } from '@/i18n';
-import { getLang, getPageContext, type SearchParams } from '@/i18n/server';
+import { getLang, getPageContext } from '@/i18n/server';
 import { pageMetadata } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,8 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function TermsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { t } = await getPageContext('/terms', await searchParams);
+export default async function TermsPage() {
+  const { t } = await getPageContext();
   return (
     <div className="page">
       <div className="container">

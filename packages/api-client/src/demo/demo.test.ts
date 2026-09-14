@@ -4,6 +4,7 @@ import { MemoryStorage, type DataSourceConfig, type KeyValueStorage } from '../c
 import { ClientApiError } from '../errors';
 import { createDemoDataSource, type DemoDataSourceOptions } from './index';
 import {
+  ACCOUNT_DEVICE,
   ACCOUNT_GMAIL,
   APPROVAL_AHMET_REPLY,
   APPROVAL_BASVURU_CALENDAR,
@@ -18,6 +19,7 @@ import {
   THREAD_AHMET_REVIZE,
   THREAD_SELIN_SOZLESME,
   THREAD_THY,
+  VIP_MEHMET,
 } from './ids';
 
 const NOW = '2026-09-05T05:00:00Z'; // 08:00 Europe/Istanbul, Saturday 5 September 2026
@@ -611,6 +613,65 @@ describe('demo data source · onboarding, accounts, meetings, assistant', () => 
     expect(
       (await ds.feed.getFlow({ filter: 'calendar' })).items.some((i) => i.kind === 'conflict'),
     ).toBe(false);
+  });
+
+  it('updates a VIP in place ("her zaman bildir") without creating a duplicate', async () => {
+    const ds = makeSource();
+    const before = await ds.people.listVips();
+    const mehmet = before.find((v) => v.id === VIP_MEHMET);
+    expect(mehmet?.notifyAlways).toBe(true);
+    const updated = await ds.people.updateVip(VIP_MEHMET, { notifyAlways: false });
+    expect(updated).toMatchObject({
+      id: VIP_MEHMET,
+      contactId: mehmet?.contactId,
+      notifyAlways: false,
+      relation: mehmet?.relation,
+    });
+    const after = await ds.people.listVips();
+    expect(after).toHaveLength(before.length);
+    expect(after.find((v) => v.id === VIP_MEHMET)?.notifyAlways).toBe(false);
+    const related = await ds.people.updateVip(VIP_MEHMET, { relation: '  Ortak  ' });
+    expect(related.relation).toBe('Ortak');
+    expect(related.notifyAlways).toBe(false);
+    await expect(
+      ds.people.updateVip('00000000-0000-4000-8000-00000000dead', {}),
+    ).rejects.toMatchObject({ code: 'not_found' });
+    await expect(
+      ds.people.updateVip(VIP_MEHMET, { relation: 'x'.repeat(61) }),
+    ).rejects.toMatchObject({ code: 'validation' });
+  });
+
+  it('keeps one device-calendar account per install while the calendar list changes', async () => {
+    const ds = makeSource();
+    const initial = (await ds.accounts.listAccounts()).filter((a) => a.provider === 'device');
+    expect(initial.map((a) => a.id)).toEqual([ACCOUNT_DEVICE]);
+    const first = await ds.accounts.registerDeviceCalendar({
+      provider: 'device',
+      displayName: 'Takvim',
+      calendarIds: ['cal-1'],
+      deviceId: 'android-id',
+    });
+    const second = await ds.accounts.registerDeviceCalendar({
+      provider: 'device',
+      displayName: 'Takvim',
+      calendarIds: ['cal-2', 'cal-1'],
+      deviceId: 'android-id',
+    });
+    expect(second.id).toBe(first.id);
+    expect(second.externalAccountId).toBe('device/android-id');
+    expect(second.grantedScopes).toEqual(['cal-1', 'cal-2']);
+    const devices = (await ds.accounts.listAccounts()).filter((a) => a.provider === 'device');
+    expect(devices).toHaveLength(2); // the seeded `device` account + this install
+    await ds.accounts.disconnect(first.id);
+    const again = await ds.accounts.registerDeviceCalendar({
+      provider: 'device',
+      displayName: 'Takvim',
+      calendarIds: ['cal-1'],
+      deviceId: 'android-id',
+    });
+    expect(again.id).toBe(first.id);
+    expect(again.status).toBe('active');
+    expect(again.deletedAt).toBeNull();
   });
 
   it('exposes mail intelligence buckets and person intelligence', async () => {

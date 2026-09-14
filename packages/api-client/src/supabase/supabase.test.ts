@@ -3,6 +3,7 @@ import { MemoryStorage, type KeyValueStorage } from '../config';
 import { ClientApiError } from '../errors';
 import { createSupabaseDataSource } from './index';
 import {
+  deviceAccountToRow,
   toApprovalAction,
   toBriefing,
   toConnectedAccount,
@@ -17,6 +18,8 @@ import type {
   ContactRow,
   EmailThreadRow,
   InsightRow,
+  PushTokenRow,
+  VipPersonRow,
 } from './rows';
 import { createChunkedSecureStorage, utf8ByteLength } from './secureStorage';
 import type { SupabaseDataSourceConfig } from './client';
@@ -38,8 +41,14 @@ const h = vi.hoisted(() => {
     args: unknown[];
   }
   interface FakeChannel {
-    on(type: string, filter: unknown, cb: unknown): FakeChannel;
+    on(type: string, filter: unknown, cb: (payload: unknown) => void): FakeChannel;
     subscribe(cb?: unknown): FakeChannel;
+  }
+  interface ChannelEntry {
+    name: string;
+    filters: unknown[];
+    callbacks: ((payload: unknown) => void)[];
+    subscribed: boolean;
   }
   const defaultSession = (): Record<string, unknown> => ({
     access_token: 'tok',
@@ -60,7 +69,7 @@ const h = vi.hoisted(() => {
     calls: [] as Call[],
     rpcCalls: [] as { fn: string; args: unknown }[],
     rpcResults: [] as Result[],
-    channels: [] as { name: string; filters: unknown[]; subscribed: boolean }[],
+    channels: [] as ChannelEntry[],
     removedChannels: 0,
     uploads: [] as { path: string; body: unknown; options: unknown }[],
     uploadResult: { data: { path: 'x' }, error: null } as Result,
@@ -181,11 +190,12 @@ const h = vi.hoisted(() => {
       };
     },
     channel: (name: string): FakeChannel => {
-      const entry = { name, filters: [] as unknown[], subscribed: false };
+      const entry: ChannelEntry = { name, filters: [], callbacks: [], subscribed: false };
       state.channels.push(entry);
       const ch: FakeChannel = {
-        on(_type, filter) {
+        on(_type, filter, cb) {
           entry.filters.push(filter);
+          entry.callbacks.push(cb);
           return ch;
         },
         subscribe() {
@@ -377,6 +387,38 @@ const approvalRow: ApprovalActionRow = {
   updated_at: '2026-09-05T09:00:00+00:00',
 };
 
+const vipRow: VipPersonRow = {
+  id: 'vip-1',
+  user_id: 'user-1',
+  contact_id: 'c-1',
+  display_name: 'Mehmet Yılmaz',
+  email: 'mehmet@example.com',
+  relation: 'Müşteri',
+  notify_always: true,
+  created_at: '2026-09-01T00:00:00Z',
+  updated_at: '2026-09-01T00:00:00Z',
+};
+
+const deviceAccountRow: ConnectedAccountRow = {
+  id: 'acc-device',
+  user_id: 'user-1',
+  provider: 'apple',
+  kinds: ['calendar'],
+  external_account_id: 'device/ios-vendor-id',
+  display_name: 'Apple Takvim',
+  email: null,
+  status: 'active',
+  granted_scopes: ['cal-a', 'cal-b'],
+  controls: {},
+  last_sync_at: null,
+  last_error: null,
+  backfill_completed: true,
+  is_primary: false,
+  deleted_at: null,
+  created_at: '2026-09-05T09:00:00Z',
+  updated_at: '2026-09-05T09:00:00Z',
+};
+
 beforeEach(() => {
   h.state.reset();
   fetchMock.mockReset();
@@ -470,6 +512,14 @@ describe('functions client', () => {
       nextCursor: null,
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('requests flow page 2 with the opaque cursor exactly as the server issued it', async () => {
+    fetchMock.mockResolvedValueOnce(ok({ items: [], nextCursor: '40' }));
+    const ds = createDs();
+    const page = await ds.feed.getFlow({ filter: 'important', cursor: '20', limit: 20 });
+    expect(page.nextCursor).toBe('40');
+    expect(requestOf().url).toBe(`${BASE}/functions/v1/flow?filter=important&cursor=20&limit=20`);
   });
 
   it('never retries writes', async () => {
@@ -675,6 +725,103 @@ describe('table access', () => {
     expect(h.state.ops('contacts', 'update')[0]?.args[0]).toEqual({ is_vip: true });
   });
 
+  it('updateVip edits the existing row in place instead of inserting a duplicate', async () => {
+    h.state.queue('vip_people', { data: { ...vipRow, notify_always: false }, error: null });
+    const ds = createDs();
+    const vip = await ds.people.updateVip('vip-1', { notifyAlways: false });
+    expect(vip).toMatchObject({ id: 'vip-1', notifyAlways: false, relation: 'Müşteri' });
+    expect(h.state.ops('vip_people', 'update')[0]?.args[0]).toEqual({ notify_always: false });
+    expect(h.state.ops('vip_people', 'eq').map((c) => c.args)).toEqual([
+      ['user_id', 'user-1'],
+      ['id', 'vip-1'],
+    ]);
+    expect(h.state.ops('vip_people', 'insert')).toHaveLength(0);
+    expect(h.state.ops('vip_people', 'upsert')).toHaveLength(0);
+  });
+
+  it('updateVip with an empty patch only re-reads the VIP', async () => {
+    h.state.queue('vip_people', { data: vipRow, error: null });
+    const ds = createDs();
+    const vip = await ds.people.updateVip('vip-1', {});
+    expect(vip.notifyAlways).toBe(true);
+    expect(h.state.ops('vip_people', 'update')).toHaveLength(0);
+    expect(h.state.ops('vip_people', 'select')).toHaveLength(1);
+  });
+
+  it('registers push tokens through the register_push_token RPC, never a client upsert', async () => {
+    const row: PushTokenRow = {
+      id: 'pt-1',
+      user_id: 'user-1',
+      token: 'ExponentPushToken[abc]',
+      platform: 'ios',
+      device_id: 'ios-vendor-id',
+      device_name: null,
+      app_version: '1.0.0',
+      is_active: true,
+      last_seen_at: '2026-09-05T09:00:00+00:00',
+      created_at: '2026-09-05T09:00:00+00:00',
+      updated_at: '2026-09-05T09:00:00+00:00',
+    };
+    h.state.rpcResults.push({ data: row, error: null });
+    const ds = createDs();
+    await ds.profile.registerPushToken({
+      token: 'ExponentPushToken[abc]',
+      platform: 'ios',
+      deviceId: 'ios-vendor-id',
+      appVersion: '1.0.0',
+    });
+    expect(h.state.rpcCalls).toEqual([
+      {
+        fn: 'register_push_token',
+        args: {
+          p_token: 'ExponentPushToken[abc]',
+          p_device_id: 'ios-vendor-id',
+          p_platform: 'ios',
+          p_device_name: null,
+          p_app_version: '1.0.0',
+        },
+      },
+    ]);
+    expect(h.state.ops('push_tokens', 'upsert')).toHaveLength(0);
+    expect(h.state.ops('push_tokens', 'insert')).toHaveLength(0);
+
+    h.state.rpcResults.push({
+      data: null,
+      error: { code: '42501', message: 'permission denied', details: '', hint: '' },
+    });
+    await expect(
+      ds.profile.registerPushToken({
+        token: 'ExponentPushToken[abc]',
+        platform: 'ios',
+        deviceId: 'ios-vendor-id',
+      }),
+    ).rejects.toMatchObject({ code: 'forbidden' });
+  });
+
+  it('keys device-calendar accounts on the install id and stores the calendar ids as scopes', async () => {
+    h.state.queue('connected_accounts', { data: deviceAccountRow, error: null });
+    const ds = createDs();
+    const account = await ds.accounts.registerDeviceCalendar({
+      provider: 'apple',
+      displayName: 'Apple Takvim',
+      calendarIds: ['cal-b', 'cal-a', 'cal-b'],
+      deviceId: 'ios-vendor-id',
+    });
+    expect(account.externalAccountId).toBe('device/ios-vendor-id');
+    expect(account.grantedScopes).toEqual(['cal-a', 'cal-b']);
+    const upsert = h.state.ops('connected_accounts', 'upsert')[0];
+    expect(upsert?.args[0]).toMatchObject({
+      user_id: 'user-1',
+      provider: 'apple',
+      kinds: ['calendar'],
+      external_account_id: 'device/ios-vendor-id',
+      granted_scopes: ['cal-a', 'cal-b'],
+      status: 'active',
+      deleted_at: null,
+    });
+    expect(upsert?.args[1]).toEqual({ onConflict: 'user_id,provider,external_account_id' });
+  });
+
   it('counts pending approvals with a head request', async () => {
     h.state.queue('approval_actions', { data: null, error: null, count: 3 });
     const ds = createDs();
@@ -707,6 +854,57 @@ describe('table access', () => {
     await flush();
     expect(h.state.removedChannels).toBe(1);
     expect(seen).toEqual([]);
+  });
+
+  it('shares one realtime channel per user and removes it only with the last subscriber', async () => {
+    h.state.queue(
+      'approval_actions',
+      { data: null, error: null, count: 2 },
+      { data: null, error: null, count: 3 },
+    );
+    const ds = createDs();
+    const today: number[] = [];
+    const center: number[] = [];
+    const unsubscribeToday = ds.approvals.onPendingChange?.((n) => today.push(n));
+    const unsubscribeCenter = ds.approvals.onPendingChange?.((n) => center.push(n));
+    await flush();
+    expect(h.state.channels).toHaveLength(1);
+    expect(h.state.channels[0]?.subscribed).toBe(true);
+
+    // one postgres_changes event fans out to every listener
+    h.state.channels[0]?.callbacks[0]?.({});
+    await flush();
+    expect(today).toEqual([2]);
+    expect(center).toEqual([2]);
+
+    // the Approval Center unmounts: the channel stays up for the Today tab badge
+    unsubscribeCenter?.();
+    await flush();
+    expect(h.state.removedChannels).toBe(0);
+    h.state.channels[0]?.callbacks[0]?.({});
+    await flush();
+    expect(today).toEqual([2, 3]);
+    expect(center).toEqual([2]);
+
+    // the last subscriber leaves → the channel is removed; the next one gets a fresh channel
+    unsubscribeToday?.();
+    await flush();
+    expect(h.state.removedChannels).toBe(1);
+    const unsubscribeAgain = ds.approvals.onPendingChange?.(() => undefined);
+    await flush();
+    expect(h.state.channels).toHaveLength(2);
+    unsubscribeAgain?.();
+    await flush();
+    expect(h.state.removedChannels).toBe(2);
+  });
+
+  it('never opens a channel for a subscriber that unsubscribed before the session resolved', async () => {
+    const ds = createDs();
+    const unsubscribe = ds.approvals.onPendingChange?.(() => undefined);
+    unsubscribe?.();
+    await flush();
+    expect(h.state.channels).toHaveLength(0);
+    expect(h.state.removedChannels).toBe(0);
   });
 
   it('uploads capture files to a user-scoped path in the private bucket', async () => {
@@ -867,6 +1065,33 @@ describe('mappers', () => {
       learn_from_interactions: false,
       android_allowed_packages: ['com.whatsapp'],
     });
+  });
+
+  it('gives a device-calendar account the same external id whatever its calendar list', () => {
+    const before = deviceAccountToRow('user-1', {
+      provider: 'device',
+      displayName: 'Takvim',
+      calendarIds: ['cal-1'],
+      deviceId: 'android-id',
+    });
+    const after = deviceAccountToRow('user-1', {
+      provider: 'device',
+      displayName: 'Takvim',
+      calendarIds: ['cal-2', 'cal-1', 'cal-3'],
+      deviceId: 'android-id',
+    });
+    expect(before.external_account_id).toBe('device/android-id');
+    expect(after.external_account_id).toBe(before.external_account_id);
+    expect(after.granted_scopes).toEqual(['cal-1', 'cal-2', 'cal-3']);
+    // the legacy `device:<calendar ids>` encoding is never produced again
+    expect(after.external_account_id?.startsWith('device:')).toBe(false);
+    expect(
+      deviceAccountToRow('user-1', {
+        provider: 'apple',
+        displayName: 'Apple Takvim',
+        calendarIds: [],
+      }).external_account_id,
+    ).toBe('device');
   });
 
   it('fills defaults for partial jsonb columns', () => {

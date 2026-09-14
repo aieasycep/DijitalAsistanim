@@ -6,8 +6,23 @@ import { count, exec, read, write, type SupabaseContext } from './client';
 import { reminderStatusToRow, toApprovalAction, toReminder } from './mappers';
 import type { ApprovalActionRow, ReminderRow } from './rows';
 
+type PendingListener = (count: number) => void;
+
+/**
+ * One realtime channel per user, shared by every `onPendingChange` subscriber. realtime-js hands back the
+ * EXISTING channel for a topic, so a per-subscriber `removeChannel` (e.g. the Approval Center unmounting)
+ * would also silence the Today tab's badge. The channel is created for the first listener, fans out to all
+ * of them and is removed only when the last one unsubscribes.
+ */
+interface SharedPendingChannel {
+  userId: string;
+  channel: RealtimeChannel;
+  listeners: Set<PendingListener>;
+}
+
 export function createApprovalsApi(ctx: SupabaseContext): ApprovalsApi {
   const approvals = () => ctx.table<ApprovalActionRow>('approval_actions');
+  let shared: SharedPendingChannel | null = null;
 
   async function loadApproval<T extends ApprovalActionType>(userId: string, id: string) {
     return toApprovalAction<T>(
@@ -25,6 +40,49 @@ export function createApprovalsApi(ctx: SupabaseContext): ApprovalsApi {
           .eq('status', 'pending'),
       );
     });
+
+  function teardown(entry: SharedPendingChannel): void {
+    if (shared === entry) shared = null;
+    void ctx.client.removeChannel(entry.channel);
+  }
+
+  /** Re-reads the pending count and fans it out to every listener of the shared channel. */
+  async function broadcast(entry: SharedPendingChannel): Promise<void> {
+    let n: number;
+    try {
+      n = await pendingCount();
+    } catch {
+      return; // Transient read failure; the next change event triggers another refresh.
+    }
+    if (shared !== entry) return;
+    for (const listener of [...entry.listeners]) listener(n);
+  }
+
+  function acquire(userId: string): SharedPendingChannel {
+    if (shared && shared.userId === userId) return shared;
+    if (shared) teardown(shared); // another user signed in on this client
+    const entry: SharedPendingChannel = {
+      userId,
+      listeners: new Set(),
+      channel: ctx.client.channel(`approvals:${userId}`),
+    };
+    entry.channel
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'approval_actions',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          void broadcast(entry);
+        },
+      )
+      .subscribe();
+    shared = entry;
+    return entry;
+  }
 
   return {
     listApprovals: (input) =>
@@ -59,41 +117,23 @@ export function createApprovalsApi(ctx: SupabaseContext): ApprovalsApi {
 
     /**
      * Realtime `postgres_changes` on the user's approval_actions rows; every change re-reads the pending count.
-     * When realtime is unavailable (offline, no session, channel error) this degrades to a silent no-op and the
-     * UI keeps using `pendingCount()` on focus / interval.
+     * All subscribers share one channel per user (see `SharedPendingChannel`). When realtime is unavailable
+     * (offline, no session, channel error) this degrades to a silent no-op and the UI keeps using
+     * `pendingCount()` on focus / interval.
      */
     onPendingChange(cb) {
       let active = true;
-      let channel: RealtimeChannel | null = null;
-
-      const refresh = async (): Promise<void> => {
-        try {
-          const n = await pendingCount();
-          if (active) cb(n);
-        } catch {
-          // Transient read failure; the next change event triggers another refresh.
-        }
+      let entry: SharedPendingChannel | null = null;
+      const listener: PendingListener = (n) => {
+        if (active) cb(n);
       };
 
       void (async () => {
         try {
           const userId = await ctx.requireUserId();
           if (!active) return;
-          channel = ctx.client
-            .channel(`approvals:${userId}`)
-            .on(
-              'postgres_changes',
-              {
-                event: '*',
-                schema: 'public',
-                table: 'approval_actions',
-                filter: `user_id=eq.${userId}`,
-              },
-              () => {
-                void refresh();
-              },
-            )
-            .subscribe();
+          entry = acquire(userId);
+          entry.listeners.add(listener);
         } catch {
           // Realtime not available right now — nothing to tear down, pendingCount() still works.
         }
@@ -101,10 +141,10 @@ export function createApprovalsApi(ctx: SupabaseContext): ApprovalsApi {
 
       return () => {
         active = false;
-        if (channel) {
-          void ctx.client.removeChannel(channel);
-          channel = null;
-        }
+        if (!entry) return;
+        entry.listeners.delete(listener);
+        if (entry.listeners.size === 0 && shared === entry) teardown(entry);
+        entry = null;
       };
     },
   };

@@ -14,6 +14,25 @@ export function absoluteUrl(path: string): string {
   return `${publicEnv.webUrl.replace(/\/$/, '')}${path}`;
 }
 
+/**
+ * The URL that renders `path` in `lang` for a cookie-less client. Turkish is the bare URL; English
+ * carries `?lang=en`, which `src/proxy.ts` turns into the `x-da-lang` header (no redirect).
+ */
+export function langUrl(path: string, lang: Lang): string {
+  const url = absoluteUrl(path);
+  if (lang !== 'en') return url;
+  return `${url}${url.includes('?') ? '&' : '?'}lang=en`;
+}
+
+/** hreflang map shared by page metadata and the sitemap; `x-default` is the Turkish URL. */
+export function languageAlternates(path: string): Record<string, string> {
+  return {
+    tr: langUrl(path, 'tr'),
+    en: langUrl(path, 'en'),
+    'x-default': langUrl(path, 'tr'),
+  };
+}
+
 export function pageMetadata({
   lang,
   path,
@@ -21,17 +40,15 @@ export function pageMetadata({
   description,
   noindex = false,
 }: PageMeta): Metadata {
-  const url = absoluteUrl(path);
+  // Canonical points at the URL that renders the language actually served, so a cookie-driven
+  // English render still declares the stable `?lang=en` URL as its canonical.
+  const url = langUrl(path, lang);
   return {
     title,
     description,
     alternates: {
       canonical: url,
-      languages: {
-        tr: url,
-        en: `${url}?lang=en`,
-        'x-default': url,
-      },
+      languages: languageAlternates(path),
     },
     openGraph: {
       title,

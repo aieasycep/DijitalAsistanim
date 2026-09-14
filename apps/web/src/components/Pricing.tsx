@@ -55,7 +55,7 @@ export function PricingPlans({ t }: { t: Dictionary }) {
         <Link href={ctaHref()} className="btn btn-primary btn-block">
           {p.ctaPro}
         </Link>
-        <p className="caption plan-legal">{p.trialNote}</p>
+        {p.trialNote && <p className="caption plan-legal">{p.trialNote}</p>}
       </div>
     </div>
   );

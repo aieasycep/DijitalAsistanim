@@ -1,5 +1,5 @@
 import type { Contact, PersonIntelligence, VipPerson } from '@da/domain';
-import { vipUpsertSchema } from '@da/validation';
+import { vipUpsertSchema, z } from '@da/validation';
 import type { PeopleApi } from '../../datasource';
 import type { DemoContext } from '../context';
 import { reinforcePreference } from '../core/learning';
@@ -7,6 +7,11 @@ import { eventsForContact, getContact, threadsForContact, threadSource } from '.
 import type { DemoState } from '../state';
 import { fold } from '../text';
 import { notFound, validate } from '../validate';
+
+const vipPatchSchema = z.object({
+  notifyAlways: z.boolean().optional(),
+  relation: vipUpsertSchema.shape.relation,
+});
 
 function addVipCore(
   ctx: DemoContext,
@@ -181,6 +186,18 @@ export function createPeopleApi(ctx: DemoContext): PeopleApi {
       ctx.run(() => {
         const clean = validate(vipUpsertSchema, input);
         return ctx.store.mutate((s) => ({ ...addVipCore(ctx, s, clean) }));
+      }),
+    updateVip: (vipId, patch) =>
+      ctx.run(() => {
+        const clean = validate(vipPatchSchema, patch);
+        return ctx.store.mutate((s) => {
+          const vip = s.vips.find((v) => v.id === vipId);
+          if (!vip) throw notFound('VIP', vipId);
+          if (clean.notifyAlways !== undefined) vip.notifyAlways = clean.notifyAlways;
+          if (clean.relation !== undefined) vip.relation = clean.relation?.trim() || null;
+          vip.updatedAt = ctx.nowIso();
+          return { ...vip };
+        });
       }),
     removeVip: (vipId) =>
       ctx.run(() => {

@@ -8,10 +8,24 @@ function clean(value: string | undefined): string | undefined {
   return v && v.length > 0 ? v : undefined;
 }
 
+/** Positive integer or null. Anything else (unset, empty, 0, negative, non-numeric) means null. */
+function positiveInt(value: string | undefined): number | null {
+  const v = clean(value);
+  if (!v || !/^\d+$/.test(v)) return null;
+  const n = Number(v);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+
 export const publicEnv = {
   webUrl: clean(process.env.NEXT_PUBLIC_WEB_URL) ?? 'https://dijitalasistan.app',
   appStoreUrl: clean(process.env.NEXT_PUBLIC_APP_STORE_URL),
   playStoreUrl: clean(process.env.NEXT_PUBLIC_PLAY_STORE_URL),
+  /**
+   * Length of the Pro free trial in days — the single source for every trial mention on the site.
+   * A trial only exists when the App Store / Google Play product carries an introductory offer, so
+   * set this only once that offer is live; null (unset/empty/0) removes all trial copy.
+   */
+  trialDays: positiveInt(process.env.NEXT_PUBLIC_TRIAL_DAYS),
 } as const;
 
 export function serverEnv() {

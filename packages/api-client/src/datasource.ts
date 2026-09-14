@@ -163,11 +163,17 @@ export interface AccountsApi {
     accountId?: string;
     error?: string;
   }): Promise<ConnectedAccount | null>;
-  /** Device calendars (EventKit / Android provider) are registered as accounts of provider 'apple' | 'device'. */
+  /**
+   * Device calendars (EventKit / Android provider) are registered as accounts of provider 'apple' | 'device'.
+   * The account is keyed on the stable per-install `deviceId` (never on the calendar list, which changes when
+   * the user adds or removes a calendar); `calendarIds` are stored on the account (`grantedScopes`).
+   */
   registerDeviceCalendar(input: {
     provider: 'apple' | 'device';
     displayName: string;
     calendarIds: string[];
+    /** Stable per-install identifier (see `getDeviceId()` in the app); omitted → one account per provider. */
+    deviceId?: string;
   }): Promise<ConnectedAccount>;
   updateControls(accountId: UUID, controls: Partial<DataSourceControls>): Promise<ConnectedAccount>;
   setPrimary(accountId: UUID): Promise<void>;
@@ -326,6 +332,11 @@ export interface PeopleApi {
     relation?: string | null;
     notifyAlways?: boolean;
   }): Promise<VipPerson>;
+  /** Edits an existing VIP in place ("Her zaman bildir", relation); never creates a second row. */
+  updateVip(
+    vipId: UUID,
+    patch: { notifyAlways?: boolean; relation?: string | null },
+  ): Promise<VipPerson>;
   removeVip(vipId: UUID): Promise<void>;
   setVip(contactId: UUID, isVip: boolean): Promise<void>;
 }

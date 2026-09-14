@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// No-dead-button policy: fails on TODO/FIXME/"coming soon"/placeholder markers and on empty press handlers.
+// No-dead-button policy: fails on TODO/FIXME/"coming soon"/placeholder markers, on empty press handlers and
+// on forbidden user-facing copy (end-to-end encryption claims).
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,13 +43,20 @@ const EMPTY_HANDLERS = [
   },
 ];
 
-function walk(dir, out = []) {
+// User-facing copy must never claim (or even discuss) end-to-end encryption — the product does not offer it.
+const COPY_DIRS = ['packages/i18n/src/locales', 'apps/web/src/i18n', 'apps/mobile/assets/locales'];
+const COPY_EXT = new Set(['.json', '.ts', '.tsx']);
+const FORBIDDEN_COPY = [
+  { name: 'end-to-end encryption claim', re: /u[çc]tan\s+uca|end[\s-]to[\s-]end/i },
+];
+
+function walk(dir, out = [], ext = EXT) {
   for (const entry of readdirSync(dir)) {
     if (IGNORE_DIRS.has(entry)) continue;
     const full = path.join(dir, entry);
     const st = statSync(full);
-    if (st.isDirectory()) walk(full, out);
-    else if (EXT.has(path.extname(entry))) out.push(full);
+    if (st.isDirectory()) walk(full, out, ext);
+    else if (ext.has(path.extname(entry))) out.push(full);
   }
   return out;
 }
@@ -65,10 +73,22 @@ for (const file of walk(ROOT)) {
   });
 }
 
+for (const dir of COPY_DIRS) {
+  for (const file of walk(path.join(ROOT, dir), [], COPY_EXT)) {
+    const rel = path.relative(ROOT, file);
+    const lines = readFileSync(file, 'utf8').split('\n');
+    lines.forEach((line, i) => {
+      for (const { name, re } of FORBIDDEN_COPY) {
+        if (re.test(line)) problems.push(`${rel}:${i + 1}: ${name}`);
+      }
+    });
+  }
+}
+
 if (problems.length) {
   console.error(
     'Dead-code / placeholder check failed:\n' + problems.map((p) => ` - ${p}`).join('\n'),
   );
   process.exit(1);
 }
-console.log('✓ no TODO/FIXME/placeholder markers or empty handlers');
+console.log('✓ no TODO/FIXME/placeholder markers, empty handlers or forbidden copy');

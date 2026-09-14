@@ -3,7 +3,7 @@ import { Faq } from '@/components/Faq';
 import { GiftIcon } from '@/components/Icons';
 import { PricingPlans, PricingTable } from '@/components/Pricing';
 import { getDictionary } from '@/i18n';
-import { getLang, getPageContext, type SearchParams } from '@/i18n/server';
+import { getLang, getPageContext } from '@/i18n/server';
 import { pageMetadata } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,12 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function PricingPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const { t } = await getPageContext('/pricing', await searchParams);
+export default async function PricingPage() {
+  const { t } = await getPageContext();
   const pricingFaq = t.faq.items.filter((item) => /plan|deneme|trial|free/i.test(item.q));
 
   return (

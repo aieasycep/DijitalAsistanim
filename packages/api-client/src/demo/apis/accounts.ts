@@ -6,6 +6,7 @@ import type { DemoContext } from '../context';
 import { emitPending } from '../core/approvals';
 import { appendAudit } from '../core/audit';
 import { syncConflicts } from '../core/calendar';
+import { deviceAccountExternalId } from '../../supabase/mappers';
 import { DEFAULT_CONTROLS, GOOGLE_READ_SCOPES } from '../fixtures/accounts';
 import type { DemoState, PendingOAuth } from '../state';
 import { notFound, validate } from '../validate';
@@ -254,18 +255,25 @@ export function createAccountsApi(ctx: DemoContext): AccountsApi {
           return { ...account };
         });
       }),
+    /**
+     * Keyed on (provider, external id) exactly like the Supabase adapter: the external id is the stable
+     * per-install device id (`device/<id>`, or `device` when the caller has none), the calendar ids live in
+     * `grantedScopes`. Re-registering with a different calendar list updates the same account.
+     */
     registerDeviceCalendar: (input) =>
       ctx.run(() =>
         ctx.store.mutate((s) => {
           const now = ctx.nowIso();
+          const externalAccountId = deviceAccountExternalId(input.deviceId);
+          const calendarIds = [...new Set(input.calendarIds)].sort();
           const existing = s.accounts.find(
-            (a) => a.provider === input.provider && a.externalAccountId === 'device',
+            (a) => a.provider === input.provider && a.externalAccountId === externalAccountId,
           );
           if (existing) {
             existing.deletedAt = null;
             existing.status = 'active';
             existing.displayName = input.displayName;
-            existing.grantedScopes = [...input.calendarIds];
+            existing.grantedScopes = calendarIds;
             existing.lastSyncAt = now;
             existing.updatedAt = now;
             return { ...existing };
@@ -275,11 +283,11 @@ export function createAccountsApi(ctx: DemoContext): AccountsApi {
             userId: ctx.userId,
             provider: input.provider,
             kinds: ['calendar'],
-            externalAccountId: 'device',
+            externalAccountId,
             displayName: input.displayName,
             email: null,
             status: 'active',
-            grantedScopes: [...input.calendarIds],
+            grantedScopes: calendarIds,
             controls: {
               ...DEFAULT_CONTROLS,
               readEmail: false,

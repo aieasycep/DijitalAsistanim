@@ -1,5 +1,6 @@
 import { type MetadataRoute } from 'next';
-import { absoluteUrl } from '@/lib/seo';
+import { LANGS } from '@/i18n';
+import { languageAlternates, langUrl } from '@/lib/seo';
 
 const ROUTES: {
   path: string;
@@ -15,16 +16,16 @@ const ROUTES: {
   { path: '/data-deletion', priority: 0.4, changeFrequency: 'yearly' },
 ];
 
+/** One entry per language for every route, each carrying the full hreflang set (Google's guidance). */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date('2026-09-05T00:00:00Z');
-  return ROUTES.map((r) => {
-    const url = absoluteUrl(r.path);
-    return {
-      url,
+  const lastModified = new Date('2026-09-13T00:00:00Z');
+  return ROUTES.flatMap((r) =>
+    LANGS.map((lang) => ({
+      url: langUrl(r.path, lang),
       lastModified,
       changeFrequency: r.changeFrequency,
       priority: r.priority,
-      alternates: { languages: { tr: url, en: `${url}?lang=en` } },
-    };
-  });
+      alternates: { languages: languageAlternates(r.path) },
+    })),
+  );
 }

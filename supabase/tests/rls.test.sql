@@ -1,7 +1,7 @@
 -- pgTAP · Row Level Security & server-side guards
 -- Runs after seed.sql. User 1 = demo user "Yunus", user 2 = another user; nothing may leak across.
 begin;
-select plan(86);
+select plan(96);
 
 create or replace function pg_temp.as_user(uid uuid) returns void language plpgsql as $$
 begin
@@ -275,6 +275,29 @@ select throws_ok($$select scope from public.oauth_credentials where account_id =
 select pg_temp.as_user('00000000-0000-4000-8000-000000000002');
 select is((select count(*) from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), 0::bigint, 'other users cannot see user1 account scopes');
 select throws_ok($$select * from public.oauth_credentials where user_id = '00000000-0000-4000-8000-000000000002'$$, '42501', null, 'oauth_credentials are invisible to their owner too');
+
+-- ---------------------------------------------------------------------------
+-- 12. Push tokens follow the signed-in user (register_push_token) · device accounts keep their calendar list
+-- ---------------------------------------------------------------------------
+-- seed: user1 holds ExponentPushToken[demo-device-1] on device demo-device-1; user2 now signs in on that phone
+select pg_temp.as_user('00000000-0000-4000-8000-000000000002');
+select lives_ok($$select public.register_push_token('ExponentPushToken[demo-device-1]', 'demo-device-1', 'ios', 'iPhone', '1.0.0')$$, 'user2 can register the token user1 held on the same phone');
+select is((select user_id from public.push_tokens where token = 'ExponentPushToken[demo-device-1]'), '00000000-0000-4000-8000-000000000002'::uuid, 'the token now belongs to user2');
+select is((select count(*) from public.push_tokens where token = 'ExponentPushToken[demo-device-1]'), 1::bigint, 'exactly one row per token');
+select lives_ok($$select public.register_push_token('ExponentPushToken[demo-device-1]', 'demo-device-1', 'ios', 'iPhone', '1.0.1')$$, 're-registering the same token is idempotent');
+select is((select app_version from public.push_tokens where user_id = '00000000-0000-4000-8000-000000000002' and device_id = 'demo-device-1'), '1.0.1', 'upsert refreshes app_version');
+select throws_ok($$select public.register_push_token('short', 'demo-device-1', 'ios')$$, '22023', null, 'token length is validated');
+select throws_ok($$select public.register_push_token('ExponentPushToken[x]', 'demo-device-1', 'web')$$, '22023', null, 'platform must be ios/android');
+select pg_temp.as_anon();
+select throws_ok($$select public.register_push_token('ExponentPushToken[anon]', 'dev-anon', 'ios')$$, '42501', null, 'anon cannot execute register_push_token');
+
+-- device-calendar accounts: the client may update granted_scopes (calendar ids) and re-activate the row
+select pg_temp.as_user('00000000-0000-4000-8000-000000000001');
+update public.connected_accounts set granted_scopes = array['cal-1', 'cal-2'] where id = '00000000-0000-4000-8000-0000000000c2';
+select is((select granted_scopes from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c2'), array['cal-1', 'cal-2'], 'device account keeps client-written calendar ids');
+update public.connected_accounts set deleted_at = now() where id = '00000000-0000-4000-8000-0000000000c2';
+update public.connected_accounts set deleted_at = null where id = '00000000-0000-4000-8000-0000000000c2';
+select is((select status::text from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c2'), 'active', 're-registered device account is active again');
 
 select * from finish();
 rollback;

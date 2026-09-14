@@ -2,7 +2,7 @@ import { type Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRightIcon } from '@/components/Icons';
 import { getDictionary } from '@/i18n';
-import { getLang, getPageContext, type SearchParams } from '@/i18n/server';
+import { getLang, getPageContext } from '@/i18n/server';
 import { SITE } from '@/lib/env';
 import { pageMetadata } from '@/lib/seo';
 
@@ -17,12 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function SupportPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const { t } = await getPageContext('/support', await searchParams);
+export default async function SupportPage() {
+  const { t } = await getPageContext();
   const s = t.supportPage;
   const links = [
     { href: '/#how', label: t.nav.howItWorks },

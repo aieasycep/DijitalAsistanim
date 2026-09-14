@@ -8,6 +8,7 @@ import {
   toLearnedPreference,
   toPriorityRule,
   toVipPerson,
+  vipPatchToRow,
   vipToRow,
 } from './mappers';
 import type { ContactRow, LearnedPreferenceRow, PriorityRuleRow, VipPersonRow } from './rows';
@@ -60,6 +61,21 @@ export function createPeopleApi(ctx: SupabaseContext): PeopleApi {
         const row = await exec(vips().insert(vipToRow(userId, input)).select('*').single());
         if (row.contact_id) await setContactVip(userId, row.contact_id, true);
         return toVipPerson(row);
+      }),
+
+    /**
+     * Updates the existing row in place. Re-inserting (as `addVip` would) collides with the partial unique
+     * indexes on (user_id, contact_id) / (user_id, lower(email)) and surfaces as `conflict`.
+     */
+    updateVip: (vipId, patch) =>
+      write(async () => {
+        const userId = await ctx.requireUserId();
+        const row = vipPatchToRow(patch);
+        const scoped = () => vips().select('*').eq('user_id', userId).eq('id', vipId).single();
+        if (Object.keys(row).length === 0) return toVipPerson(await exec(scoped()));
+        return toVipPerson(
+          await exec(vips().update(row).eq('user_id', userId).eq('id', vipId).select('*').single()),
+        );
       }),
 
     removeVip: (vipId) =>

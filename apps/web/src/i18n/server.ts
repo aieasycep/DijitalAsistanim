@@ -1,51 +1,27 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import {
-  DEFAULT_LANG,
-  LANG_COOKIE,
-  getDictionary,
-  isLang,
-  type Dictionary,
-  type Lang,
-} from './index';
+import { cookies, headers } from 'next/headers';
+import { getDictionary, type Dictionary, type Lang } from './index';
+import { DEFAULT_LANG, isLang, LANG_COOKIE, LANG_HEADER } from './lang';
 
 export type SearchParams = Record<string, string | string[] | undefined>;
 
-/** Language from the persisted cookie (layout, metadata). */
-export async function getLang(): Promise<Lang> {
-  const store = await cookies();
-  const value = store.get(LANG_COOKIE)?.value;
-  return isLang(value) ? value : DEFAULT_LANG;
-}
-
-function firstValue(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
-
 /**
- * Language for a page. A `?lang=` query param is persisted through the `/lang` route handler
- * (which sets the cookie and redirects back to the clean URL) so that the whole document —
- * including <html lang> — renders consistently from one source.
+ * Language of the current request, in priority order:
+ * 1. `x-da-lang`, which `src/proxy.ts` derives from an explicit `?lang=` search param — this makes
+ *    `/path?lang=en` a stable, cookie-less URL that renders English directly (crawlers, hreflang,
+ *    sitemap) without any redirect;
+ * 2. the `da_lang` cookie, written only by the `/lang` toggle;
+ * 3. Turkish.
+ * Layout, metadata and pages all read this, so `<html lang>` and the copy always agree.
  */
-export async function resolveLang(pathname: string, searchParams: SearchParams): Promise<Lang> {
-  const requested = firstValue(searchParams.lang);
-  if (isLang(requested)) {
-    const rest = new URLSearchParams();
-    for (const [key, value] of Object.entries(searchParams)) {
-      if (key === 'lang' || value === undefined) continue;
-      for (const v of Array.isArray(value) ? value : [value]) rest.append(key, v);
-    }
-    const query = rest.toString();
-    const next = query ? `${pathname}?${query}` : pathname;
-    redirect(`/lang?to=${requested}&next=${encodeURIComponent(next)}`);
-  }
-  return getLang();
+export async function getLang(): Promise<Lang> {
+  const [hdrs, store] = await Promise.all([headers(), cookies()]);
+  const fromUrl = hdrs.get(LANG_HEADER);
+  if (isLang(fromUrl)) return fromUrl;
+  const fromCookie = store.get(LANG_COOKIE)?.value;
+  return isLang(fromCookie) ? fromCookie : DEFAULT_LANG;
 }
 
-export async function getPageContext(
-  pathname: string,
-  searchParams: SearchParams,
-): Promise<{ lang: Lang; t: Dictionary }> {
-  const lang = await resolveLang(pathname, searchParams);
+export async function getPageContext(): Promise<{ lang: Lang; t: Dictionary }> {
+  const lang = await getLang();
   return { lang, t: getDictionary(lang) };
 }

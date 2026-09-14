@@ -28,16 +28,8 @@ export interface DeviceExecutionResult {
   reason?: string;
 }
 
-/** Calendar identifiers registered for a device account (Supabase encodes them in externalAccountId). */
-export function deviceCalendarIds(
-  account: Pick<ConnectedAccount, 'externalAccountId' | 'grantedScopes'>,
-): string[] {
-  if (account.externalAccountId.startsWith('device:'))
-    return account.externalAccountId
-      .slice('device:'.length)
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
+/** Calendar identifiers registered for a device account (kept in grantedScopes by both adapters). */
+export function deviceCalendarIds(account: Pick<ConnectedAccount, 'grantedScopes'>): string[] {
   return account.grantedScopes.filter(Boolean);
 }
 

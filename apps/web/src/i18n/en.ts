@@ -18,7 +18,8 @@ export const en: Dictionary = {
     language: 'Language',
     switchTo: 'Türkçe',
     switchToLang: 'tr',
-    home: 'Home',
+    menu: 'Menu',
+    siteNavigation: 'Site navigation',
   },
   hero: {
     kicker: 'Personal assistant for iOS and Android',
@@ -247,8 +248,7 @@ export const en: Dictionary = {
     annualDetail: '124 TL per month · save 38%',
     bestValue: 'Best value',
     perMonthLabel: 'month',
-    trialNote:
-      '7-day free trial — subject to store terms. We remind you 24 hours before the trial ends; cancel any time.',
+    trialNote: null,
     storeNote:
       'Subscriptions are purchased and managed through the App Store or Google Play. Prices include VAT and may differ by store currency.',
     tableFeature: 'Feature',
@@ -264,7 +264,7 @@ export const en: Dictionary = {
       { label: 'Advanced planning', free: '—', pro: '✓' },
       { label: 'Assistant questions', free: '10 / day', pro: '300 / day' },
     ],
-    ctaPro: 'Try Pro free for 7 days',
+    ctaPro: 'Go Pro',
     ctaFree: 'Start with Free',
     included: 'Included in Free',
     proIncludes: [
@@ -298,12 +298,13 @@ export const en: Dictionary = {
         a: 'One mailbox and one calendar connection, a briefing every morning, 10 assistant questions a day and the core of mail intelligence. No credit card, no time limit.',
       },
       {
-        q: 'How does the trial work?',
-        a: 'Pro plans come with a 7-day free trial; trial terms follow App Store and Google Play rules. We remind you 24 hours before it ends. Cancel and you pay nothing; otherwise the plan you chose starts.',
+        topic: 'trial',
+        q: 'Is there a free trial?',
+        a: 'A free trial is offered only when the Pro product on the App Store or Google Play carries an introductory offer; if one exists, its length and terms are shown by the store on the purchase screen. Without one you move to Pro directly; the Free plan stays free with no time limit.',
       },
       {
-        q: 'Is my data end-to-end encrypted?',
-        a: 'Data is encrypted in transit (TLS) and at rest; OAuth tokens are encrypted separately. To produce summaries our servers need to process the content, so this is not end-to-end encryption and we do not claim it is.',
+        q: 'How is my data encrypted?',
+        a: 'Data is encrypted with TLS in transit and at the disk level at rest; OAuth tokens are additionally encrypted at the application level. To produce summaries and briefings our servers process the content, which means the content is readable on our servers while it is being processed.',
       },
       {
         q: 'Is my data used to train AI models?',
@@ -314,6 +315,16 @@ export const en: Dictionary = {
         a: 'In the app, go to Settings → Privacy & Security → Delete my account. Connection permissions are revoked and all data and subscription mappings are permanently deleted within 30 days. You can also write to gizlilik@dijitalasistan.app.',
       },
     ],
+  },
+  trial: {
+    ctaPro: 'Try Pro free for {{trialDays}} days',
+    note: '{{trialDays}}-day free trial; first subscription only, subject to store terms. Cancel any time.',
+    faqAnswer:
+      'Pro plans come with a {{trialDays}}-day free trial; it applies to your first subscription only and its terms follow App Store and Google Play rules. Cancel during the trial and you pay nothing; otherwise the plan you chose starts.',
+    pricingDescription:
+      'Dijital Asistan Free and Pro plans: 199 TL/month or 1,490 TL/year with a {{trialDays}}-day free trial. Transparent comparison, no hidden terms.',
+    billingBullet:
+      'The free trial ({{trialDays}} days) is offered only on your first subscription and where store terms allow. Cancel during the trial and you are not charged; how far ahead you must cancel is set by the store’s rules.',
   },
   finalCta: {
     title: 'Have your briefing ready tomorrow morning.',
@@ -351,18 +362,17 @@ export const en: Dictionary = {
   pricingPage: {
     title: 'Pricing',
     description:
-      'Dijital Asistan Free and Pro plans: 199 TL/month or 1,490 TL/year with a 7-day free trial. Transparent comparison, no hidden terms.',
+      'Dijital Asistan Free and Pro plans: 199 TL/month or 1,490 TL/year. Transparent comparison, no hidden terms.',
     billingTitle: 'Billing, renewal and cancellation',
     billing: [
       'Pro subscriptions are purchased through the App Store (iOS) or Google Play (Android); payment is charged to your store account.',
-      'The free trial is offered only on your first subscription and where store terms allow. Cancel at least 24 hours before the trial ends and you are not charged.',
       'The subscription renews automatically at the end of each period and continues at the same price until you cancel. Price changes are announced in advance as required by store rules.',
       'Cancellations and refunds follow store policies: App Store subscription settings on iOS, the Google Play subscriptions section on Android. The “Manage subscription” link in the app takes you to the right place.',
       'If you move from Pro back to Free, your connected accounts and data stay; only Pro-exclusive features switch off.',
     ],
     referralTitle: 'Invite a friend',
     referralBody:
-      'When someone you invite receives their first briefing, you both get 14 days of Pro. Find your invite link in the app under Settings → Invite a friend.',
+      'The moment your invite code is used on a new account (opened within the last 7 days), you both get {{referralDays}} days of Pro. Each account can use a code once; one invite code can be used at most 20 times in 30 days. Find your invite link in the app under Settings → Invite a friend.',
     faqTitle: 'Pricing questions',
   },
   supportPage: {
@@ -387,12 +397,12 @@ export const en: Dictionary = {
         body: 'Make sure notifications are enabled in system settings and that the category is on under Settings → Notifications in the app. Quiet hours and “Only notify if it really matters” reduce notifications by design.',
       },
       {
-        title: 'Subscription, trial and refunds',
+        title: 'Subscription and refunds',
         body: 'Subscriptions are managed through the App Store or Google Play. Settings → Subscription → Manage subscription takes you to the store. If a purchase is missing, try “Restore purchases”.',
       },
       {
         title: 'I want to download or delete my data',
-        body: 'Under Settings → Privacy & Security you can download your data as JSON, delete your analysis history or close your account entirely. Details are on the Data Deletion page.',
+        body: 'Under Settings → Privacy & Security you can download your data as JSON (Download my data), delete your analysis history (Delete history) or close your account entirely (Delete my account). Details are on the Data Deletion page.',
       },
     ],
     linksTitle: 'Useful links',
@@ -549,7 +559,7 @@ export const en: Dictionary = {
     revokeSteps: [
       {
         title: 'From the app',
-        body: 'Settings → Connections → choose the account → Remove connection. Data from that account is cleaned up according to your retention setting; you can also delete your analysis history immediately.',
+        body: 'Settings → Connections → choose the account → Disconnect. Data from that account is cleaned up according to your retention setting; you can also delete your analysis history immediately.',
       },
       {
         title: 'From your Google account',
@@ -576,7 +586,7 @@ export const en: Dictionary = {
     orInstall: 'Don’t have the app yet?',
     referralTitle: 'A friend invited you.',
     referralBody:
-      'Install the app and use this code; after your first briefing you both get 14 days of Pro.',
+      'Install the app and use this code: the moment it is accepted, you both get {{referralDays}} days of Pro. The code works only on accounts opened within the last 7 days, once per account.',
     codeLabel: 'Invite code',
     autoNote: 'If you opened this on your phone, we try to open the app automatically.',
     backHome: 'Back to home',
@@ -585,6 +595,13 @@ export const en: Dictionary = {
     title: 'Page not found.',
     body: 'The page you are looking for may have moved or never existed. You can continue from the home page.',
     cta: 'Back to home',
+  },
+  errorPage: {
+    kicker: 'Error',
+    title: 'Something went wrong.',
+    body: 'An unexpected error occurred while loading the page. You can try again or go back to the home page.',
+    retry: 'Try again',
+    home: 'Back to home',
   },
   legal: {
     updatedPrefix: 'Last updated',
@@ -700,7 +717,7 @@ export const en: Dictionary = {
             'OAuth access and refresh tokens are additionally encrypted at the application level with AES-256-GCM, with regular key rotation.',
             'Row-level access rules make each user’s data visible only to that user.',
             'Critical operations such as token decryption, sending email, calendar writes and data deletion are recorded in an audit log.',
-            'The Service is not end-to-end encrypted: our servers must process the content to produce summaries.',
+            'To produce summaries, content is processed on our servers: encryption applies in transit and at rest, and the content is readable by our servers while it is being processed.',
           ],
         },
         {
@@ -779,9 +796,9 @@ export const en: Dictionary = {
           bullets: [
             'The Free plan costs nothing and includes a limited feature set. The Pro plan is offered as a monthly (199 TL / month) or annual (1,490 TL / year) subscription; current prices are shown in the store and may vary by local currency.',
             'Pro subscriptions are purchased through the App Store or Google Play; payment, renewal, cancellation and refunds are subject to the respective store’s terms.',
-            'Where available, a 7-day free trial is offered (subject to store terms). If the trial is not cancelled at least 24 hours before it ends, the selected plan is charged.',
+            'A free trial is offered only when the Pro product in the store carries an introductory offer; its length and terms are shown by the store at purchase. If the trial is not cancelled within the trial period, the selected plan is charged under the store’s rules.',
             'Subscriptions renew automatically at the end of each period. Cancelling does not affect access to Pro features until the end of the paid period.',
-            'Referral programme: when someone you invite receives their first briefing, both of you receive 14 days of Pro. The programme is limited to 6 invites per year; entitlements may be cancelled in case of abuse.',
+            'Referral programme: when your invite code is successfully used on a new account, both of you are granted {{referralDays}} days of Pro immediately; if you already have a running referral bonus, the new one starts when it ends. A code can be used only on accounts opened within the last 7 days and once per account; you cannot use your own code, and a code cannot be used from a device previously associated with your account. One invite code can be used at most 20 times in any 30-day period; entitlements may be cancelled in case of abuse.',
           ],
         },
         {
@@ -847,7 +864,7 @@ export const en: Dictionary = {
         {
           title: 'Request deletion by email',
           paragraphs: [
-            'If you cannot access the app, send an email with the subject “Account deletion request” to gizlilik@dijitalasistan.app from the address registered to your account. To verify your identity we send a confirmation link to that address; deletion starts once you confirm.',
+            'If you cannot access the app, send an email with the subject “Account deletion request” to gizlilik@dijitalasistan.app from the address registered to your account. Our support team replies to that email to confirm the request really came from the registered address; once you confirm in your reply, they carry out the deletion manually and let you know in the same thread when it is done. No automated links or forms are involved.',
           ],
         },
         {
@@ -871,19 +888,19 @@ export const en: Dictionary = {
         {
           title: 'How long it takes',
           paragraphs: [
-            'Your account is deactivated and syncing stops the moment we receive your request. All data is permanently deleted within 30 days at the latest; copies in backups are removed within the backup rotation cycle. We email you when deletion is complete.',
+            'When you delete in the app, your account, connection grants and data are deleted at the same time and syncing stops at that moment. Requests sent by email are carried out manually after the support team has confirmed the request came from the registered email address; we usually reply within 1–2 business days. In both cases, copies in backups are removed within the backup rotation cycle, within 30 days at the latest.',
           ],
         },
         {
           title: 'If you only want to delete your history',
           paragraphs: [
-            'You can wipe your analysis history without closing your account: Settings → Privacy & Security → Delete analysis history. Summaries, priority decisions and the memory index are deleted; your connections and settings remain. Under Data retention you can also choose 30 days, 90 days, 1 year or “until I delete it”.',
+            'You can wipe your analysis history without closing your account: Settings → Privacy & Security → Delete history. Summaries, priority decisions and the memory index are deleted; your connections and settings remain. Under Data retention you can also choose 30 days, 90 days, 1 year or “until I delete it”.',
           ],
         },
         {
           title: 'If you want to remove a connection',
           paragraphs: [
-            'To remove access for a single account, use Settings → Connections → choose the account → Remove connection, or remove Dijital Asistan’s access from your Google/Microsoft account settings. Details are on the OAuth Permissions page.',
+            'To remove access for a single account, use Settings → Connections → choose the account → Disconnect, or remove Dijital Asistan’s access from your Google/Microsoft account settings. Details are on the OAuth Permissions page.',
           ],
         },
         {

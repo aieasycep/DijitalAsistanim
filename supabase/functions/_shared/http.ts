@@ -59,6 +59,47 @@ export function assertMethod(req: Request, ...methods: string[]): void {
   }
 }
 
+const NUMERIC_QUERY_VALUE = /^-?\d+(\.\d+)?$/;
+
+function coerceScalar(value: string, expected: string): number | boolean | undefined {
+  if (expected === 'number' && NUMERIC_QUERY_VALUE.test(value)) return Number(value);
+  if (expected === 'boolean' && (value === 'true' || value === 'false')) return value === 'true';
+  return undefined;
+}
+
+/**
+ * Turns query parameters into the object a request schema expects. A query string only carries strings,
+ * so every value is offered to the schema verbatim first; only the keys the schema rejects with
+ * `invalid_type` because it wants a number / boolean (`limit`, `regenerate`, …) are converted. Keys typed
+ * as strings by contract — opaque cursors such as `cursor=20`, OAuth `code` / `state`, ids, dates — are
+ * therefore never turned into numbers, whatever they look like. Repeated keys keep their last value.
+ */
+export function queryToInput(
+  params: URLSearchParams,
+  schema: z.ZodTypeAny,
+): Record<string, unknown> {
+  const raw: Record<string, unknown> = {};
+  params.forEach((value, key) => {
+    raw[key] = value;
+  });
+  const first = schema.safeParse(raw);
+  if (first.success) return raw;
+  const coerced: Record<string, unknown> = { ...raw };
+  let changed = false;
+  for (const issue of first.error.issues) {
+    if (issue.code !== 'invalid_type' || issue.path.length !== 1) continue;
+    const key = issue.path[0];
+    if (typeof key !== 'string') continue;
+    const value = raw[key];
+    if (typeof value !== 'string') continue;
+    const next = coerceScalar(value, String(issue.expected));
+    if (next === undefined) continue;
+    coerced[key] = next;
+    changed = true;
+  }
+  return changed ? coerced : raw;
+}
+
 /** Parse & validate a JSON body (POST) or query params (GET) with a zod schema. */
 export async function parseInput<S extends z.ZodTypeAny>(
   req: Request,
@@ -66,15 +107,7 @@ export async function parseInput<S extends z.ZodTypeAny>(
 ): Promise<z.output<S>> {
   let raw: unknown;
   if (req.method === 'GET') {
-    const url = new URL(req.url);
-    const obj: Record<string, unknown> = {};
-    url.searchParams.forEach((v, k) => {
-      if (v === 'true') obj[k] = true;
-      else if (v === 'false') obj[k] = false;
-      else if (/^-?\d+$/.test(v) && k !== 'code' && k !== 'state') obj[k] = Number(v);
-      else obj[k] = v;
-    });
-    raw = obj;
+    raw = queryToInput(new URL(req.url).searchParams, schema);
   } else {
     const ct = req.headers.get('content-type') ?? '';
     if (ct.includes('application/json')) {
