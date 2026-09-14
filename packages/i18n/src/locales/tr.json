@@ -617,6 +617,17 @@
     "dueLabel": "Son tarih {{time}}",
     "offlineHint": "Çevrimdışı — hatırlatıcıyı bağlantı gelince ayarlayabilirsin."
   },
+  "reminders": {
+    "title": "Hatırlatıcılar",
+    "subtitle": "{{count}} planlı hatırlatıcı",
+    "count": "{{count}} hatırlatıcı",
+    "empty": "Planlı hatırlatıcı yok.",
+    "emptyBody": "Bir mail, toplantı veya görev için “Hatırlat” dediğinde burada görünür.",
+    "at": "{{day}} {{time}} · {{option}}",
+    "complete": "Tamamlandı",
+    "cancel": "İptal et",
+    "completedToast": "Hatırlatıcı tamamlandı"
+  },
   "approvals": {
     "title": "Onay Bekleyenler",
     "count": "{{count}} onay bekliyor",

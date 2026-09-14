@@ -25,7 +25,9 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: true,
       networkMode: 'offlineFirst',
     },
-    mutations: { retry: 0, networkMode: 'online' },
+    // 'always': a write must reach its mutationFn even offline so `runOrQueue` can persist it in the
+    // offline queue (with 'online' TanStack would pause it in memory and lose it when the app is killed).
+    mutations: { retry: 0, networkMode: 'always' },
   },
 });
 

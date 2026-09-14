@@ -24,6 +24,7 @@ import { PlanTimeline } from '@/features/plan/PlanTimeline';
 import { dayHeader, weekRangeLabel } from '@/features/plan/dates';
 import { usePlan, type PlanRange } from '@/features/plan/usePlan';
 import { useScheduleSuggestion } from '@/features/plan/useScheduleSuggestion';
+import { useScheduledReminderCount } from '@/features/reminders/useReminderList';
 import { trackScreen } from '@/lib/analytics';
 
 const TAB_BAR_SPACE = 84;
@@ -50,6 +51,7 @@ export default function PlanScreen() {
     () => plan.days.reduce((n, d) => n + d.commitments.length, 0),
     [plan.days],
   );
+  const reminderCount = useScheduledReminderCount();
 
   const segment = (
     <View style={styles.segment} accessibilityRole="tablist" testID="plan-segment">
@@ -179,6 +181,18 @@ export default function PlanScreen() {
                 }
                 onPress={() => router.push('/commitments')}
                 testID="plan-commitments"
+              />
+              <ListRow
+                icon="schedule"
+                title={t('reminders.title')}
+                meta={
+                  reminderCount
+                    ? t('reminders.count', { count: reminderCount })
+                    : t('reminders.empty')
+                }
+                divider
+                onPress={() => router.push('/reminders')}
+                testID="plan-reminders"
               />
             </ListGroup>
           </>

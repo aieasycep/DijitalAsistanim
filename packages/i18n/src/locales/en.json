@@ -617,6 +617,17 @@
     "dueLabel": "Due {{time}}",
     "offlineHint": "Offline — you can set the reminder once you're back online."
   },
+  "reminders": {
+    "title": "Reminders",
+    "subtitle": "{{count}} scheduled",
+    "count": "{{count}} reminders",
+    "empty": "No scheduled reminders.",
+    "emptyBody": "Reminders you set on a mail, meeting or task show up here.",
+    "at": "{{day}} {{time}} · {{option}}",
+    "complete": "Done",
+    "cancel": "Cancel",
+    "completedToast": "Reminder completed"
+  },
   "approvals": {
     "title": "Pending approvals",
     "count": "{{count}} awaiting approval",
