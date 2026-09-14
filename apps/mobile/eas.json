@@ -35,6 +35,12 @@
       "env": { "APP_ENV": "preview" },
       "android": { "buildType": "apk" }
     },
+    "demo": {
+      "extends": "preview",
+      "channel": "demo",
+      "env": { "APP_ENV": "preview", "EXPO_PUBLIC_DATA_MODE": "demo" },
+      "android": { "buildType": "apk" }
+    },
     "production": {
       "extends": "base",
       "channel": "production",

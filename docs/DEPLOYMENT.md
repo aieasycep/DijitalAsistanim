@@ -33,6 +33,7 @@ cd apps/mobile
 eas init                               # sets EXPO_PUBLIC_EAS_PROJECT_ID
 eas credentials                        # Apple signing, push key (APNs), Android keystore, FCM
 eas build --profile development --platform all      # dev client (demo mode)
+eas build --profile demo --platform android         # standalone demo APK (no backend, no credentials)
 eas build --profile preview --platform all          # internal testers (Supabase staging)
 eas build --profile production --platform all       # store builds
 eas submit --platform ios / android
