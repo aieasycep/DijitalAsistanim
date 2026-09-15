@@ -37,15 +37,19 @@ export function serverEnv() {
       .split(',')
       .map((s) => s.trim().toUpperCase())
       .filter((s) => /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(s)),
-    supportEmail: clean(process.env.SUPPORT_EMAIL) ?? 'destek@dijitalasistan.app',
-    privacyEmail: clean(process.env.PRIVACY_EMAIL) ?? 'gizlilik@dijitalasistan.app',
+    supportEmail: SITE.supportEmail,
+    privacyEmail: SITE.privacyEmail,
   };
 }
 
+/**
+ * Site identity used by the pages (server components, rendered per request). The contact addresses come from
+ * SUPPORT_EMAIL / PRIVACY_EMAIL in the server environment (deploy/ovh/.env) with the project defaults.
+ */
 export const SITE = {
   name: 'Dijital Asistan',
   legalEntity: 'Dijital Asistan',
-  supportEmail: 'destek@dijitalasistan.app',
-  privacyEmail: 'gizlilik@dijitalasistan.app',
+  supportEmail: clean(process.env.SUPPORT_EMAIL) ?? 'destek@dijitalasistan.app',
+  privacyEmail: clean(process.env.PRIVACY_EMAIL) ?? 'gizlilik@dijitalasistan.app',
   lastUpdated: '2026-09-05',
 } as const;

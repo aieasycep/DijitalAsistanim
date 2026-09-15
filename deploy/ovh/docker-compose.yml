@@ -1,0 +1,41 @@
+# Dijital Asistan web site on a single Linux host (OVH): the Next.js image built by
+# .github/workflows/web-image.yml behind Caddy, which terminates TLS with Let's Encrypt.
+# Usage (see README.md): cp .env.example .env → edit → docker compose pull && docker compose up -d
+services:
+  web:
+    image: ghcr.io/aieasycep/dijitalasistanim-web:${WEB_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - '3000'
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:-destek@dijitalasistan.app}
+      SITE_HOST: ${SITE_HOST:-dijitalasistan.app}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+volumes:
+  caddy_data:
+  caddy_config:

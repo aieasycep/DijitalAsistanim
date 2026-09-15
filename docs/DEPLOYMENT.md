@@ -101,14 +101,29 @@ deploy` and the two `alter database` settings from section 1. Minimum secrets: `
   (`APPLE_TEAM_ID`, `ANDROID_SHA256_CERT_FINGERPRINTS` from `eas credentials`).
 - Push: APNs key + FCM credentials configured in EAS; the server uses the Expo Push API (`EXPO_ACCESS_TOKEN` recommended).
 
-## 3. Web (Vercel or any Node host)
+## 3. Web
+
+### Own server (OVH) — the default
+
+`apps/web/Dockerfile` builds the site as a Next.js standalone image; `.github/workflows/web-image.yml` publishes it to
+`ghcr.io/aieasycep/dijitalasistanim-web` on every push that touches the site (tags `sha-<7>`, `<branch>`, `latest` on
+`main`). The host runs `deploy/ovh/docker-compose.yml`: the image plus Caddy, which terminates TLS with Let's Encrypt.
+Step-by-step (Docker install, DNS, registry login, first start, updates): `deploy/ovh/README.md`.
+
+- Build-time values (inlined into the pages) are repository variables read by the workflow: `NEXT_PUBLIC_WEB_URL`,
+  `NEXT_PUBLIC_APP_STORE_URL`, `NEXT_PUBLIC_PLAY_STORE_URL`, `NEXT_PUBLIC_TRIAL_DAYS` (all optional; defaults in
+  `apps/web/src/lib/env.ts`). Changing one means rebuilding the image.
+- Run-time values live in `deploy/ovh/.env` and take effect on restart: `SUPPORT_EMAIL`, `PRIVACY_EMAIL` (contact
+  addresses on the pages) and the `/.well-known/*` app-link values `APPLE_TEAM_ID`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`,
+  `ANDROID_SHA256_CERT_FINGERPRINTS`.
+
+### Vercel or any Node host (alternative)
 
 ```bash
 pnpm --filter @da/web build && pnpm --filter @da/web start
 ```
 
-Set `NEXT_PUBLIC_*`, `APPLE_TEAM_ID`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `ANDROID_SHA256_CERT_FINGERPRINTS`,
-`NEXT_PUBLIC_APP_STORE_URL`, `NEXT_PUBLIC_PLAY_STORE_URL`. Point `dijitalasistan.app` at the deployment.
+Set the same variables in the host's environment and point `dijitalasistan.app` at the deployment.
 
 ## 4. RevenueCat
 

@@ -1,9 +1,14 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ['@da/design-tokens', '@da/domain'],
+  // Self-hosted deployment (apps/web/Dockerfile): a minimal server bundle that traces the monorepo root so the
+  // workspace packages consumed from `src` are included. Vercel ignores this setting.
+  output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   async headers() {
     return [
       {
