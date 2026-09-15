@@ -1,0 +1,29 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@da/api-client": ["../../packages/api-client/src/index.ts"],
+      "@da/design-tokens": ["../../packages/design-tokens/src/index.ts"],
+      "@da/domain": ["../../packages/domain/src/index.ts"],
+      "@da/i18n": ["../../packages/i18n/src/index.ts"],
+      "@da/ui": ["../../packages/ui/src/index.ts"],
+      "@da/validation": ["../../packages/validation/src/index.ts"]
+    },
+    "types": ["jest", "react-native"]
+  },
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "src/types/*.d.ts"],
+  "exclude": ["node_modules", "ios", "android", "modules/**/android", "modules/**/ios", "maestro"]
+}

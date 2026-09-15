@@ -1,0 +1,39 @@
+# Flow B — Today → Important Email → Email Detail → Generate Reply → Approval → Send success
+appId: ${APP_ID}
+tags: [critical, flow-b]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- assertVisible:
+    text: 'ÖNCELİKLERİN'
+- tapOn:
+    text: 'Ahmet senden bugün 17:00.*'
+- assertVisible:
+    id: 'email-screen'
+- assertVisible:
+    text: 'AI ÖZETİ'
+- tapOn:
+    id: 'email-action-reply'
+- extendedWaitUntil:
+    visible:
+      id: 'reply-editor'
+    timeout: 20000
+- tapOn:
+    id: 'reply-tone-friendly'
+- extendedWaitUntil:
+    visible:
+      id: 'reply-approve'
+    timeout: 20000
+- tapOn:
+    id: 'reply-approve'
+- assertVisible:
+    text: 'AI ne yapmak istiyor?'
+- assertVisible:
+    id: 'approval-approve'
+- tapOn:
+    id: 'approval-approve'
+- extendedWaitUntil:
+    visible:
+      text: 'Tamamlandı'
+    timeout: 20000
+- assertVisible:
+    id: 'approval-status'

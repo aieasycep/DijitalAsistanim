@@ -1,0 +1,32 @@
+# Flow C — Email → Task Create → Approval → created
+appId: ${APP_ID}
+tags: [critical, flow-c]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- tapOn:
+    text: 'Ahmet senden bugün 17:00.*'
+- assertVisible:
+    id: 'email-screen'
+- tapOn:
+    id: 'email-action-task'
+- assertVisible:
+    text: 'Görev oluştur'
+- tapOn:
+    id: 'approval-approve'
+- extendedWaitUntil:
+    visible:
+      text: 'Tamamlandı'
+    timeout: 20000
+- back
+- runFlow:
+    when:
+      notVisible:
+        id: 'today-screen'
+    commands:
+      - back
+- tapOn:
+    text: 'Plan'
+- assertVisible:
+    id: 'plan-screen'
+- assertVisible:
+    text: 'Revize teklif.*'

@@ -1,0 +1,30 @@
+# Flow J — Appearance → Dark → actual dark application (checked via themed testIDs)
+appId: ${APP_ID}
+tags: [critical, flow-j]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- tapOn:
+    id: 'today-avatar'
+- assertVisible:
+    text: 'Ayarlar'
+- tapOn:
+    id: 'settings-row-appearance'
+- tapOn:
+    id: 'appearance-dark'
+- assertVisible:
+    id: 'theme-dark'
+- back
+- back
+- assertVisible:
+    id: 'today-screen'
+- assertVisible:
+    id: 'theme-dark'
+- takeScreenshot: today-dark
+- tapOn:
+    id: 'today-avatar'
+- tapOn:
+    id: 'settings-row-appearance'
+- tapOn:
+    id: 'appearance-light'
+- assertVisible:
+    id: 'theme-light'

@@ -1,0 +1,18 @@
+// Expo SDK 57 local module convention: `expo-module-gradle-plugin` applies the Kotlin plugin and
+// resolves compileSdk / minSdk / Kotlin version from the root project (`expo-build-properties`).
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.dijitalasistan'
+version = '1.0.0'
+
+android {
+  namespace "com.dijitalasistan.notificationlistener"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+    consumerProguardFiles 'proguard-rules.pro'
+  }
+}

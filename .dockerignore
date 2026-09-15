@@ -1,0 +1,19 @@
+# Build context for apps/web/Dockerfile (docker build -f apps/web/Dockerfile .)
+.git
+node_modules
+**/node_modules
+**/.next
+**/.expo
+**/.turbo
+**/dist
+**/build
+**/coverage
+apps/mobile/android
+apps/mobile/ios
+supabase/.temp
+docs/design-reference
+.env
+.env.*
+!.env.example
+**/*.log
+deploy
