@@ -28,8 +28,10 @@ COPY packages/i18n/package.json packages/i18n/
 COPY packages/server-core/package.json packages/server-core/
 COPY packages/ui/package.json packages/ui/
 COPY packages/validation/package.json packages/validation/
+# --ignore-scripts: the root workspace's tooling (deno, @sentry/cli, esbuild) ships install hooks the site does not
+# need — deno's refuses to run on musl. Next.js, sharp and everything the site imports are prebuilt packages.
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm install --frozen-lockfile --filter @da/web...
+    pnpm install --frozen-lockfile --filter @da/web... --ignore-scripts
 COPY packages/design-tokens packages/design-tokens
 COPY packages/domain packages/domain
 COPY apps/web apps/web
