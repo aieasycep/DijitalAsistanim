@@ -47,7 +47,8 @@ function RootNavigator() {
   useEffect(() => {
     if (status === 'loading') return;
     const group = segments[0] as string | undefined;
-    const inAuth = group === '(auth)';
+    // `auth/callback` (the Supabase PKCE return expo-router opens on Android) belongs to the sign-in flow too.
+    const inAuth = group === '(auth)' || group === 'auth';
     const inOnboarding = group === '(onboarding)';
     if (status === 'signedOut' && !inAuth && group !== '(marketing)') {
       router.replace('/(marketing)/welcome');

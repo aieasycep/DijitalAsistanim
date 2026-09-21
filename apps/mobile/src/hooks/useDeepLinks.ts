@@ -6,7 +6,9 @@
  *    (navigate, not push: expo-router may already have linked to the same route, and navigate re-uses it).
  *  - `oauth/<provider>` completes the account connection (works during onboarding).
  *  - `referral?code=` stores the code for the paywall/referral screen, even when signed out.
- *  - `auth/callback` finishes the Supabase PKCE / magic-link sign-in.
+ *  - `auth/callback` finishes the Supabase PKCE / magic-link sign-in (through `completeAuthCallback`, shared with
+ *    the auth session that started it and with the `auth/callback` screen expo-router opens for the same URL, so
+ *    the single-use code is exchanged once; those surfaces show the outcome, this handler only records failures).
  */
 import { useCallback, useEffect, useRef } from 'react';
 import * as Linking from 'expo-linking';
@@ -15,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { qk } from '@da/api-client';
 import { t } from '@da/i18n';
 import { useToast } from '@da/ui';
+import { completeAuthCallback as exchangeAuthCallback } from '@/features/auth/authCallback';
 import { useDataSource } from '@/hooks/useDataSource';
 import { useSessionStore } from '@/store/session';
 import { track } from '@/lib/analytics';
@@ -136,13 +139,12 @@ export function useDeepLinks(): void {
   const completeAuthCallback = useCallback(
     async (url: string) => {
       try {
-        await ds.auth.exchangeCodeForSession(url);
+        await exchangeAuthCallback(ds, url);
       } catch (e) {
         captureError(e, { where: 'useDeepLinks.authCallback' });
-        toast.show({ message: t('errors.oauthFailed'), icon: 'warning', iconTone: 'critical' });
       }
     },
-    [ds, toast],
+    [ds],
   );
 
   const dispatch = useCallback(

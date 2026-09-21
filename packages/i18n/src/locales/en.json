@@ -797,7 +797,12 @@
       "resend": "Resend code",
       "changeEmail": "Change email",
       "appleUnavailable": "Sign in with Apple is not available on this device.",
-      "demoNotice": "Demo mode · no real account needed"
+      "demoNotice": "Demo mode · no real account needed",
+      "callbackTitle": "Finishing sign-in",
+      "callbackWorking": "Verifying your account…",
+      "callbackFailed": "Sign-in didn't complete.",
+      "callbackFailedBody": "Authorization didn't finish. Go back to sign-in and try again.",
+      "backToSignIn": "Back to sign-in"
     },
     "connect": {
       "title": "Connect your digital life.",

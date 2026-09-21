@@ -793,7 +793,12 @@
       "resend": "Kodu yeniden gönder",
       "changeEmail": "E-postayı değiştir",
       "appleUnavailable": "Apple ile giriş bu cihazda kullanılamıyor.",
-      "demoNotice": "Deneme modu · gerçek hesap gerekmez"
+      "demoNotice": "Deneme modu · gerçek hesap gerekmez",
+      "callbackTitle": "Giriş tamamlanıyor",
+      "callbackWorking": "Hesabın doğrulanıyor…",
+      "callbackFailed": "Giriş tamamlanamadı.",
+      "callbackFailedBody": "Yetkilendirme tamamlanmadı. Girişe dönüp tekrar deneyebilirsin.",
+      "backToSignIn": "Girişe dön"
     },
     "connect": {
       "title": "Dijital hayatını bağla.",

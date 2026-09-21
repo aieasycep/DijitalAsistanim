@@ -1,7 +1,8 @@
 /**
  * Account creation / sign-in for the (auth) screens.
  *  - Apple: native Sign in with Apple (iOS only) with a hashed nonce → `ds.auth.signInWithApple`.
- *  - Google / Microsoft: web OAuth via `ds.auth.getOAuthSignInUrl` + an auth session → `ds.auth.exchangeCodeForSession`.
+ *  - Google / Microsoft: web OAuth via `ds.auth.getOAuthSignInUrl` + an auth session → `completeAuthCallback`
+ *    (shared with the deep-link handler and the `auth/callback` screen, which receive the same URL on Android).
  *  - Demo mode: every provider signs in through the demo adapter (no native SDK / browser round-trip).
  * The session change itself is picked up by SessionProvider (`onAuthStateChange`), which drives navigation.
  */
@@ -13,6 +14,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@da/ui';
 import type { AuthSession } from '@da/api-client';
+import { completeAuthCallback } from '@/features/auth/authCallback';
 import { useDataSource } from '@/hooks/useDataSource';
 import { env, isDemoMode } from '@/lib/env';
 import { describeError } from '@/lib/errors';
@@ -20,7 +22,7 @@ import { captureError } from '@/lib/monitoring';
 
 export type SignInProvider = 'apple' | 'google' | 'microsoft';
 
-/** Supabase PKCE / OAuth return; `useDeepLinks` also understands this path on Android. */
+/** Supabase PKCE / OAuth return; on Android the same URL also reaches `useDeepLinks` and `app/auth/callback.tsx`. */
 export const AUTH_CALLBACK_URL = `${env.appScheme}://auth/callback`;
 
 const DEMO_TOKEN = 'demo-identity-token';
@@ -94,7 +96,7 @@ export function useNativeSignIn() {
       });
       const result = await WebBrowser.openAuthSessionAsync(url, AUTH_CALLBACK_URL);
       if (result.type !== 'success') return null;
-      return ds.auth.exchangeCodeForSession(result.url);
+      return completeAuthCallback(ds, result.url);
     },
     [ds],
   );

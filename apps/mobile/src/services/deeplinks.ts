@@ -21,7 +21,10 @@ export interface ParsedDeepLink {
   params?: Record<string, string>;
 }
 
-/** Pseudo-route handled by `useDeepLinks` (Supabase PKCE / magic-link return). Never pushed to the router. */
+/**
+ * Supabase PKCE / magic-link return. `useDeepLinks` completes the sign-in and never navigates to it itself;
+ * expo-router opens `app/auth/callback.tsx` for the URL on Android, which shows progress and errors.
+ */
 export const AUTH_CALLBACK_HREF = '/auth/callback';
 
 export const OAUTH_PROVIDERS = ['google', 'microsoft'] as const;
