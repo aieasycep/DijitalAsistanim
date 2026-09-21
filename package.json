@@ -1,0 +1,60 @@
+{
+  "name": "dijital-asistan",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dijital Asistan — bugün bilmen gerekenleri, sen sormadan söyler. iOS + Android + Web monorepo.",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml,sql,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml,css}\"",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "pnpm -r --parallel --if-present typecheck",
+    "typecheck:functions": "node scripts/deno-check.mjs",
+    "test": "pnpm -r --if-present test",
+    "test:unit": "pnpm --filter \"./packages/**\" --if-present test",
+    "test:mobile": "pnpm --filter @da/mobile test",
+    "test:db": "node scripts/db-test.mjs",
+    "build:web": "pnpm --filter @da/web build",
+    "validate:expo": "pnpm --filter @da/mobile validate",
+    "validate:migrations": "node scripts/validate-migrations.mjs",
+    "check:dead-code": "node scripts/check-dead-code.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check:all": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build:web && pnpm validate:expo && pnpm validate:migrations && pnpm check:dead-code && pnpm check:secrets",
+    "mobile": "pnpm --filter @da/mobile start",
+    "web": "pnpm --filter @da/web dev",
+    "supabase:start": "supabase start",
+    "supabase:reset": "supabase db reset",
+    "supabase:functions": "supabase functions serve --env-file ./supabase/.env.local"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^22.19.0",
+    "deno": "^2.9.6",
+    "eslint": "^9.39.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^16.4.0",
+    "prettier": "^3.9.6",
+    "sharp": "0.35.4",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.46.0",
+    "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "typescript": "5.9.3"
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "@sentry/cli",
+      "supabase",
+      "deno"
+    ]
+  }
+}

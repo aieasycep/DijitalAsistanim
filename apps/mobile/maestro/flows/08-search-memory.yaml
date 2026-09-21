@@ -1,0 +1,46 @@
+# Flow I — Search → person/mail/flight/payment → correct detail
+appId: ${APP_ID}
+tags: [critical, flow-i]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- tapOn:
+    id: 'today-search'
+- assertVisible:
+    id: 'search-input'
+- tapOn:
+    id: 'search-input'
+- inputText: 'uçak bileti'
+- pressKey: Enter
+- extendedWaitUntil:
+    visible:
+      id: 'search-result-0'
+    timeout: 15000
+- assertVisible:
+    text: 'TK2412.*'
+- tapOn:
+    id: 'search-result-0'
+- assertVisible:
+    id: 'life-screen'
+- back
+- tapOn:
+    id: 'search-input'
+- eraseText: 30
+- inputText: 'elektrik faturası'
+- pressKey: Enter
+- extendedWaitUntil:
+    visible:
+      text: '.*1.842 TL.*'
+    timeout: 15000
+- tapOn:
+    id: 'search-input'
+- eraseText: 30
+- inputText: 'Mehmet'
+- pressKey: Enter
+- extendedWaitUntil:
+    visible:
+      text: 'Mehmet Yılmaz'
+    timeout: 15000
+- tapOn:
+    text: 'Mehmet Yılmaz'
+- assertVisible:
+    id: 'person-screen'

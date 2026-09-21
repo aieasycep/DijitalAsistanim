@@ -1,0 +1,30 @@
+appId: ${APP_ID}
+---
+# Makes the signed-in demo user Pro through the real paywall (demo purchase) when it is still on the
+# free plan; a no-op when Pro is already active. Starts and ends on the Today screen.
+- tapOn:
+    id: 'today-avatar'
+- tapOn:
+    id: 'settings-row-subscription'
+- runFlow:
+    when:
+      visible:
+        id: 'subscription-upgrade'
+    commands:
+      - tapOn:
+          id: 'subscription-upgrade'
+      - tapOn:
+          id: 'paywall-plan-annual'
+      - tapOn:
+          id: 'paywall-cta'
+      - extendedWaitUntil:
+          visible:
+            text: 'Pro açıldı.*'
+          timeout: 20000
+      - back
+- back
+- back
+- extendedWaitUntil:
+    visible:
+      id: 'today-screen'
+    timeout: 15000

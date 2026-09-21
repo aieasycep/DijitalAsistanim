@@ -1,0 +1,114 @@
+# Supabase local development configuration for Dijital Asistan.
+# Docs: https://supabase.com/docs/guides/local-development/cli/config
+project_id = "dijital-asistan"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+
+[realtime]
+enabled = false
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "25MiB"
+
+[storage.buckets.captures]
+public = false
+file_size_limit = "25MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/heic", "image/webp", "application/pdf", "text/plain", "audio/m4a", "audio/mp4", "audio/mpeg", "audio/wav"]
+
+[storage.buckets.exports]
+public = false
+file_size_limit = "200MiB"
+allowed_mime_types = ["application/zip", "application/json"]
+
+[storage.buckets.briefing-audio]
+public = false
+file_size_limit = "20MiB"
+allowed_mime_types = ["audio/mpeg", "audio/mp4"]
+
+[storage.buckets.attachments-cache]
+public = false
+file_size_limit = "10MiB"
+allowed_mime_types = ["application/pdf", "text/plain"]
+
+[auth]
+enabled = true
+site_url = "https://dijitalasistan.app"
+additional_redirect_urls = [
+  "dijitalasistan://auth/callback",
+  "https://dijitalasistan.app/app/auth/callback",
+  "http://localhost:3000/app/auth/callback",
+  "exp://127.0.0.1:8081/--/auth/callback"
+]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+otp_length = 6
+otp_expiry = 600
+
+[auth.external.apple]
+enabled = true
+client_id = "env(APPLE_SERVICES_ID)"
+secret = "env(APPLE_OAUTH_CLIENT_SECRET)"
+redirect_uri = ""
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_OAUTH_CLIENT_ID)"
+secret = "env(GOOGLE_OAUTH_CLIENT_SECRET)"
+skip_nonce_check = true
+
+[auth.external.azure]
+enabled = true
+client_id = "env(MICROSOFT_OAUTH_CLIENT_ID)"
+secret = "env(MICROSOFT_OAUTH_CLIENT_SECRET)"
+url = "https://login.microsoftonline.com/common"
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+inspector_port = 8083
+
+[functions.oauth-google-callback]
+verify_jwt = false
+[functions.oauth-microsoft-callback]
+verify_jwt = false
+[functions.webhook-gmail]
+verify_jwt = false
+[functions.webhook-microsoft]
+verify_jwt = false
+[functions.webhook-revenuecat]
+verify_jwt = false
+[functions.cron-dispatch]
+verify_jwt = false
+
+[analytics]
+enabled = false

@@ -1,0 +1,9 @@
+{
+  "name": "notification-listener",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android NotificationListenerService bridge for Dijital Asistan (Expo Modules API, Android only).",
+  "main": "index.ts",
+  "types": "index.ts",
+  "license": "UNLICENSED"
+}

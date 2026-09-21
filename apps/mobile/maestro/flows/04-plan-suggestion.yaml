@@ -1,0 +1,32 @@
+# Flow E — Plan → AI suggestion → Planla → Approval → timeline updated
+appId: ${APP_ID}
+tags: [critical, flow-e]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- tapOn:
+    text: 'Plan'
+- assertVisible:
+    id: 'plan-screen'
+- assertVisible:
+    text: 'TAKVİM ZEKÂSI'
+- assertVisible:
+    text: 'Yarın 14:00–16:30 arasında 2,5 saat boşluğun var.'
+- tapOn:
+    id: 'plan-suggestion-primary'
+- assertVisible:
+    text: 'Görev oluştur'
+- tapOn:
+    id: 'approval-approve'
+- extendedWaitUntil:
+    visible:
+      text: 'Tamamlandı'
+    timeout: 20000
+- back
+- assertVisible:
+    id: 'plan-screen'
+- tapOn:
+    id: 'plan-segment-week'
+- assertVisible:
+    text: 'Teklif hazırlama'
+- assertVisible:
+    text: 'Planlandı.*'
