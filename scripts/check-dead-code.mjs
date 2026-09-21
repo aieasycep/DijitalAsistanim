@@ -43,6 +43,16 @@ const EMPTY_HANDLERS = [
   },
 ];
 
+// Code that ends up in the app bundle must read public config as static `process.env.EXPO_PUBLIC_X` member
+// expressions: Expo inlines only those at bundle time, a dynamic `process.env[name]` is empty on the device
+// (a Supabase build silently became a demo build this way once).
+const BUNDLE_DIRS = ['apps/mobile/src', 'apps/mobile/app', 'apps/mobile/modules', 'packages'];
+const BUNDLE_EXT = new Set(['.ts', '.tsx', '.js', '.jsx']);
+const BUNDLE_RULES = [
+  { name: 'dynamic process.env read (never inlined in the app bundle)', re: /process\.env\[/ },
+];
+const isTestFile = (rel) => /__tests__|\.test\.|\/testing\//.test(rel);
+
 // User-facing copy must never claim (or even discuss) end-to-end encryption — the product does not offer it.
 const COPY_DIRS = ['packages/i18n/src/locales', 'apps/web/src/i18n', 'apps/mobile/assets/locales'];
 const COPY_EXT = new Set(['.json', '.ts', '.tsx']);
@@ -71,6 +81,19 @@ for (const file of walk(ROOT)) {
       if (re.test(line)) problems.push(`${rel}:${i + 1}: ${name}`);
     }
   });
+}
+
+for (const dir of BUNDLE_DIRS) {
+  for (const file of walk(path.join(ROOT, dir), [], BUNDLE_EXT)) {
+    const rel = path.relative(ROOT, file);
+    if (isTestFile(rel)) continue;
+    const lines = readFileSync(file, 'utf8').split('\n');
+    lines.forEach((line, i) => {
+      for (const { name, re } of BUNDLE_RULES) {
+        if (re.test(line)) problems.push(`${rel}:${i + 1}: ${name}`);
+      }
+    });
+  }
 }
 
 for (const dir of COPY_DIRS) {

@@ -2,6 +2,11 @@ import Constants from 'expo-constants';
 
 /**
  * Public runtime configuration (EXPO_PUBLIC_* only — never secrets).
+ *
+ * Every variable is read as a static `process.env.EXPO_PUBLIC_X` member expression on purpose: Expo inlines
+ * exactly those at bundle time. A dynamic bracket-style read through a variable name is never inlined and is
+ * always empty on the device, which silently turns a Supabase build into a demo build
+ * (scripts/check-dead-code.mjs guards against it).
  * Demo mode is only honoured in non-production builds (see @da/api-client resolveMode).
  */
 const extra = (Constants.expoConfig?.extra ?? {}) as {
@@ -10,10 +15,8 @@ const extra = (Constants.expoConfig?.extra ?? {}) as {
   universalHosts?: string[];
 };
 
-const pub = (key: string): string | undefined => {
-  const v = process.env[key];
-  return v && v.length > 0 ? v : undefined;
-};
+const clean = (value: string | undefined): string | undefined =>
+  value && value.length > 0 ? value : undefined;
 
 /**
  * A production build is the store build: APP_ENV=production / the EAS `production` profile, embedded by
@@ -28,25 +31,25 @@ export const IS_PRODUCTION =
 
 export const env = {
   dataMode:
-    (pub('EXPO_PUBLIC_DATA_MODE') as 'demo' | 'supabase' | undefined) ??
+    (clean(process.env.EXPO_PUBLIC_DATA_MODE) as 'demo' | 'supabase' | undefined) ??
     (IS_PRODUCTION ? 'supabase' : 'demo'),
-  supabaseUrl: pub('EXPO_PUBLIC_SUPABASE_URL'),
-  supabaseAnonKey: pub('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
-  webUrl: pub('EXPO_PUBLIC_WEB_URL') ?? 'https://dijitalasistan.app',
-  appScheme: pub('EXPO_PUBLIC_APP_SCHEME') ?? 'dijitalasistan',
-  demoUserName: pub('EXPO_PUBLIC_DEMO_USER_NAME') ?? 'Yunus',
-  revenueCatIosKey: pub('EXPO_PUBLIC_REVENUECAT_IOS_KEY'),
-  revenueCatAndroidKey: pub('EXPO_PUBLIC_REVENUECAT_ANDROID_KEY'),
-  rcEntitlementId: pub('EXPO_PUBLIC_RC_ENTITLEMENT_ID') ?? 'pro',
-  rcProductMonthly: pub('EXPO_PUBLIC_RC_PRODUCT_MONTHLY') ?? 'da_pro_monthly',
-  rcProductAnnual: pub('EXPO_PUBLIC_RC_PRODUCT_ANNUAL') ?? 'da_pro_annual',
-  sentryDsn: pub('EXPO_PUBLIC_SENTRY_DSN'),
-  posthogKey: pub('EXPO_PUBLIC_POSTHOG_KEY'),
-  posthogHost: pub('EXPO_PUBLIC_POSTHOG_HOST') ?? 'https://eu.i.posthog.com',
-  easProjectId: pub('EXPO_PUBLIC_EAS_PROJECT_ID'),
-  googleIosClientId: pub('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'),
-  googleAndroidClientId: pub('EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID'),
-  googleWebClientId: pub('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'),
+  supabaseUrl: clean(process.env.EXPO_PUBLIC_SUPABASE_URL),
+  supabaseAnonKey: clean(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY),
+  webUrl: clean(process.env.EXPO_PUBLIC_WEB_URL) ?? 'https://dijitalasistan.app',
+  appScheme: clean(process.env.EXPO_PUBLIC_APP_SCHEME) ?? 'dijitalasistan',
+  demoUserName: clean(process.env.EXPO_PUBLIC_DEMO_USER_NAME) ?? 'Yunus',
+  revenueCatIosKey: clean(process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY),
+  revenueCatAndroidKey: clean(process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY),
+  rcEntitlementId: clean(process.env.EXPO_PUBLIC_RC_ENTITLEMENT_ID) ?? 'pro',
+  rcProductMonthly: clean(process.env.EXPO_PUBLIC_RC_PRODUCT_MONTHLY) ?? 'da_pro_monthly',
+  rcProductAnnual: clean(process.env.EXPO_PUBLIC_RC_PRODUCT_ANNUAL) ?? 'da_pro_annual',
+  sentryDsn: clean(process.env.EXPO_PUBLIC_SENTRY_DSN),
+  posthogKey: clean(process.env.EXPO_PUBLIC_POSTHOG_KEY),
+  posthogHost: clean(process.env.EXPO_PUBLIC_POSTHOG_HOST) ?? 'https://eu.i.posthog.com',
+  easProjectId: clean(process.env.EXPO_PUBLIC_EAS_PROJECT_ID),
+  googleIosClientId: clean(process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID),
+  googleAndroidClientId: clean(process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID),
+  googleWebClientId: clean(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID),
   appGroup: extra.appGroup ?? 'group.com.dijitalasistan.app',
   universalHosts: extra.universalHosts ?? ['dijitalasistan.app'],
   appVersion: Constants.expoConfig?.version ?? '1.0.0',
@@ -56,8 +59,8 @@ export const env = {
    * there) and the demo timezone so greetings, plan suggestions and seeded meetings are deterministic.
    * Ignored outside demo mode.
    */
-  demoNow: pub('EXPO_PUBLIC_DEMO_NOW'),
-  demoTimezone: pub('EXPO_PUBLIC_DEMO_TIMEZONE'),
+  demoNow: clean(process.env.EXPO_PUBLIC_DEMO_NOW),
+  demoTimezone: clean(process.env.EXPO_PUBLIC_DEMO_TIMEZONE),
 } as const;
 
 export const hasSupabase = Boolean(env.supabaseUrl && env.supabaseAnonKey);
