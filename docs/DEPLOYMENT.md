@@ -84,7 +84,12 @@ installs are never blocked).
 deploy` and the two `alter database` settings from section 1. Minimum secrets: `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
    `SUPABASE_SERVICE_ROLE_KEY`, `INTERNAL_FUNCTION_SECRET`, `TOKEN_ENCRYPTION_KEY`, `GOOGLE_OAUTH_CLIENT_ID`,
    `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `AI_PROVIDER` + `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY`).
-2. Supabase Auth: enable Email, put `{{ .Token }}` in the Magic Link template (above).
+2. Supabase Auth: enable Email, put `{{ .Token }}` in the Magic Link template (above). For the "Google ile devam et"
+   button also enable the **Google** provider (Authentication → Sign In / Providers) with the web client's ID and
+   secret, add the callback shown there (`https://<ref>.supabase.co/auth/v1/callback`) to that web client's authorized
+   redirect URIs in Google Cloud, and add `dijitalasistan://auth/callback` under Authentication → URL configuration →
+   Redirect URLs. Until the provider is enabled the button ends on a Supabase page saying
+   `Unsupported provider: provider is not enabled`.
 3. Google Cloud: OAuth consent screen in **Testing** with your Gmail address as a test user (restricted Gmail scopes
    work for test users without verification), enable the Gmail, Calendar and Tasks APIs, create the web client with
    the two redirect URIs from docs/OAUTH_SETUP.md.
