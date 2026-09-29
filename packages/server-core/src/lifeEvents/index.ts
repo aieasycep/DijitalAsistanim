@@ -7,15 +7,15 @@
  * `lifeEventExtractionSchema` (@da/validation) and is ready to become a LifeEvent row.
  */
 import type { Locale } from '@da/domain';
-import { EvidenceCollector, buildContext, type Ctx } from './common';
-import { detectFlight } from './flight';
-import { detectPayment } from './payment';
-import { detectReservation } from './reservation';
-import { detectSecurity } from './security';
-import { detectShipment } from './shipment';
-import { detectSubscription, hasRenewalCue } from './subscription';
-import { lifeEventTitle } from './titles';
-import type { ExtractLifeEventInput, ExtractedLifeEvent } from './types';
+import { EvidenceCollector, buildContext, type Ctx } from './common.ts';
+import { detectFlight } from './flight.ts';
+import { detectPayment } from './payment.ts';
+import { detectReservation } from './reservation.ts';
+import { detectSecurity } from './security.ts';
+import { detectShipment } from './shipment.ts';
+import { detectSubscription, hasRenewalCue } from './subscription.ts';
+import { lifeEventTitle } from './titles.ts';
+import type { ExtractLifeEventInput, ExtractedLifeEvent } from './types.ts';
 
 export type {
   BillKind,
@@ -23,7 +23,7 @@ export type {
   ExtractedLifeEvent,
   LifeEventStatusValue,
   LifeEventTitleOptions,
-} from './types';
+} from './types.ts';
 export {
   lifeEventActions,
   lifeEventDedupeKey,
@@ -31,13 +31,13 @@ export {
   lifeEventStatus,
   lifeEventTitle,
   type LifeEventLike,
-} from './titles';
+} from './titles.ts';
 export {
   findAmounts as findLifeEventAmounts,
   formatAmount as formatLifeEventAmount,
   parseAmountNumber,
   senderOrgName,
-} from './common';
+} from './common.ts';
 
 const MIN_CONFIDENCE = 0.5;
 

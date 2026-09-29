@@ -1,5 +1,5 @@
 /** Android notification privacy guard: authenticator / password-manager apps and OTP contents never leave the device. */
-import type { NotificationInput, SensitiveNotificationResult } from './types';
+import type { NotificationInput, SensitiveNotificationResult } from './types.ts';
 
 export const DEFAULT_EXCLUDED_PACKAGES: readonly string[] = [
   'com.google.android.apps.authenticator2',

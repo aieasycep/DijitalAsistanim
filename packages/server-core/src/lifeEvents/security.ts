@@ -1,7 +1,7 @@
 /** Security alerts: new sign-in / new device, password changes, 2-step verification changes, suspicious activity. */
-import { RE_OTP, RE_SECURITY_EVENT_CRITICAL, RE_SECURITY_STRONG } from '../triage/signals';
-import { capitalizeFirst, type Ctx } from './common';
-import type { ExtractedLifeEvent } from './types';
+import { RE_OTP, RE_SECURITY_EVENT_CRITICAL, RE_SECURITY_STRONG } from '../triage/signals.ts';
+import { capitalizeFirst, type Ctx } from './common.ts';
+import type { ExtractedLifeEvent } from './types.ts';
 
 interface EventPattern {
   re: RegExp;

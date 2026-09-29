@@ -4,8 +4,8 @@
  * is dropped rather than delivered late.
  */
 import type { NotificationCategory } from '@da/domain';
-import type { NotificationPayload } from '../notifications';
-import type { ExpoInterruptionLevel, ExpoPushMessage, ExpoPushPriority } from './expo';
+import type { NotificationPayload } from '../notifications/index.ts';
+import type { ExpoInterruptionLevel, ExpoPushMessage, ExpoPushPriority } from './expo.ts';
 
 /** Seconds a message stays deliverable when the device is offline. */
 export const PUSH_TTL_SECONDS: Record<NotificationCategory, number> = {

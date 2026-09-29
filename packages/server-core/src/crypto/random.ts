@@ -1,6 +1,6 @@
 /** Cryptographically secure random values: tokens, PKCE, referral codes. */
-import { bytesToBase64Url, bytesToHex } from './encoding';
-import { sha256Base64Url } from './hash';
+import { bytesToBase64Url, bytesToHex } from './encoding.ts';
+import { sha256Base64Url } from './hash.ts';
 
 const MAX_RANDOM_CHUNK = 65_536;
 

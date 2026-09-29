@@ -9,6 +9,7 @@
     "skipLibCheck": true,
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "module": "esnext",
     "resolveJsonModule": true,
     "allowJs": true,

@@ -8,7 +8,7 @@ import {
   lowercasePreservingIndices,
   turkishDative,
   type ExtractedDate,
-} from '../dates';
+} from '../dates/index.ts';
 import {
   ET_COMPOUNDS,
   NOUN_TO_VERB,
@@ -32,14 +32,14 @@ import {
   lookupRequestStem,
   lookupVerbalNoun,
   type CounterpartCase,
-} from './verbs';
+} from './verbs.ts';
 import {
   NAME_STOPLIST,
   isNameToken,
   type ClauseAnalysis,
   type ClauseName,
   type AnalyzeOptions,
-} from './shared';
+} from './shared.ts';
 
 const FILLERS = new Set(
   [

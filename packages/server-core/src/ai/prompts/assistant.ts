@@ -1,7 +1,7 @@
 /** Assistant (RAG) answers grounded in retrieved chunks (voice intent and capture analysis live in voice.ts / capture.ts). */
 import { assistantAnswerAiSchema, type AssistantAnswerAi } from '@da/validation';
-import { PROMPT_CHAR_LIMITS, redactForPrompt } from '../redact';
-import type { PromptSpec } from '../types';
+import { PROMPT_CHAR_LIMITS, redactForPrompt } from '../redact.ts';
+import type { PromptSpec } from '../types.ts';
 import {
   DEFAULT_PROMPT_TIMEZONE,
   capList,
@@ -11,7 +11,7 @@ import {
   joinLines,
   temporalContext,
   type PromptBase,
-} from './shared';
+} from './shared.ts';
 
 // ---------------------------------------------------------------------------
 // assistantAnswer

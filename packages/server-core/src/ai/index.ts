@@ -30,7 +30,7 @@ export {
   type AiUsageRecord,
   type AiUsageSink,
   type PromptSpec,
-} from './types';
+} from './types.ts';
 export {
   DEFAULT_CACHE_TTL_SEC,
   DEFAULT_MAX_OUTPUT_TOKENS,
@@ -43,41 +43,41 @@ export {
   type GenerateOptions,
   type GenerateStructuredResult,
   type GenerateTextResult,
-} from './client';
+} from './client.ts';
 export {
   ANTHROPIC_API_VERSION,
   ANTHROPIC_MESSAGES_URL,
   AnthropicProvider,
   STRUCTURED_OUTPUT_TOOL,
   type AnthropicProviderConfig,
-} from './anthropic';
+} from './anthropic.ts';
 export {
   OPENAI_CHAT_COMPLETIONS_URL,
   OPENAI_STRUCTURED_OUTPUT_NAME,
   OpenAIProvider,
   openAiSupportsTemperature,
   type OpenAIProviderConfig,
-} from './openai';
+} from './openai.ts';
 export {
   AiProviderError,
   isAiProviderError,
   parseRetryAfterSec,
   type AiProviderErrorKind,
-} from './providerError';
+} from './providerError.ts';
 export {
   httpError,
   postJson,
   providerErrorMessage,
   type JsonPostInput,
   type JsonPostResult,
-} from './http';
+} from './http.ts';
 export {
   extractJson,
   formatZodIssues,
   isOpenAiStrictCompatible,
   jsonSchemaFor,
   stripSchemaMeta,
-} from './schema';
+} from './schema.ts';
 export {
   CONTEXT_CLOSE_TAG,
   CONTEXT_OPEN_TAG,
@@ -88,7 +88,7 @@ export {
   type FitPromptInput,
   type FitPromptOptions,
   type FitPromptResult,
-} from './inputBudget';
+} from './inputBudget.ts';
 export {
   DEFAULT_BUDGET_TIMEZONE,
   assertBudget,
@@ -99,7 +99,7 @@ export {
   type AiBudgetStatus,
   type AiDailyTokenLimits,
   type AssertBudgetInput,
-} from './budget';
+} from './budget.ts';
 export {
   PROMPT_CHAR_LIMITS,
   redactForPrompt,
@@ -107,5 +107,5 @@ export {
   stripDisclaimers,
   stripSignature,
   type RedactOptions,
-} from './redact';
-export * from './prompts';
+} from './redact.ts';
+export * from './prompts/index.ts';

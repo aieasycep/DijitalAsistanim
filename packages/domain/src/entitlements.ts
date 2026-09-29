@@ -1,4 +1,4 @@
-import type { Plan } from './enums';
+import type { Plan } from './enums.ts';
 
 /** Gated product features. Checked ONLY via the central entitlement resolver (@da/server-core / api-client). */
 export const FEATURES = [

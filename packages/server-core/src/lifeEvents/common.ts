@@ -1,7 +1,7 @@
 /** Shared context, evidence collection, amount parsing, URL and sender helpers for life-event detectors. */
 import type { Locale } from '@da/domain';
-import { extractDates, lowercasePreservingIndices, type ExtractedDate } from '../dates';
-import { emailDomain, normalizeText, stripQuotedHistory } from '../util';
+import { extractDates, lowercasePreservingIndices, type ExtractedDate } from '../dates/index.ts';
+import { emailDomain, normalizeText, stripQuotedHistory } from '../util/index.ts';
 
 export const MAX_EVIDENCE = 8;
 const EVIDENCE_LEN = 160;

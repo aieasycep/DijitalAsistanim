@@ -6,9 +6,9 @@ import {
   type EmailAnalysisAi,
   type EmailBatchClassification,
 } from '@da/validation';
-import { AppError } from '../../errors';
-import { PROMPT_CHAR_LIMITS, redactForPrompt } from '../redact';
-import type { PromptSpec } from '../types';
+import { AppError } from '../../errors/index.ts';
+import { PROMPT_CHAR_LIMITS, redactForPrompt } from '../redact.ts';
+import type { PromptSpec } from '../types.ts';
 import {
   DEFAULT_PROMPT_TIMEZONE,
   bullets,
@@ -22,7 +22,7 @@ import {
   temporalContext,
   type PromptBase,
   type PromptParticipant,
-} from './shared';
+} from './shared.ts';
 
 export interface PromptEmailMessage {
   id: string;

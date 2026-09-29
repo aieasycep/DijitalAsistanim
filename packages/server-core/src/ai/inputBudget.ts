@@ -3,8 +3,8 @@
  * truncated until the estimated prompt fits `maxInputTokens`.
  */
 import type { Locale } from '@da/domain';
-import { AppError } from '../errors';
-import { estimateTokens } from '../util';
+import { AppError } from '../errors/index.ts';
+import { estimateTokens } from '../util/index.ts';
 
 export const CONTEXT_OPEN_TAG = '<kaynaklar>';
 export const CONTEXT_CLOSE_TAG = '</kaynaklar>';

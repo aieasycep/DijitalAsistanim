@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeReminderOptions, computeSmartReminder, validateCustomReminder } from './index';
+import { computeReminderOptions, computeSmartReminder, validateCustomReminder } from './index.ts';
 
 const now = '2026-09-04T05:42:00.000Z'; // Friday 08:42 Istanbul
 const tz = 'Europe/Istanbul';

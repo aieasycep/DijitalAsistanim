@@ -4,10 +4,19 @@
  * HTML→text and quoted-reply stripping. Web APIs only (TextEncoder/TextDecoder, btoa/atob).
  */
 import type { EmailParticipant } from '@da/domain';
-import { base64UrlToBytes, bytesToBase64, bytesToBase64Url, utf8Encode } from '../crypto/encoding';
-import { randomHex } from '../crypto/random';
-import { collapseWhitespace, decodeHtmlEntities, extractReadableText } from '../safefetch/readable';
-import type { SendMailInput } from './types';
+import {
+  base64UrlToBytes,
+  bytesToBase64,
+  bytesToBase64Url,
+  utf8Encode,
+} from '../crypto/encoding.ts';
+import { randomHex } from '../crypto/random.ts';
+import {
+  collapseWhitespace,
+  decodeHtmlEntities,
+  extractReadableText,
+} from '../safefetch/readable.ts';
+import type { SendMailInput } from './types.ts';
 
 const CRLF = '\r\n';
 const BASE64_LINE = 76;

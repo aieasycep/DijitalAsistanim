@@ -1,8 +1,8 @@
 import type { PushToken } from '@da/domain';
 import { describe, expect, it } from 'vitest';
-import { isAppError } from '../errors';
-import type { NotificationPayload } from '../notifications';
-import type { FetchLike } from '../safefetch/fetch';
+import { isAppError } from '../errors/index.ts';
+import type { NotificationPayload } from '../notifications/index.ts';
+import type { FetchLike } from '../safefetch/fetch.ts';
 import {
   EXPO_PUSH_SEND_URL,
   classifyExpoOutcome,
@@ -15,7 +15,7 @@ import {
   toExpoMessage,
   type ExpoPushMessage,
   type ExpoPushTicket,
-} from './index';
+} from './index.ts';
 
 const NOW = '2026-09-05T08:00:00.000Z';
 

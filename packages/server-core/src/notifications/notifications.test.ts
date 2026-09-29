@@ -22,7 +22,7 @@ import {
   pushDedupeKey,
   shouldSend,
   type NotificationPrefsInput,
-} from './index';
+} from './index.ts';
 
 const now = '2026-09-04T05:42:00.000Z'; // Friday 08:42 Istanbul
 const tz = 'Europe/Istanbul';

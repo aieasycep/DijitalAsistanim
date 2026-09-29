@@ -3,8 +3,13 @@
  * promises, "can you / could you / please / I need you to / waiting for your …" requests. Negated
  * ("won't"), conditional ("if …") and question forms are rejected.
  */
-import { extractDates, lowercasePreservingIndices, type ExtractedDate } from '../dates';
-import { isNameToken, type AnalyzeOptions, type ClauseAnalysis, type ClauseName } from './shared';
+import { extractDates, lowercasePreservingIndices, type ExtractedDate } from '../dates/index.ts';
+import {
+  isNameToken,
+  type AnalyzeOptions,
+  type ClauseAnalysis,
+  type ClauseName,
+} from './shared.ts';
 
 const NB = '(?<![\\p{L}])';
 const ADVERBS =

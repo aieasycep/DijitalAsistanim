@@ -14,12 +14,18 @@ import {
   lowercasePreservingIndices,
   parseDateKey,
   type ExtractedDate,
-} from '../dates';
-import { clamp, normalizeText, stripQuotedHistory, truncate, uniqBy } from '../util';
-import { analyzeEnglishClause, composeEnglish } from './english';
-import { detectVocative, splitClauses, splitSentences, stripSignature, type Span } from './segment';
-import { firstNameOf, resolveFullName, stripHonorifics, type ClauseAnalysis } from './shared';
-import { analyzeTurkishClause, composeTurkish, isKnownDeliverable } from './turkish';
+} from '../dates/index.ts';
+import { clamp, normalizeText, stripQuotedHistory, truncate, uniqBy } from '../util/index.ts';
+import { analyzeEnglishClause, composeEnglish } from './english.ts';
+import {
+  detectVocative,
+  splitClauses,
+  splitSentences,
+  stripSignature,
+  type Span,
+} from './segment.ts';
+import { firstNameOf, resolveFullName, stripHonorifics, type ClauseAnalysis } from './shared.ts';
+import { analyzeTurkishClause, composeTurkish, isKnownDeliverable } from './turkish.ts';
 import {
   RE_EXPECTATION,
   RE_FIRST_PERSON_FORMS,
@@ -29,14 +35,14 @@ import {
   RE_REQUEST_NEED,
   RE_REQUEST_QUESTION,
   RE_REQUEST_VERBAL_NOUN,
-} from './verbs';
+} from './verbs.ts';
 import type {
   CommitmentCandidate,
   CommitmentDraft,
   CommitmentDue,
   ExtractCommitmentsInput,
   NormalizeCommitmentOptions,
-} from './types';
+} from './types.ts';
 
 export type {
   CommitmentCandidate,
@@ -47,12 +53,12 @@ export type {
   CommitmentLanguage,
   ExtractCommitmentsInput,
   NormalizeCommitmentOptions,
-} from './types';
+} from './types.ts';
 export {
   stripSignature as stripMailSignature,
   detectVocative as detectVocativeName,
-} from './segment';
-export { turkishAccusative, normalizeNounPhrase } from './turkish';
+} from './segment.ts';
+export { turkishAccusative, normalizeNounPhrase } from './turkish.ts';
 
 const MAX_TEXT = 20_000;
 const MAX_CANDIDATES = 8;

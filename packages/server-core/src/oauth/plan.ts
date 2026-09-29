@@ -4,12 +4,12 @@
  * `codeVerifier` under `nonce` and returns `{ authorizationUrl, state }` to the client.
  */
 import type { Locale, OAuthStartRequest, OAuthStartResponse } from '@da/domain';
-import { AppError } from '../errors';
-import { createPkcePair } from '../crypto';
-import { buildAuthorizationUrl, type OAuthPrompt } from './authorize';
-import { missingScopes, scopesFor, type OAuthScopeGroup } from './scopes';
-import { createOAuthState } from './state';
-import { mapOAuthError } from './errors';
+import { AppError } from '../errors/index.ts';
+import { createPkcePair } from '../crypto/index.ts';
+import { buildAuthorizationUrl, type OAuthPrompt } from './authorize.ts';
+import { missingScopes, scopesFor, type OAuthScopeGroup } from './scopes.ts';
+import { createOAuthState } from './state.ts';
+import { mapOAuthError } from './errors.ts';
 
 export interface OAuthStartPlanInput {
   request: OAuthStartRequest;

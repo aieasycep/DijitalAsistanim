@@ -2,8 +2,8 @@
  * dates — Turkish/English natural-language date & deadline extraction with evidence,
  * timezone-aware calendar arithmetic and natural date labels.
  */
-export type { DateKind, ExtractDatesInput, ExtractedDate } from './types';
-export { extractDates, deadlineFromText, hasDeadlineVocabulary } from './extract';
+export type { DateKind, ExtractDatesInput, ExtractedDate } from './types.ts';
+export { extractDates, deadlineFromText, hasDeadlineVocabulary } from './extract.ts';
 export {
   type LocalDate,
   type LocalDateTime,
@@ -21,7 +21,7 @@ export {
   sameDate,
   localToUtcIso,
   nextWeekday,
-} from './calendar';
+} from './calendar.ts';
 export {
   formatClock,
   formatDayLabel,
@@ -29,7 +29,7 @@ export {
   formatDateLocative,
   formatDeadlinePhrase,
   type FormatDateOptions,
-} from './format';
+} from './format.ts';
 export {
   turkishDative,
   turkishLocative,
@@ -40,7 +40,7 @@ export {
   flexI,
   escapeRegex,
   pad2,
-} from './turkish';
+} from './turkish.ts';
 export {
   MONTHS_TR,
   MONTHS_TR_TITLE,
@@ -50,4 +50,4 @@ export {
   WEEKDAYS_EN_TITLE,
   monthIndex,
   weekdayIndex,
-} from './lexicon';
+} from './lexicon.ts';

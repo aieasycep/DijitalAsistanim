@@ -3,8 +3,8 @@
  * cursor is the ISO instant of the last successful sync and each run lists tasks with
  * `updatedMin` (deleted/hidden tasks included so completions and removals propagate).
  */
-import { GOOGLE_SCOPES } from '../oauth/scopes';
-import { encodePathSegment, providerRequest, toIsoOrNull } from './http';
+import { GOOGLE_SCOPES } from '../oauth/scopes.ts';
+import { encodePathSegment, providerRequest, toIsoOrNull } from './http.ts';
 import type {
   CreateTaskInput,
   CreateTaskResult,
@@ -13,7 +13,7 @@ import type {
   TaskDraft,
   TasksDelta,
   TasksSyncInput,
-} from './types';
+} from './types.ts';
 
 export const GOOGLE_TASKS_API_BASE = 'https://tasks.googleapis.com/tasks/v1';
 export const GOOGLE_DEFAULT_TASK_LIST = '@default';

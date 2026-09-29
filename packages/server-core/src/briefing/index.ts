@@ -22,13 +22,13 @@ import type {
 } from '@da/domain';
 import { BRIEFING_SECTIONS } from '@da/domain';
 import type { BriefingAi } from '@da/validation';
-import type { BriefingCandidate } from '../ai/prompts/briefing';
+import type { BriefingCandidate } from '../ai/prompts/briefing.ts';
 import {
   durationMinutes,
   externalAttendees,
   hasPhysicalLocation,
   isSchedulable,
-} from '../calendar';
+} from '../calendar/index.ts';
 import {
   MONTHS_EN_TITLE,
   MONTHS_TR_TITLE,
@@ -40,8 +40,8 @@ import {
   turkishDative,
   turkishLocative,
   turkishNumberLocative,
-} from '../dates';
-import { refreshFollowUpStatus, waitingDays } from '../followups';
+} from '../dates/index.ts';
+import { refreshFollowUpStatus, waitingDays } from '../followups/index.ts';
 import {
   badgeLabel,
   formatDayOrDate,
@@ -50,8 +50,8 @@ import {
   selectTopInsights,
   sourceLabel,
   type InsightDraft,
-} from '../insights';
-import { DAY, HOUR, localDateKey, localHour } from '../util';
+} from '../insights/index.ts';
+import { DAY, HOUR, localDateKey, localHour } from '../util/index.ts';
 
 export const WORDS_PER_MINUTE = 150;
 export const MAX_AUDIO_CHAPTERS = 6;

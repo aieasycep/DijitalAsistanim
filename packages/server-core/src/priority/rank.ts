@@ -1,11 +1,11 @@
 /** Deterministic ranking and diverse top-N selection. */
-import { scoreCandidate, tierRank } from './score';
+import { scoreCandidate, tierRank } from './score.ts';
 import type {
   PriorityCandidate,
   PriorityContext,
   RankedCandidate,
   SelectTopOptions,
-} from './types';
+} from './types.ts';
 
 export function rankCandidates(
   candidates: readonly PriorityCandidate[],

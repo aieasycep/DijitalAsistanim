@@ -1,6 +1,6 @@
 /** SHA-256 / HMAC-SHA256 helpers over WebCrypto plus constant-time comparison. */
-import { normalizeText } from '../util';
-import { bytesToBase64Url, bytesToHex, toArrayBuffer, toBytes } from './encoding';
+import { normalizeText } from '../util/index.ts';
+import { bytesToBase64Url, bytesToHex, toArrayBuffer, toBytes } from './encoding.ts';
 
 export async function sha256Bytes(input: string | Uint8Array): Promise<Uint8Array> {
   const digest = await crypto.subtle.digest('SHA-256', toArrayBuffer(toBytes(input)));

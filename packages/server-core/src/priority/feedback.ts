@@ -9,7 +9,7 @@ import type {
   FeedbackPlan,
   LearnedPreferenceUpsert,
   RuleSuggestion,
-} from './types';
+} from './types.ts';
 
 const ACK: Record<Locale, Record<AiFeedbackKind, string>> = {
   tr: {

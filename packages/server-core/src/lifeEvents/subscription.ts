@@ -1,8 +1,8 @@
 /** Subscriptions: service name from the sender (or a known service in the text), renewal date with evidence, amount when present. */
-import { deadlineFromText } from '../dates';
-import { RE_SUBSCRIPTION } from '../triage/signals';
-import { brandInText, dateNear, findAmounts, pickAmount, type Ctx } from './common';
-import type { ExtractedLifeEvent } from './types';
+import { deadlineFromText } from '../dates/index.ts';
+import { RE_SUBSCRIPTION } from '../triage/signals.ts';
+import { brandInText, dateNear, findAmounts, pickAmount, type Ctx } from './common.ts';
+import type { ExtractedLifeEvent } from './types.ts';
 
 const SERVICES = [
   'Netflix',

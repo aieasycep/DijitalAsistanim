@@ -1,8 +1,8 @@
 /** Meeting prep grounded in invite, emails, notes and commitments (schedule suggestions live in schedule.ts). */
 import type { CommitmentDirection } from '@da/domain';
 import { meetingPrepAiSchema, type MeetingPrepAi } from '@da/validation';
-import { PROMPT_CHAR_LIMITS, redactForPrompt } from '../redact';
-import type { PromptSpec } from '../types';
+import { PROMPT_CHAR_LIMITS, redactForPrompt } from '../redact.ts';
+import type { PromptSpec } from '../types.ts';
 import {
   DEFAULT_PROMPT_TIMEZONE,
   bullets,
@@ -17,7 +17,7 @@ import {
   temporalContext,
   type PromptBase,
   type PromptParticipant,
-} from './shared';
+} from './shared.ts';
 
 // ---------------------------------------------------------------------------
 // meetingPrep

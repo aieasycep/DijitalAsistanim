@@ -31,7 +31,7 @@ import {
   externalAttendees,
   hasPhysicalLocation,
   isSchedulable,
-} from '../calendar';
+} from '../calendar/index.ts';
 import {
   MONTHS_EN_TITLE,
   MONTHS_TR_TITLE,
@@ -43,16 +43,24 @@ import {
   formatDayLabel,
   isoWeekday,
   localDateOf,
-} from '../dates';
+} from '../dates/index.ts';
 import {
   followUpBrief,
   followUpReason,
   followUpWaitLabel,
   refreshFollowUpStatus,
   stripSubjectPrefixes,
-} from '../followups';
-import type { PriorityCandidate, PriorityResult } from '../priority';
-import { DAY, HOUR, MINUTE, emailDomain, localDateKey, localHHmm, localHour } from '../util';
+} from '../followups/index.ts';
+import type { PriorityCandidate, PriorityResult } from '../priority/index.ts';
+import {
+  DAY,
+  HOUR,
+  MINUTE,
+  emailDomain,
+  localDateKey,
+  localHHmm,
+  localHour,
+} from '../util/index.ts';
 
 export type InsightDraft = Omit<Insight, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
 export type RankOutcome = Pick<PriorityResult, 'score' | 'tier' | 'reasons' | 'muted'>;

@@ -24,13 +24,13 @@ import type {
   TaskCreatePayload,
 } from '@da/domain';
 import { approvalPayloadSchemas } from '@da/validation';
-import { buildIdempotencyKey, randomUuid } from '../crypto';
-import { formatClock, formatDateLabel } from '../dates';
-import { AppError } from '../errors';
-import { requiredScopeFor as oauthRequiredScopeFor } from '../oauth';
-import { HOUR } from '../util';
+import { buildIdempotencyKey, randomUuid } from '../crypto/index.ts';
+import { formatClock, formatDateLabel } from '../dates/index.ts';
+import { AppError } from '../errors/index.ts';
+import { requiredScopeFor as oauthRequiredScopeFor } from '../oauth/index.ts';
+import { HOUR } from '../util/index.ts';
 
-export { requiredScopeFor } from '../oauth';
+export { requiredScopeFor } from '../oauth/index.ts';
 
 // --- State machine ------------------------------------------------------------------------------
 

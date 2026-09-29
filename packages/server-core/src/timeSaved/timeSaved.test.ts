@@ -6,7 +6,7 @@ import {
   computeTimeSavedBreakdown,
   computeTimeSavedMinutes,
   formatTimeSaved,
-} from './index';
+} from './index.ts';
 
 describe('timeSaved · computeTimeSavedMinutes', () => {
   it('applies the documented weights', () => {

@@ -14,7 +14,7 @@ import {
   timingSafeEqualBytes,
   utf8Decode,
   utf8Encode,
-} from '../crypto';
+} from '../crypto/index.ts';
 import {
   OAUTH_KINDS,
   OAUTH_PROVIDERS,
@@ -22,7 +22,7 @@ import {
   type OAuthKind,
   type OAuthProvider,
   type OAuthScopeGroup,
-} from './scopes';
+} from './scopes.ts';
 
 export const DEFAULT_OAUTH_STATE_TTL_SEC = 10 * 60;
 const STATE_VERSION = 1;

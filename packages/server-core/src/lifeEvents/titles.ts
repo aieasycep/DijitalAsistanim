@@ -9,15 +9,15 @@ import {
   localDateTimeOf,
   pad2,
   turkishLocative,
-} from '../dates';
-import { localDateKey, truncate } from '../util';
-import { formatAmount, slug } from './common';
+} from '../dates/index.ts';
+import { localDateKey, truncate } from '../util/index.ts';
+import { formatAmount, slug } from './common.ts';
 import type {
   BillKind,
   ExtractedLifeEvent,
   LifeEventStatusValue,
   LifeEventTitleOptions,
-} from './types';
+} from './types.ts';
 
 const DEFAULT_TZ = 'Europe/Istanbul';
 const MAX_TITLE = 120;

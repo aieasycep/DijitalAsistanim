@@ -2,7 +2,7 @@
  * Typed limit policies per user action. Abuse protection only — plan quotas
  * (free: 10 assistant queries/day) are enforced separately by the entitlement resolver.
  */
-import type { RateLimitRule } from './algorithms';
+import type { RateLimitRule } from './algorithms.ts';
 
 export const RATE_LIMIT_ACTIONS = [
   'assistant_query',

@@ -1,8 +1,13 @@
 /** Human labels for instants: "bugün 17:00", "yarın", "Cuma", "12 Eylül", "9 Eylül'de". */
 import type { Locale } from '@da/domain';
-import { daysBetween, isoWeekday, localDateOf, localDateTimeOf } from './calendar';
-import { MONTHS_EN_TITLE, MONTHS_TR_TITLE, WEEKDAYS_EN_TITLE, WEEKDAYS_TR_TITLE } from './lexicon';
-import { pad2, timeWithDative, turkishLocative, turkishNumberLocative } from './turkish';
+import { daysBetween, isoWeekday, localDateOf, localDateTimeOf } from './calendar.ts';
+import {
+  MONTHS_EN_TITLE,
+  MONTHS_TR_TITLE,
+  WEEKDAYS_EN_TITLE,
+  WEEKDAYS_TR_TITLE,
+} from './lexicon.ts';
+import { pad2, timeWithDative, turkishLocative, turkishNumberLocative } from './turkish.ts';
 
 export interface FormatDateOptions {
   now: string;

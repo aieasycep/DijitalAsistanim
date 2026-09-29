@@ -7,7 +7,7 @@ import {
   stripQuotedHistory,
   truncate,
   zonedTimeToUtc,
-} from './index';
+} from './index.ts';
 
 describe('util', () => {
   it('normalizes html and whitespace', () => {

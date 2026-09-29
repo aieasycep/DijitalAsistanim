@@ -5,8 +5,8 @@
  */
 import type { Importance } from '@da/domain';
 import { scheduleSuggestionAiSchema, type ScheduleSuggestionAi } from '@da/validation';
-import { PROMPT_CHAR_LIMITS } from '../redact';
-import type { PromptSpec } from '../types';
+import { PROMPT_CHAR_LIMITS } from '../redact.ts';
+import type { PromptSpec } from '../types.ts';
 import {
   DEFAULT_PROMPT_TIMEZONE,
   bullets,
@@ -17,7 +17,7 @@ import {
   joinLines,
   temporalContext,
   type PromptBase,
-} from './shared';
+} from './shared.ts';
 
 export interface ScheduleFreeBlock {
   startAt: string;

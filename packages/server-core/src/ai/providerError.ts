@@ -1,4 +1,4 @@
-import type { AiProviderName } from './types';
+import type { AiProviderName } from './types.ts';
 
 export type AiProviderErrorKind = 'http' | 'network' | 'timeout' | 'parse' | 'refusal' | 'empty';
 

@@ -1,6 +1,6 @@
 /** Building blocks shared by all prompt builders: anti-hallucination rules, system composer, formatting. */
 import type { Locale } from '@da/domain';
-import { normalizeText } from '../../util';
+import { normalizeText } from '../../util/index.ts';
 
 export const DEFAULT_PROMPT_TIMEZONE = 'Europe/Istanbul';
 

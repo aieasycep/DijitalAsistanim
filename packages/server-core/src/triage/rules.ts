@@ -1,6 +1,6 @@
 /** Explicit user rules (PriorityRule) and VIP matching for triage. */
 import type { PriorityRule, VipPerson } from '@da/domain';
-import { domainMatches, domainPart } from './senders';
+import { domainMatches, domainPart } from './senders.ts';
 
 export interface RuleMatch {
   rule: PriorityRule;

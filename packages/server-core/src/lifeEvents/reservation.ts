@@ -1,6 +1,6 @@
 /** Restaurant / hotel / event reservations: venue, address, date-time, party size — only what the source states. */
-import { dateNear, labelledValue, type Ctx } from './common';
-import type { ExtractedLifeEvent } from './types';
+import { dateNear, labelledValue, type Ctx } from './common.ts';
+import type { ExtractedLifeEvent } from './types.ts';
 
 const RE_RESERVATION =
   /(?<![\p{L}])(?:rezervasyon(?:unuz|un|u|)|reservation|booking|masa(?:nız|n)?|check-?in tarihi|giriş tarihi|konaklama(?:nız)?|otel|hotel|randevu(?:nuz)?|bilet(?:iniz|leriniz)?|tickets?|etkinlik|event|konser|concert|table for|your table)(?![\p{L}])/u;

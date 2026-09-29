@@ -13,8 +13,19 @@
 supabase login && supabase link --project-ref <ref>
 supabase db push                       # applies supabase/migrations in order
 supabase secrets set --env-file supabase/.env.local   # see .env.example (server-side section)
-supabase functions deploy              # deploys every folder in supabase/functions
+pnpm supabase:deploy                   # = supabase functions deploy --use-api --import-map supabase/functions/deno.json
 ```
+
+- Pass the import map explicitly (the `pnpm supabase:deploy` script does): CLI 2.118+ only auto-detects a
+  `deno.json` inside each function folder or `supabase/functions/import_map.json`, and without the map every function
+  fails to bundle with `Relative import path "@da/…" not prefixed with / or ./ or ../`.
+- The hosted runtime resolves imports strictly: every relative import in `supabase/functions` and in the packages it
+  bundles (`@da/domain`, `@da/validation`, `@da/server-core`) must name the file (`./x.ts`, `./x/index.ts`), and
+  `deno.json` maps each `@da/server-core/<module>` to its `index.ts`. Deno's "sloppy imports" are not enabled, so
+  `pnpm typecheck:functions` fails locally on an extensionless import before it can break a deploy (the symptom in
+  production is `BOOT_ERROR` / `worker boot error: Module not found` on every call).
+- The Management API and dashboard list secrets by SHA-256 of their value, so a secret can only be checked by
+  hashing the expected value; `supabase secrets list` shows the same digests.
 
 - Set database settings used by pg_cron → Edge Function calls:
   ```sql
@@ -80,11 +91,12 @@ installs are never blocked).
 
 ### First real-data test (staging, no EAS)
 
-1. Supabase: create a project, then `supabase link`, `supabase db push`, `supabase secrets set`, `supabase functions
-deploy` and the two `alter database` settings from section 1. Minimum secrets: `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+1. Supabase: create a project, then `supabase link`, `supabase db push`, `supabase secrets set`, `pnpm supabase:deploy`
+   and the two `alter database` settings from section 1 (or the two Vault secrets). Minimum secrets: `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
    `SUPABASE_SERVICE_ROLE_KEY`, `INTERNAL_FUNCTION_SECRET`, `TOKEN_ENCRYPTION_KEY`, `GOOGLE_OAUTH_CLIENT_ID`,
    `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `AI_PROVIDER` + `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY`).
-2. Supabase Auth: enable Email, put `{{ .Token }}` in the Magic Link template (above). For the "Google ile devam et"
+2. Supabase Auth: enable Email, put `{{ .Token }}` in the Magic Link template (above) and set **Email OTP length**
+   to 6 (the sign-in screen accepts exactly six digits; the dashboard default is 8). For the "Google ile devam et"
    button also enable the **Google** provider (Authentication → Sign In / Providers) with the web client's ID and
    secret, add the callback shown there (`https://<ref>.supabase.co/auth/v1/callback`) to that web client's authorized
    redirect URIs in Google Cloud, and add `dijitalasistan://auth/callback` under Authentication → URL configuration →

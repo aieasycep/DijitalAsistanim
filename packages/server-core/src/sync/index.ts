@@ -14,7 +14,7 @@ export type {
   SyncDueState,
   SyncMode,
   SyncResource,
-} from './schedule';
+} from './schedule.ts';
 export {
   MAX_BACKOFF_MINUTES,
   POLL_INTERVALS,
@@ -27,14 +27,14 @@ export {
   selectDueStates,
   subscriptionRenewalDue,
   waitMinutes,
-} from './schedule';
+} from './schedule.ts';
 export type {
   CalendarDeltaApplication,
   ChangedEvents,
   EmailThreadPatch,
   EventLike,
   MergeThreadOptions,
-} from './merge';
+} from './merge.ts';
 export {
   applyCalendarDelta,
   dedupeMessages,
@@ -44,13 +44,13 @@ export {
   mergeThreadUpdate,
   normalizeSubject,
   threadKeyFor,
-} from './merge';
+} from './merge.ts';
 export type {
   FirstAnalysisCounts,
   FirstAnalysisStages,
   InitialAnalysisWindow,
   ProgressFromInput,
-} from './initial';
+} from './initial.ts';
 export {
   DEFAULT_INITIAL_WINDOW_HOURS,
   FIRST_ANALYSIS_STEPS,
@@ -61,4 +61,4 @@ export {
   nextStep,
   progressFrom,
   stepFromStages,
-} from './initial';
+} from './initial.ts';

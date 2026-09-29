@@ -8,10 +8,10 @@
  */
 import type { EmailCategory, Importance, SourceType } from '@da/domain';
 import { z } from 'zod';
-import { parseRetryAfterSec } from '../ai/providerError';
-import type { AiFetch, AiLogger } from '../ai/types';
-import { AppError } from '../errors';
-import { chunk, estimateTokens, normalizeText } from '../util';
+import { parseRetryAfterSec } from '../ai/providerError.ts';
+import type { AiFetch, AiLogger } from '../ai/types.ts';
+import { AppError } from '../errors/index.ts';
+import { chunk, estimateTokens, normalizeText } from '../util/index.ts';
 
 export const EMBEDDING_PROVIDER_NAMES = ['openai', 'voyage'] as const;
 export type EmbeddingProviderName = (typeof EMBEDDING_PROVIDER_NAMES)[number];

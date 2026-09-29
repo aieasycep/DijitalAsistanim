@@ -14,7 +14,7 @@ export {
   toBytes,
   utf8Decode,
   utf8Encode,
-} from './encoding';
+} from './encoding.ts';
 export {
   ENCRYPTION_FORMAT_VERSION,
   createTokenCipher,
@@ -25,7 +25,7 @@ export {
   isEncryptedPayload,
   needsReencrypt,
   parseEncryptedPayload,
-} from './aes';
+} from './aes.ts';
 export type {
   DecryptFailureReason,
   DecryptResult,
@@ -34,7 +34,7 @@ export type {
   EncryptionKeyring,
   ReencryptResult,
   TokenCipher,
-} from './aes';
+} from './aes.ts';
 export {
   fingerprint,
   hmacSha256,
@@ -46,7 +46,7 @@ export {
   timingSafeEqual,
   timingSafeEqualBytes,
   verifyHmacSha256Hex,
-} from './hash';
+} from './hash.ts';
 export {
   REFERRAL_CODE_ALPHABET,
   REFERRAL_CODE_LENGTH,
@@ -63,6 +63,6 @@ export {
   randomString,
   randomToken,
   randomUuid,
-} from './random';
-export type { PkcePair } from './random';
-export { buildIdempotencyKey, canonicalJson } from './idempotency';
+} from './random.ts';
+export type { PkcePair } from './random.ts';
+export { buildIdempotencyKey, canonicalJson } from './idempotency.ts';

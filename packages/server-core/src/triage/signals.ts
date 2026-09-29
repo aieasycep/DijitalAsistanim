@@ -1,5 +1,5 @@
 /** Deterministic content signals (Turkish + English). All regexes run on lowercase text. */
-import { flexI, lowercasePreservingIndices } from '../dates';
+import { flexI, lowercasePreservingIndices } from '../dates/index.ts';
 
 const B = '(?<![\\p{L}\\p{N}])';
 const E = '(?![\\p{L}\\p{N}])';

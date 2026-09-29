@@ -4,9 +4,9 @@
  * with OpenAI's strict subset (all properties required, no validation keywords).
  */
 import { z } from 'zod';
-import { httpError, postJson } from './http';
-import { AiProviderError } from './providerError';
-import { extractJson, isOpenAiStrictCompatible, stripSchemaMeta } from './schema';
+import { httpError, postJson } from './http.ts';
+import { AiProviderError } from './providerError.ts';
+import { extractJson, isOpenAiStrictCompatible, stripSchemaMeta } from './schema.ts';
 import type {
   AiFetch,
   AiLogger,
@@ -15,7 +15,7 @@ import type {
   AiResponse,
   AiStopReason,
   AiTier,
-} from './types';
+} from './types.ts';
 
 export const OPENAI_CHAT_COMPLETIONS_URL = 'https://api.openai.com/v1/chat/completions';
 export const OPENAI_STRUCTURED_OUTPUT_NAME = 'emit';

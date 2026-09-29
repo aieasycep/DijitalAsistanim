@@ -9,7 +9,7 @@ import type {
   CalendarEventDraft,
   EmailMessageDraft,
   EmailThreadDraft,
-} from '../providers/types';
+} from '../providers/types.ts';
 
 // --- Subjects ----------------------------------------------------------------------------------
 

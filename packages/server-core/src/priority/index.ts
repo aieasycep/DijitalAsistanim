@@ -18,8 +18,8 @@ export type {
   VipUpsert,
   RuleSuggestion,
   FollowUpUpdate,
-} from './types';
-export { scoreCandidate, matchPriorityRules, learnedWeight, tierRank } from './score';
-export { rankCandidates, compareRanked, selectTopPriorities } from './rank';
-export { applyFeedback } from './feedback';
-export { rulePhrase as priorityRulePhrase } from './i18n';
+} from './types.ts';
+export { scoreCandidate, matchPriorityRules, learnedWeight, tierRank } from './score.ts';
+export { rankCandidates, compareRanked, selectTopPriorities } from './rank.ts';
+export { applyFeedback } from './feedback.ts';
+export { rulePhrase as priorityRulePhrase } from './i18n.ts';

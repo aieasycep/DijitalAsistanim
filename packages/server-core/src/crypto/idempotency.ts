@@ -2,7 +2,7 @@
  * Stable idempotency keys: the same intent (same namespace + same canonical parts) always
  * produces the same key, so retries and duplicate AI proposals collapse into one action.
  */
-import { sha256Hex } from './hash';
+import { sha256Hex } from './hash.ts';
 
 const NAMESPACE_PATTERN = /^[A-Za-z0-9_.:-]{1,60}$/;
 const KEY_HASH_CHARS = 32;

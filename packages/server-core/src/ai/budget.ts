@@ -1,7 +1,7 @@
 /** Per-user daily AI token budget (AI_DAILY_TOKEN_BUDGET_FREE / _PRO). */
 import type { Locale, Plan } from '@da/domain';
-import { AppError } from '../errors';
-import { addDays, localDateKey, zonedTimeToUtc } from '../util';
+import { AppError } from '../errors/index.ts';
+import { addDays, localDateKey, zonedTimeToUtc } from '../util/index.ts';
 
 export interface AiDailyTokenLimits {
   free: number;

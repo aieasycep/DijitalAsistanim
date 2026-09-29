@@ -7,8 +7,8 @@
  * Key rotation: decrypt with the current key first, then the previous key. When the previous
  * key was needed the caller should re-encrypt (`needsReencrypt` / `reencryptIfNeeded`).
  */
-import { AppError } from '../errors';
-import { base64ToBytes, bytesToBase64, toArrayBuffer, utf8Decode, utf8Encode } from './encoding';
+import { AppError } from '../errors/index.ts';
+import { base64ToBytes, bytesToBase64, toArrayBuffer, utf8Decode, utf8Encode } from './encoding.ts';
 
 export const ENCRYPTION_FORMAT_VERSION = 'v1';
 const KEY_BYTES = 32;

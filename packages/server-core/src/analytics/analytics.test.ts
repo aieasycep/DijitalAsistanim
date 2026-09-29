@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ANALYTICS_FORBIDDEN_KEYS } from '@da/domain';
-import { sha256Hex } from '../crypto';
+import { sha256Hex } from '../crypto/index.ts';
 import {
   ANALYTICS_EVENT_NAMES,
   MemorySink,
@@ -8,7 +8,7 @@ import {
   PostHogSink,
   hashDistinctId,
   sanitizeAnalyticsEvent,
-} from './index';
+} from './index.ts';
 
 describe('analytics · sanitizeAnalyticsEvent', () => {
   it('accepts only catalogued event names', () => {

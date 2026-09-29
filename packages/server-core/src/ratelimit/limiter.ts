@@ -1,9 +1,13 @@
 /** Rate limiter over an injected store; evaluates every rule of a policy and commits atomically-ish. */
 import type { Locale } from '@da/domain';
-import { AppError } from '../errors';
-import { evaluateRule, parseRateLimitState, type RateLimitRule } from './algorithms';
-import { resolveRateLimitPolicies, type RateLimitAction, type RateLimitPolicies } from './policies';
-import type { RateLimitStore } from './store';
+import { AppError } from '../errors/index.ts';
+import { evaluateRule, parseRateLimitState, type RateLimitRule } from './algorithms.ts';
+import {
+  resolveRateLimitPolicies,
+  type RateLimitAction,
+  type RateLimitPolicies,
+} from './policies.ts';
+import type { RateLimitStore } from './store.ts';
 
 export interface RateLimitResult {
   action: RateLimitAction;

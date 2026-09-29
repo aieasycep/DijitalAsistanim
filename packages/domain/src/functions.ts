@@ -43,7 +43,7 @@ import type {
   TodayRequest,
   TodayResponse,
   TranscribeResponse,
-} from './api';
+} from './api.ts';
 import type {
   AndroidNotificationItem,
   Briefing,
@@ -53,7 +53,7 @@ import type {
   DataExportRequest,
   ISODate,
   UUID,
-} from './entities';
+} from './entities.ts';
 
 export interface FunctionContract<Req, Res> {
   method: 'GET' | 'POST';

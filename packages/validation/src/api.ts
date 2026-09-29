@@ -20,7 +20,7 @@ import {
   themePreferenceSchema,
   timezoneSchema,
   uuidSchema,
-} from './common';
+} from './common.ts';
 import { NOTIFICATION_CATEGORIES } from '@da/domain';
 
 // --- Approval payloads -------------------------------------------------------

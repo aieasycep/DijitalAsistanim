@@ -9,10 +9,15 @@
  * sorting by score never contradicts the tier.
  */
 import type { Importance, LearnedPreference, Locale, PriorityRule } from '@da/domain';
-import { formatDateLabel, formatDayLabel, formatDeadlinePhrase } from '../dates';
-import { HOUR } from '../util';
-import { rulePhrase, t } from './i18n';
-import type { PriorityCandidate, PriorityContext, PriorityFactor, PriorityResult } from './types';
+import { formatDateLabel, formatDayLabel, formatDeadlinePhrase } from '../dates/index.ts';
+import { HOUR } from '../util/index.ts';
+import { rulePhrase, t } from './i18n.ts';
+import type {
+  PriorityCandidate,
+  PriorityContext,
+  PriorityFactor,
+  PriorityResult,
+} from './types.ts';
 
 const TIER_RANK: Record<Importance, number> = { low: 0, normal: 1, high: 2, critical: 3 };
 const RANK_TIER: Importance[] = ['low', 'normal', 'high', 'critical'];

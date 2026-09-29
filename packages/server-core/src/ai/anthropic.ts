@@ -4,9 +4,9 @@
  * is the requested JSON schema; the tool input is the parsed result.
  */
 import { z } from 'zod';
-import { httpError, postJson } from './http';
-import { AiProviderError } from './providerError';
-import { extractJson, stripSchemaMeta } from './schema';
+import { httpError, postJson } from './http.ts';
+import { AiProviderError } from './providerError.ts';
+import { extractJson, stripSchemaMeta } from './schema.ts';
 import type {
   AiFetch,
   AiLogger,
@@ -15,7 +15,7 @@ import type {
   AiResponse,
   AiStopReason,
   AiTier,
-} from './types';
+} from './types.ts';
 
 export const ANTHROPIC_MESSAGES_URL = 'https://api.anthropic.com/v1/messages';
 export const ANTHROPIC_API_VERSION = '2023-06-01';

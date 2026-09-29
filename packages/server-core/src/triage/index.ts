@@ -11,9 +11,9 @@ export type {
   NotificationInput,
   SensitiveNotificationResult,
   SensitiveReason,
-} from './types';
-export { triageEmail, detectSignals, shouldSendToAi } from './triage';
-export { isSensitiveNotification, DEFAULT_EXCLUDED_PACKAGES } from './notifications';
+} from './types.ts';
+export { triageEmail, detectSignals, shouldSendToAi } from './triage.ts';
+export { isSensitiveNotification, DEFAULT_EXCLUDED_PACKAGES } from './notifications.ts';
 export {
   DEFAULT_AUTOMATED_SENDERS,
   DEFAULT_AUTOMATED_DOMAINS,
@@ -22,9 +22,9 @@ export {
   isBulkAddress,
   isAutomatedSender,
   isSecuritySender,
-} from './senders';
+} from './senders.ts';
 export {
   matchRules as matchTriageRules,
   matchVip as matchTriageVip,
   type RuleMatch,
-} from './rules';
+} from './rules.ts';

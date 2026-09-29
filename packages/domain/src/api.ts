@@ -12,7 +12,7 @@ import type {
   Provider,
   ReminderOption,
   ReplyTone,
-} from './enums';
+} from './enums.ts';
 import type {
   ApprovalAction,
   ApprovalPayloadMap,
@@ -39,8 +39,8 @@ import type {
   SearchResult,
   TodayFeed,
   UUID,
-} from './entities';
-import type { SourceRef } from './source';
+} from './entities.ts';
+import type { SourceRef } from './source.ts';
 
 export interface ApiError {
   code:

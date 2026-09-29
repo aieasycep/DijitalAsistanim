@@ -16,9 +16,9 @@ import type {
   ScheduleSuggestion,
   TaskItem,
 } from '@da/domain';
-import { formatClock, formatDayLabel, timeWithDative, turkishDative } from '../dates';
-import { AppError } from '../errors';
-import { MINUTE, addMinutes, localDateKey, zonedTimeToUtc } from '../util';
+import { formatClock, formatDayLabel, timeWithDative, turkishDative } from '../dates/index.ts';
+import { AppError } from '../errors/index.ts';
+import { MINUTE, addMinutes, localDateKey, zonedTimeToUtc } from '../util/index.ts';
 
 export const DEFAULT_TIMEZONE = 'Europe/Istanbul';
 export const DEFAULT_DAY_START = '09:00';

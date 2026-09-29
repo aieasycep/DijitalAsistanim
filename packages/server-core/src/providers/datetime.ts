@@ -1,5 +1,5 @@
 /** Date/time helpers for provider payloads (all-day anchoring, zone-local wall clocks). */
-import { MINUTE, localDateKey, tzOffsetMinutes, zonedTimeToUtc } from '../util';
+import { MINUTE, localDateKey, tzOffsetMinutes, zonedTimeToUtc } from '../util/index.ts';
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const LOCAL_DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/;

@@ -6,9 +6,9 @@
  * hand back the profile historyId captured *before* the listing so nothing slips between the two.
  */
 import type { EmailParticipant } from '@da/domain';
-import { GOOGLE_SCOPES } from '../oauth/scopes';
-import { collapseWhitespace, decodeHtmlEntities } from '../safefetch/readable';
-import { clamp, truncate } from '../util';
+import { GOOGLE_SCOPES } from '../oauth/scopes.ts';
+import { collapseWhitespace, decodeHtmlEntities } from '../safefetch/readable.ts';
+import { clamp, truncate } from '../util/index.ts';
 import {
   encodePathSegment,
   isProviderStatus,
@@ -17,7 +17,7 @@ import {
   providerRequestRaw,
   sameEmail,
   toIsoOrNull,
-} from './http';
+} from './http.ts';
 import {
   buildRawMessage,
   decodeBase64Url,
@@ -25,7 +25,7 @@ import {
   encodeBase64Url,
   htmlToText,
   parseAddressList,
-} from './mime';
+} from './mime.ts';
 import type {
   EmailAttachmentMeta,
   EmailMessageDraft,
@@ -36,7 +36,7 @@ import type {
   SendMailInput,
   SendMailResult,
   WatchResult,
-} from './types';
+} from './types.ts';
 
 export const GMAIL_API_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me';
 export const GMAIL_MODIFY_SCOPE = 'https://www.googleapis.com/auth/gmail.modify';

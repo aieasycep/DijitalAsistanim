@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isAppError } from '../errors';
-import type { FetchLike } from '../safefetch/fetch';
+import { isAppError } from '../errors/index.ts';
+import type { FetchLike } from '../safefetch/fetch.ts';
 import {
   buildRawMessage,
   createGmailClient,
@@ -28,7 +28,7 @@ import {
   type GoogleCalendarEvent,
   type GraphEvent,
   type GraphMessage,
-} from './index';
+} from './index.ts';
 
 // --- Test helpers -----------------------------------------------------------------------------------
 

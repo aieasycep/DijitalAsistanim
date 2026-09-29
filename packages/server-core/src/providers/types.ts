@@ -14,7 +14,7 @@ import type {
   EmailThread,
   TaskItem,
 } from '@da/domain';
-import type { FetchLike } from '../safefetch/fetch';
+import type { FetchLike } from '../safefetch/fetch.ts';
 
 /** Injected fetch (the global in edge functions, a stub in tests). */
 export type ProviderFetch = FetchLike;

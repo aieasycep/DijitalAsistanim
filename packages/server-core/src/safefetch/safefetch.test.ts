@@ -13,7 +13,7 @@ import {
   validateResolvedAddresses,
   type FetchLike,
   type SafeFetchRejectReason,
-} from './index';
+} from './index.ts';
 
 type Route = (url: string, init: RequestInit) => Response | Promise<Response>;
 

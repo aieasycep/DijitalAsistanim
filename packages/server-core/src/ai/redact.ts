@@ -4,8 +4,8 @@
  * needs (greeting, body, closing + name) and drops noise that costs tokens and leaks nothing useful.
  */
 import type { Locale } from '@da/domain';
-import { normalizeText, stripQuotedHistory } from '../util';
-import type { AiPurpose } from './types';
+import { normalizeText, stripQuotedHistory } from '../util/index.ts';
+import type { AiPurpose } from './types.ts';
 
 /** Character caps per purpose — for list purposes the cap applies to each item. */
 export const PROMPT_CHAR_LIMITS: Record<AiPurpose, number> = {

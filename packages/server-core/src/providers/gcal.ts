@@ -3,10 +3,10 @@
  * plus normalisation to CalendarEventDraft.
  */
 import type { CalendarAttendee, EmailParticipant } from '@da/domain';
-import { randomUuid } from '../crypto/random';
-import { GOOGLE_SCOPES } from '../oauth/scopes';
-import { addDays, clamp } from '../util';
-import { addCalendarDays, dateToInstant, localDateInZone } from './datetime';
+import { randomUuid } from '../crypto/random.ts';
+import { GOOGLE_SCOPES } from '../oauth/scopes.ts';
+import { addDays, clamp } from '../util/index.ts';
+import { addCalendarDays, dateToInstant, localDateInZone } from './datetime.ts';
 import {
   encodePathSegment,
   isProviderStatus,
@@ -14,8 +14,8 @@ import {
   providerRequestRaw,
   sameEmail,
   toIsoOrNull,
-} from './http';
-import { detectMeetingLink, meetingProviderFor, type MeetingLink } from './meeting';
+} from './http.ts';
+import { detectMeetingLink, meetingProviderFor, type MeetingLink } from './meeting.ts';
 import type {
   CalendarDelta,
   CalendarEventDraft,
@@ -26,7 +26,7 @@ import type {
   ProviderFetch,
   UpdateEventInput,
   WatchResult,
-} from './types';
+} from './types.ts';
 
 export const GOOGLE_CALENDAR_API_BASE = 'https://www.googleapis.com/calendar/v3';
 export const DEFAULT_CALENDAR_ID = 'primary';

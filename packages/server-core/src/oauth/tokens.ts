@@ -1,9 +1,9 @@
 /** Token endpoint interactions: code exchange, refresh (rotation-aware) and revocation. */
 import type { Locale } from '@da/domain';
 import { z } from 'zod';
-import { mapOAuthError, parseOAuthErrorBody, providerUnreachableError } from './errors';
-import { MICROSOFT_CONSENT_MANAGE_URL, providerEndpoints } from './providers';
-import { parseScopeString, type OAuthProvider } from './scopes';
+import { mapOAuthError, parseOAuthErrorBody, providerUnreachableError } from './errors.ts';
+import { MICROSOFT_CONSENT_MANAGE_URL, providerEndpoints } from './providers.ts';
+import { parseScopeString, type OAuthProvider } from './scopes.ts';
 
 /** Injected fetch so token calls are testable and runtime-agnostic. */
 export type OAuthFetch = (input: string, init: RequestInit) => Promise<Response>;

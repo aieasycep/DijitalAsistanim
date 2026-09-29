@@ -17,7 +17,7 @@ import {
   isoDateTimeSchema,
   lifeEventTypeSchema,
   replyToneSchema,
-} from './common';
+} from './common.ts';
 
 export const suggestedActionKindSchema = z.enum([
   'reply',

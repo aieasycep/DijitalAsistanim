@@ -8,7 +8,7 @@ import {
   exportBundleManifest,
   exportUrlExpiry,
   retentionCutoff,
-} from './index';
+} from './index.ts';
 
 const now = '2026-09-05T08:00:00.000Z';
 

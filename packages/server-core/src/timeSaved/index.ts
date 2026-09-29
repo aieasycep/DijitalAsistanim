@@ -6,7 +6,7 @@
  * note it wrote, a draft the user actually used). It is capped at 20 hours per week.
  */
 import type { Locale, WeeklyMetrics } from '@da/domain';
-import { WEEKDAYS_EN_TITLE, WEEKDAYS_TR_TITLE, isoWeekday, parseDateKey } from '../dates';
+import { WEEKDAYS_EN_TITLE, WEEKDAYS_TR_TITLE, isoWeekday, parseDateKey } from '../dates/index.ts';
 
 /**
  * Minutes saved per unit. Rationale:

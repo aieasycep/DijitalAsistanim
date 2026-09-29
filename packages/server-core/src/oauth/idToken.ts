@@ -7,7 +7,7 @@
  * token that arrived from a client.
  */
 import { z } from 'zod';
-import { base64UrlToBytes, utf8Decode } from '../crypto';
+import { base64UrlToBytes, utf8Decode } from '../crypto/index.ts';
 
 export interface IdTokenClaims {
   iss: string;

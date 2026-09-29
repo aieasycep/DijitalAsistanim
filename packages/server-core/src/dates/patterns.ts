@@ -2,7 +2,7 @@
  * Candidate producers. Each regex runs over the index-aligned lowercase text and yields
  * partially resolved candidates; `extract.ts` merges adjacent date+time spans and finalizes.
  */
-import { HOUR, MINUTE } from '../util';
+import { HOUR, MINUTE } from '../util/index.ts';
 import {
   addBusinessDays,
   addDays,
@@ -13,7 +13,7 @@ import {
   isoWeekday,
   nextWeekday,
   type LocalDate,
-} from './calendar';
+} from './calendar.ts';
 import {
   B,
   E,
@@ -31,8 +31,8 @@ import {
   parseNumberWord,
   timeOfDay,
   weekdayIndex,
-} from './lexicon';
-import { flexI } from './turkish';
+} from './lexicon.ts';
+import { flexI } from './turkish.ts';
 
 export interface ClockTime {
   hh: number;

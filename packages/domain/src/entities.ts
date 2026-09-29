@@ -41,8 +41,8 @@ import type {
   TaskStatus,
   ThemePreference,
   TriageBucket,
-} from './enums';
-import type { SourceRef } from './source';
+} from './enums.ts';
+import type { SourceRef } from './source.ts';
 
 /** ISO-8601 UTC timestamp string. */
 export type ISODateTime = string;

@@ -5,7 +5,7 @@ import type {
   ApprovalPayloadMap,
   ApprovalStatus,
 } from '@da/domain';
-import { AppError } from '../errors';
+import { AppError } from '../errors/index.ts';
 import {
   applyEdit,
   approvalRequiredScope,
@@ -18,7 +18,7 @@ import {
   summarizeChange,
   transition,
   type CreateApprovalInput,
-} from './index';
+} from './index.ts';
 
 const now = '2026-09-04T05:42:00.000Z'; // Friday 08:42 Istanbul
 const tz = 'Europe/Istanbul';

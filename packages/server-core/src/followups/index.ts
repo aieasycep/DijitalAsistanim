@@ -13,8 +13,8 @@ import type {
   SourceType,
   UUID,
 } from '@da/domain';
-import { addDays, daysBetween, localDateOf, localToUtcIso } from '../dates';
-import { DAY, HOUR, MINUTE, localDateKey } from '../util';
+import { addDays, daysBetween, localDateOf, localToUtcIso } from '../dates/index.ts';
+import { DAY, HOUR, MINUTE, localDateKey } from '../util/index.ts';
 
 export const DEFAULT_TIMEZONE = 'Europe/Istanbul';
 export const DEFAULT_NUDGE_DAYS = 3;

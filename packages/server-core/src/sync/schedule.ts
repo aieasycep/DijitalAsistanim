@@ -4,7 +4,7 @@
  * SyncState rows — the cron dispatcher persists the outcome.
  */
 import type { SyncState } from '@da/domain';
-import { MINUTE, addDays, clamp } from '../util';
+import { MINUTE, addDays, clamp } from '../util/index.ts';
 
 export type SyncResource = SyncState['resource'];
 export type SyncMode = SyncState['mode'];

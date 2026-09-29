@@ -4,8 +4,8 @@
  */
 import type { CaptureKind } from '@da/domain';
 import { captureAnalysisAiSchema, type CaptureAnalysisAi } from '@da/validation';
-import { redactForPrompt } from '../redact';
-import type { PromptSpec } from '../types';
+import { redactForPrompt } from '../redact.ts';
+import type { PromptSpec } from '../types.ts';
 import {
   DEFAULT_PROMPT_TIMEZONE,
   clipInline,
@@ -14,7 +14,7 @@ import {
   labelled,
   temporalContext,
   type PromptBase,
-} from './shared';
+} from './shared.ts';
 
 export interface CaptureAnalysisInput extends PromptBase {
   kind: CaptureKind;

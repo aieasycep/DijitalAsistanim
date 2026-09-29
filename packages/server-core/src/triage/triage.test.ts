@@ -8,7 +8,7 @@ import {
   shouldSendToAi,
   triageEmail,
   type TriageEmailInput,
-} from './index';
+} from './index.ts';
 
 const now = '2026-09-04T05:42:00.000Z'; // Friday 08:42 Istanbul
 const ctxBase = { now, timezone: 'Europe/Istanbul' as const };
