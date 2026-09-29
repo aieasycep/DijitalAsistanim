@@ -58,8 +58,25 @@ Two separate things use OAuth:
 
 ## Supabase Auth redirect URLs
 
-Add to _Authentication → URL configuration_:
-`dijitalasistan://auth/callback`, `https://dijitalasistan.app/app/auth/callback`, `exp://127.0.0.1:8081/--/auth/callback` (dev).
+Add to _Authentication → URL configuration_ (Site URL `https://dijitalasistan.app`):
+`dijitalasistan://auth/callback`, `https://dijitalasistan.app/app/auth/callback`,
+`http://localhost:3000/app/auth/callback` (web dev), `exp://127.0.0.1:8081/--/auth/callback` (Expo dev).
+
+E-mail code sign-in: _Authentication → Sign In / Providers → Email_ → **Email OTP length = 6** (the code screen
+accepts exactly six digits; the dashboard default is 8) and `{{ .Token }}` in the Magic Link template
+(docs/DEPLOYMENT.md §1). With custom SMTP, double-check the host: a typo there silently stops every code e-mail.
+
+## Checking a Google client without the app
+
+Whether a redirect URI is registered on the web client can be checked with one request and no sign-in:
+
+```bash
+curl -sL "https://accounts.google.com/o/oauth2/v2/auth?client_id=<client-id>&redirect_uri=<uri, URL-encoded>&response_type=code&scope=openid" \
+  | grep -o redirect_uri_mismatch
+```
+
+No output means the URI is registered; `redirect_uri_mismatch` means it is missing. Check both
+`https://<project-ref>.supabase.co/functions/v1/oauth-google-callback` and `https://<project-ref>.supabase.co/auth/v1/callback`.
 
 ## Flow (data-source connect)
 
