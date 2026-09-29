@@ -1,6 +1,6 @@
 import type { CalendarEvent, EmailThread, SyncState } from '@da/domain';
 import { describe, expect, it } from 'vitest';
-import type { CalendarEventDraft, EmailMessageDraft } from '../providers/types';
+import type { CalendarEventDraft, EmailMessageDraft } from '../providers/types.ts';
 import {
   applyCalendarDelta,
   backoffMinutes,
@@ -21,7 +21,7 @@ import {
   selectDueStates,
   subscriptionRenewalDue,
   threadKeyFor,
-} from './index';
+} from './index.ts';
 
 const NOW = '2026-09-05T08:00:00.000Z';
 

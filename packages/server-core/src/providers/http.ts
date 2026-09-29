@@ -6,8 +6,8 @@
  * client. `details` only holds the status, the provider's error code/reason and (for 429/5xx)
  * the retry hint.
  */
-import { AppError, isAppError } from '../errors';
-import type { ProviderFetch } from './types';
+import { AppError, isAppError } from '../errors/index.ts';
+import type { ProviderFetch } from './types.ts';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 

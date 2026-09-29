@@ -14,8 +14,8 @@ import {
   scheduleSuggestions,
   suggestPrepTime,
   type RoutesProvider,
-} from './index';
-import { zonedTimeToUtc } from '../util';
+} from './index.ts';
+import { zonedTimeToUtc } from '../util/index.ts';
 
 const tz = 'Europe/Istanbul';
 const today = '2026-09-05';

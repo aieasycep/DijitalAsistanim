@@ -1,7 +1,7 @@
 import type { Commitment, CommitmentDirection, Locale } from '@da/domain';
-import type { CommitmentFormKind, CommitmentLanguage } from './shared';
+import type { CommitmentFormKind, CommitmentLanguage } from './shared.ts';
 
-export type { CommitmentFormKind, CommitmentLanguage } from './shared';
+export type { CommitmentFormKind, CommitmentLanguage } from './shared.ts';
 
 export interface CommitmentCounterpartHint {
   name?: string | null;

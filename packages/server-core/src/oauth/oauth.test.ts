@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { bytesToBase64Url, hmacSha256, pkceChallengeS256, utf8Encode } from '../crypto';
-import { isAppError } from '../errors';
+import { bytesToBase64Url, hmacSha256, pkceChallengeS256, utf8Encode } from '../crypto/index.ts';
+import { isAppError } from '../errors/index.ts';
 import {
   GOOGLE_SCOPES,
   MICROSOFT_CONSENT_MANAGE_URL,
@@ -28,7 +28,7 @@ import {
   scopesFor,
   verifyOAuthState,
   type OAuthFetch,
-} from './index';
+} from './index.ts';
 
 const NOW = new Date('2026-09-05T05:00:00.000Z'); // 08:00 Europe/Istanbul
 const SECRET = 'oauth-state-secret-with-at-least-32-bytes-of-entropy';

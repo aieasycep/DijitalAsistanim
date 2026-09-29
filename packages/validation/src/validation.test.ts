@@ -8,7 +8,7 @@ import {
   referralRedeemSchema,
   timezoneSchema,
   userPreferencesUpdateSchema,
-} from './index';
+} from './index.ts';
 
 const validAnalysis = {
   summary: 'Ahmet bugün 17:00’ye kadar revize teklif bekliyor.',

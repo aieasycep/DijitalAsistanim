@@ -3,15 +3,15 @@
  * malformed tokens skipped) and what to do with each ticket/receipt afterwards.
  */
 import type { PushToken } from '@da/domain';
-import type { NotificationPayload } from '../notifications';
+import type { NotificationPayload } from '../notifications/index.ts';
 import {
   classifyExpoOutcome,
   isExpoPushToken,
   type ExpoPushMessage,
   type ExpoPushReceipt,
   type ExpoPushTicket,
-} from './expo';
-import { toExpoMessage, type ToExpoMessageOptions } from './messages';
+} from './expo.ts';
+import { toExpoMessage, type ToExpoMessageOptions } from './messages.ts';
 
 export type DeliverySkipReason =
   'already_sent' | 'inactive' | 'invalid_token' | 'duplicate_token' | 'unsupported_platform';

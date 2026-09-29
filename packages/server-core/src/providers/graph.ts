@@ -8,17 +8,17 @@
  * `@odata.nextLink` is a valid continuation cursor, so long deltas can be resumed later.
  */
 import type { CalendarAttendee, EmailParticipant, Importance } from '@da/domain';
-import { AppError } from '../errors';
-import { MICROSOFT_SCOPES } from '../oauth/scopes';
-import { collapseWhitespace } from '../safefetch/readable';
-import { MINUTE, addDays, clamp, truncate } from '../util';
+import { AppError } from '../errors/index.ts';
+import { MICROSOFT_SCOPES } from '../oauth/scopes.ts';
+import { collapseWhitespace } from '../safefetch/readable.ts';
+import { MINUTE, addDays, clamp, truncate } from '../util/index.ts';
 import {
   addCalendarDays,
   dateToInstant,
   localDateInZone,
   localDateTimeInZone,
   zonedDateTimeToUtc,
-} from './datetime';
+} from './datetime.ts';
 import {
   encodePathSegment,
   isProviderStatus,
@@ -26,9 +26,9 @@ import {
   providerRequestRaw,
   sameEmail,
   toIsoOrNull,
-} from './http';
-import { detectMeetingLink, meetingProviderFor, type MeetingLink } from './meeting';
-import { htmlToText } from './mime';
+} from './http.ts';
+import { detectMeetingLink, meetingProviderFor, type MeetingLink } from './meeting.ts';
+import { htmlToText } from './mime.ts';
 import type {
   CalendarDelta,
   CalendarEventDraft,
@@ -50,7 +50,7 @@ import type {
   TasksSyncInput,
   UpdateEventInput,
   WatchResult,
-} from './types';
+} from './types.ts';
 
 export const GRAPH_API_BASE = 'https://graph.microsoft.com/v1.0';
 export const GRAPH_MAIL_READWRITE_SCOPE = 'Mail.ReadWrite';

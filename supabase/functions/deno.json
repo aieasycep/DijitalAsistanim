@@ -1,5 +1,4 @@
 {
-  "unstable": ["sloppy-imports"],
   "compilerOptions": {
     "strict": true,
     "lib": ["deno.window", "dom", "dom.iterable", "esnext"],
@@ -10,7 +9,36 @@
     "@da/domain": "../../packages/domain/src/index.ts",
     "@da/validation": "../../packages/validation/src/index.ts",
     "@da/server-core": "../../packages/server-core/src/index.ts",
-    "@da/server-core/": "../../packages/server-core/src/",
+    "@da/server-core/ai": "../../packages/server-core/src/ai/index.ts",
+    "@da/server-core/analytics": "../../packages/server-core/src/analytics/index.ts",
+    "@da/server-core/approvals": "../../packages/server-core/src/approvals/index.ts",
+    "@da/server-core/briefing": "../../packages/server-core/src/briefing/index.ts",
+    "@da/server-core/calendar": "../../packages/server-core/src/calendar/index.ts",
+    "@da/server-core/commitments": "../../packages/server-core/src/commitments/index.ts",
+    "@da/server-core/crypto": "../../packages/server-core/src/crypto/index.ts",
+    "@da/server-core/dates": "../../packages/server-core/src/dates/index.ts",
+    "@da/server-core/embeddings": "../../packages/server-core/src/embeddings/index.ts",
+    "@da/server-core/entitlements": "../../packages/server-core/src/entitlements/index.ts",
+    "@da/server-core/errors": "../../packages/server-core/src/errors/index.ts",
+    "@da/server-core/followups": "../../packages/server-core/src/followups/index.ts",
+    "@da/server-core/insights": "../../packages/server-core/src/insights/index.ts",
+    "@da/server-core/lifeEvents": "../../packages/server-core/src/lifeEvents/index.ts",
+    "@da/server-core/memory": "../../packages/server-core/src/memory/index.ts",
+    "@da/server-core/notifications": "../../packages/server-core/src/notifications/index.ts",
+    "@da/server-core/oauth": "../../packages/server-core/src/oauth/index.ts",
+    "@da/server-core/priority": "../../packages/server-core/src/priority/index.ts",
+    "@da/server-core/providers": "../../packages/server-core/src/providers/index.ts",
+    "@da/server-core/push": "../../packages/server-core/src/push/index.ts",
+    "@da/server-core/ratelimit": "../../packages/server-core/src/ratelimit/index.ts",
+    "@da/server-core/referral": "../../packages/server-core/src/referral/index.ts",
+    "@da/server-core/reminders": "../../packages/server-core/src/reminders/index.ts",
+    "@da/server-core/retention": "../../packages/server-core/src/retention/index.ts",
+    "@da/server-core/safefetch": "../../packages/server-core/src/safefetch/index.ts",
+    "@da/server-core/speech": "../../packages/server-core/src/speech/index.ts",
+    "@da/server-core/sync": "../../packages/server-core/src/sync/index.ts",
+    "@da/server-core/timeSaved": "../../packages/server-core/src/timeSaved/index.ts",
+    "@da/server-core/triage": "../../packages/server-core/src/triage/index.ts",
+    "@da/server-core/util": "../../packages/server-core/src/util/index.ts",
     "@supabase/supabase-js": "npm:@supabase/supabase-js@2.115.0",
     "zod": "npm:zod@4.5.4",
     "i18next": "npm:i18next@25.5.0"
@@ -18,7 +46,7 @@
   "lint": {
     "rules": {
       "tags": ["recommended"],
-      "exclude": ["no-explicit-any", "no-sloppy-imports"]
+      "exclude": ["no-explicit-any"]
     }
   },
   "fmt": {

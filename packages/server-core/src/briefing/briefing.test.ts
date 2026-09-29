@@ -9,7 +9,7 @@ import type {
   WeeklyMetrics,
 } from '@da/domain';
 import type { BriefingAi } from '@da/validation';
-import { zonedTimeToUtc } from '../util';
+import { zonedTimeToUtc } from '../util/index.ts';
 import {
   assembleBriefingCandidates,
   clockLocative,
@@ -22,7 +22,7 @@ import {
   turkishAblative,
   weeklyShareText,
   type BriefingContext,
-} from './index';
+} from './index.ts';
 
 const tz = 'Europe/Istanbul';
 const at = (date: string, hhmm: string): string => zonedTimeToUtc(date, hhmm, tz);

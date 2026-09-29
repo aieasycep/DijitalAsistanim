@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isAppError } from '../errors';
+import { isAppError } from '../errors/index.ts';
 import {
   DEFAULT_RATE_LIMIT_POLICIES,
   RATE_LIMIT_ACTIONS,
@@ -14,7 +14,7 @@ import {
   rateLimitMessage,
   rateLimitedError,
   resolveRateLimitPolicies,
-} from './index';
+} from './index.ts';
 
 // 2026-09-05 08:00 Europe/Istanbul (UTC+3)
 const T0 = Date.parse('2026-09-05T05:00:00.000Z');

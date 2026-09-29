@@ -7,10 +7,14 @@
  */
 import type { Locale, ReferralCredit } from '@da/domain';
 import { DeepLinks, REFERRAL_BONUS_DAYS, toUniversalUrl } from '@da/domain';
-import { isValidReferralCodeFormat, normalizeReferralCode } from '../crypto';
-import { DAY } from '../util';
+import { isValidReferralCodeFormat, normalizeReferralCode } from '../crypto/index.ts';
+import { DAY } from '../util/index.ts';
 
-export { generateReferralCode, isValidReferralCodeFormat, normalizeReferralCode } from '../crypto';
+export {
+  generateReferralCode,
+  isValidReferralCodeFormat,
+  normalizeReferralCode,
+} from '../crypto/index.ts';
 
 export const REFERRAL_MAX_ACCOUNT_AGE_DAYS = 7;
 export const REFERRAL_REFERRER_LIMIT_PER_30D = 20;

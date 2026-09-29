@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { AiFetch } from '../ai/types';
-import { isAppError } from '../errors';
+import type { AiFetch } from '../ai/types.ts';
+import { isAppError } from '../errors/index.ts';
 import {
   DEEPGRAM_LISTEN_URL,
   DeepgramStt,
@@ -19,7 +19,7 @@ import {
   resolveTtsProvider,
   splitForSpeech,
   toPlainSpeech,
-} from './index';
+} from './index.ts';
 
 interface RawCall {
   url: string;

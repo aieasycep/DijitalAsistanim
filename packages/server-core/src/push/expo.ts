@@ -4,9 +4,9 @@
  * credentials) throw AppError — per-message problems come back as tickets so one bad token never
  * blocks a batch.
  */
-import { AppError } from '../errors';
-import type { FetchLike } from '../safefetch/fetch';
-import { chunk } from '../util';
+import { AppError } from '../errors/index.ts';
+import type { FetchLike } from '../safefetch/fetch.ts';
+import { chunk } from '../util/index.ts';
 
 export const EXPO_PUSH_SEND_URL = 'https://exp.host/--/api/v2/push/send';
 export const EXPO_PUSH_RECEIPTS_URL = 'https://exp.host/--/api/v2/push/getReceipts';

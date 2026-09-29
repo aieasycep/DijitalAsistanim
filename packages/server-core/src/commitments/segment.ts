@@ -1,5 +1,5 @@
 /** Message segmentation: signature stripping, vocative detection, sentence and clause splitting. */
-import { isNameToken, stripHonorifics } from './shared';
+import { isNameToken, stripHonorifics } from './shared.ts';
 
 const CLOSINGS = [
   'saygılarımla',

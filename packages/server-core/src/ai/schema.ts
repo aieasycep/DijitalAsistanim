@@ -1,6 +1,6 @@
 /** JSON-schema helpers: zod → JSON schema, provider strict-mode compatibility, lenient JSON extraction. */
 import { z } from 'zod';
-import type { AiJsonSchema } from './types';
+import type { AiJsonSchema } from './types.ts';
 
 /** Build a provider-ready JSON schema from a zod schema (draft 2020-12, `$schema` removed). */
 export function jsonSchemaFor(schema: z.ZodType): AiJsonSchema {

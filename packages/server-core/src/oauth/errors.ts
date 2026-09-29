@@ -1,6 +1,6 @@
 /** Mapping of provider OAuth errors to the API error contract. */
 import type { Locale } from '@da/domain';
-import { AppError } from '../errors';
+import { AppError } from '../errors/index.ts';
 
 export interface OAuthErrorBody {
   error?: string;

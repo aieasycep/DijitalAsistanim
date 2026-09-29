@@ -3,8 +3,8 @@
  * navigate / unknown. Write actions are drafts only; the model never executes anything.
  */
 import { voiceIntentAiSchema, type VoiceIntentAi } from '@da/validation';
-import { PROMPT_CHAR_LIMITS } from '../redact';
-import type { PromptSpec } from '../types';
+import { PROMPT_CHAR_LIMITS } from '../redact.ts';
+import type { PromptSpec } from '../types.ts';
 import {
   DEFAULT_PROMPT_TIMEZONE,
   clipInline,
@@ -12,7 +12,7 @@ import {
   joinLines,
   temporalContext,
   type PromptBase,
-} from './shared';
+} from './shared.ts';
 
 /** App screens a voice command may open when the caller does not pass its own list. */
 export const DEFAULT_VOICE_SCREENS = [

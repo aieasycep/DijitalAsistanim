@@ -8,11 +8,16 @@
  * Pure numbers never produce a date: every candidate needs a calendar word, a separator pattern
  * (05.09.2026) or a clock pattern (17:00). Hour-only forms ("10'da") are kept only when they follow a day.
  */
-import { localDateTimeOf, localToUtcIso, sameDate, dateKey, type LocalDate } from './calendar';
-import { B, E } from './lexicon';
-import { collectCandidates, type Candidate, type ClockTime, type ResolveContext } from './patterns';
-import { flexI, lowercasePreservingIndices } from './turkish';
-import type { DateKind, ExtractDatesInput, ExtractedDate } from './types';
+import { localDateTimeOf, localToUtcIso, sameDate, dateKey, type LocalDate } from './calendar.ts';
+import { B, E } from './lexicon.ts';
+import {
+  collectCandidates,
+  type Candidate,
+  type ClockTime,
+  type ResolveContext,
+} from './patterns.ts';
+import { flexI, lowercasePreservingIndices } from './turkish.ts';
+import type { DateKind, ExtractDatesInput, ExtractedDate } from './types.ts';
 
 const MAX_TEXT = 20_000;
 const GAP_RE = /^(?:[\s,]|saat|at|on|@)*$/u;

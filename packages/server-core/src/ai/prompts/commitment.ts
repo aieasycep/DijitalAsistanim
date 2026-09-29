@@ -3,8 +3,8 @@
  * commitment must carry a verbatim quote; dates are only accepted with their evidence phrase.
  */
 import { commitmentExtractionAiSchema, type CommitmentExtractionAi } from '@da/validation';
-import { redactForPrompt } from '../redact';
-import type { PromptSpec } from '../types';
+import { redactForPrompt } from '../redact.ts';
+import type { PromptSpec } from '../types.ts';
 import {
   DEFAULT_PROMPT_TIMEZONE,
   clipInline,
@@ -16,7 +16,7 @@ import {
   temporalContext,
   type PromptBase,
   type PromptParticipant,
-} from './shared';
+} from './shared.ts';
 
 export type CommitmentSourceKind = 'email' | 'meeting_note' | 'capture' | 'assistant';
 

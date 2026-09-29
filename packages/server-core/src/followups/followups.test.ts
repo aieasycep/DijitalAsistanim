@@ -13,8 +13,8 @@ import {
   selectNudges,
   snoozeFollowUp,
   stripSubjectPrefixes,
-} from './index';
-import { zonedTimeToUtc } from '../util';
+} from './index.ts';
+import { zonedTimeToUtc } from '../util/index.ts';
 
 const tz = 'Europe/Istanbul';
 const at = (date: string, hhmm: string): string => zonedTimeToUtc(date, hhmm, tz);

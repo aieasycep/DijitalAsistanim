@@ -1,5 +1,5 @@
 /** Types and helpers shared by the Turkish and English clause analysers. */
-import type { CounterpartCase } from './verbs';
+import type { CounterpartCase } from './verbs.ts';
 
 export type CommitmentLanguage = 'tr' | 'en';
 export type CommitmentFormKind =

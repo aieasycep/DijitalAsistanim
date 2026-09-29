@@ -7,9 +7,14 @@
  * the start. Every suggestion explains itself ("Takviminde 12:10 boş; toplantından önce.").
  */
 import type { Locale, ReminderOption, SmartReminderSuggestResponse } from '@da/domain';
-import { addDays as addLocalDays, formatDayLabel, localDateOf, localToUtcIso } from '../dates';
-import { isQuietHours, nextQuietHoursEnd, type QuietHoursConfig } from '../notifications';
-import { DAY, HOUR, MINUTE, localDateKey, localHHmm } from '../util';
+import {
+  addDays as addLocalDays,
+  formatDayLabel,
+  localDateOf,
+  localToUtcIso,
+} from '../dates/index.ts';
+import { isQuietHours, nextQuietHoursEnd, type QuietHoursConfig } from '../notifications/index.ts';
+import { DAY, HOUR, MINUTE, localDateKey, localHHmm } from '../util/index.ts';
 
 export const REMINDER_DEFAULTS = {
   evening: { hh: 19, mm: 0 },

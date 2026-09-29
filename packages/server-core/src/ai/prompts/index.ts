@@ -23,7 +23,7 @@ export {
   type ComposeSystemInput,
   type PromptBase,
   type PromptParticipant,
-} from './shared';
+} from './shared.ts';
 export {
   EMAIL_BATCH_MAX,
   emailBatchClassify,
@@ -32,26 +32,26 @@ export {
   type EmailDeepAnalysisInput,
   type PromptEmailMessage,
   type UserSignals,
-} from './email';
+} from './email.ts';
 export {
   BRIEFING_CANDIDATE_MAX,
   briefing,
   type BriefingCandidate,
   type BriefingPromptInput,
-} from './briefing';
-export { meetingPrep, type MeetingPrepInput } from './meeting';
+} from './briefing.ts';
+export { meetingPrep, type MeetingPrepInput } from './meeting.ts';
 export {
   assistantAnswer,
   type AssistantAnswerInput,
   type AssistantChunk,
   type AssistantChunkKind,
-} from './assistant';
+} from './assistant.ts';
 export {
   commitmentExtraction,
   type CommitmentExtractionInput,
   type CommitmentSourceKind,
-} from './commitment';
-export { captureAnalysis, type CaptureAnalysisInput } from './capture';
+} from './commitment.ts';
+export { captureAnalysis, type CaptureAnalysisInput } from './capture.ts';
 export {
   REPLY_THREAD_MESSAGE_MAX,
   TONE_RULES,
@@ -59,8 +59,8 @@ export {
   type ReplyDraftInput,
   type ReplyThreadAnalysis,
   type ReplyThreadMessage,
-} from './reply';
-export { DEFAULT_VOICE_SCREENS, voiceIntent, type VoiceIntentInput } from './voice';
+} from './reply.ts';
+export { DEFAULT_VOICE_SCREENS, voiceIntent, type VoiceIntentInput } from './voice.ts';
 export {
   isInsideFreeBlocks,
   scheduleSuggestion,
@@ -68,10 +68,10 @@ export {
   type FreeBlockFilterResult,
   type ScheduleFreeBlock,
   type ScheduleSuggestionInput,
-} from './schedule';
+} from './schedule.ts';
 export {
   suggestedQuestions,
   type SuggestedQuestionsAi,
   type SuggestedQuestionsContact,
   type SuggestedQuestionsInput,
-} from './questions';
+} from './questions.ts';

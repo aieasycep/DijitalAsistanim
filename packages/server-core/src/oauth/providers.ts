@@ -1,5 +1,5 @@
 /** Provider endpoints. Microsoft endpoints depend on the tenant (default: `common`). */
-import type { OAuthProvider } from './scopes';
+import type { OAuthProvider } from './scopes.ts';
 
 export const DEFAULT_MICROSOFT_TENANT = 'common';
 export const MICROSOFT_CONSENT_MANAGE_URL = 'https://account.live.com/consent/Manage';

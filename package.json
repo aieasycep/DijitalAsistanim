@@ -28,7 +28,8 @@
     "web": "pnpm --filter @da/web dev",
     "supabase:start": "supabase start",
     "supabase:reset": "supabase db reset",
-    "supabase:functions": "supabase functions serve --env-file ./supabase/.env.local"
+    "supabase:functions": "supabase functions serve --env-file ./supabase/.env.local",
+    "supabase:deploy": "supabase functions deploy --use-api --import-map supabase/functions/deno.json"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

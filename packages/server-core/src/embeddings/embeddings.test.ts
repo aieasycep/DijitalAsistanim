@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { AiFetch } from '../ai/types';
-import { isAppError } from '../errors';
+import type { AiFetch } from '../ai/types.ts';
+import { isAppError } from '../errors/index.ts';
 import {
   EMBEDDING_BATCH_MAX,
   EMBEDDING_MIN_TOKENS,
@@ -15,7 +15,7 @@ import {
   prepareEmbeddingText,
   shouldEmbed,
   toPgVectorLiteral,
-} from './index';
+} from './index.ts';
 
 interface FetchCall {
   url: string;

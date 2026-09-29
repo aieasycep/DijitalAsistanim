@@ -7,7 +7,7 @@
  * Aorist and progressive forms are ambiguous enough that only listed verbs are trusted; the future
  * 1sg/1pl suffix (-acağım/-eceğim) is unambiguous and is also accepted for unknown verbs.
  */
-import { escapeRegex, flexI } from '../dates';
+import { escapeRegex, flexI } from '../dates/index.ts';
 
 export type CounterpartCase = 'dat' | 'acc' | 'ile' | 'none';
 export type FirstPersonKind =

@@ -4,8 +4,8 @@
  */
 import type { Locale, ReplyTone } from '@da/domain';
 import { replyDraftAiSchema, type ReplyDraftAi } from '@da/validation';
-import { redactForPrompt } from '../redact';
-import type { PromptSpec } from '../types';
+import { redactForPrompt } from '../redact.ts';
+import type { PromptSpec } from '../types.ts';
 import {
   DEFAULT_PROMPT_TIMEZONE,
   bullets,
@@ -19,7 +19,7 @@ import {
   temporalContext,
   type PromptBase,
   type PromptParticipant,
-} from './shared';
+} from './shared.ts';
 
 /** Thread messages sent to the model (the newest ones win when the thread is longer). */
 export const REPLY_THREAD_MESSAGE_MAX = 6;

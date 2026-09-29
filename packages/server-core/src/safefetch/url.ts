@@ -1,5 +1,5 @@
 /** Outbound URL policy for user-supplied links (Universal Capture). */
-import { classifyIp, isIpLiteral, type BlockedIpReason } from './ip';
+import { classifyIp, isIpLiteral, type BlockedIpReason } from './ip.ts';
 
 export type SafeFetchRejectReason =
   | 'invalid_url'

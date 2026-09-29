@@ -8,9 +8,9 @@ import {
   type WeeklyMetrics,
 } from '@da/domain';
 import { briefingAiSchema, type BriefingAi } from '@da/validation';
-import { AppError } from '../../errors';
-import { PROMPT_CHAR_LIMITS } from '../redact';
-import type { PromptSpec } from '../types';
+import { AppError } from '../../errors/index.ts';
+import { PROMPT_CHAR_LIMITS } from '../redact.ts';
+import type { PromptSpec } from '../types.ts';
 import {
   DEFAULT_PROMPT_TIMEZONE,
   bullets,
@@ -22,7 +22,7 @@ import {
   joinLines,
   temporalContext,
   type PromptBase,
-} from './shared';
+} from './shared.ts';
 
 export const BRIEFING_CANDIDATE_MAX = 40;
 

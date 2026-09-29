@@ -1,8 +1,8 @@
 /** Shipments: carrier, merchant, tracking number / URL, delivery window — promotions mentioning "kargo bedava" are not shipments. */
-import { localDateTimeOf } from '../dates';
-import { RE_PERCENT, RE_PROMO, RE_SHIPMENT } from '../triage/signals';
-import { brandInText, sentenceAround, type Ctx } from './common';
-import type { ExtractedLifeEvent } from './types';
+import { localDateTimeOf } from '../dates/index.ts';
+import { RE_PERCENT, RE_PROMO, RE_SHIPMENT } from '../triage/signals.ts';
+import { brandInText, sentenceAround, type Ctx } from './common.ts';
+import type { ExtractedLifeEvent } from './types.ts';
 
 const CARRIERS: [RegExp, string][] = [
   [/(?<![\p{L}])yurt\s?içi(?:\s+kargo)?(?![\p{L}])/u, 'Yurtiçi Kargo'],

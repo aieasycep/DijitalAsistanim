@@ -6,13 +6,13 @@
  * the runtime's fetch resolves the name again — a rebinding between the two is possible on
  * platforms that cannot pin the address. Treat fetched content as untrusted regardless.
  */
-import { AppError } from '../errors';
+import { AppError } from '../errors/index.ts';
 import {
   validateOutboundUrl,
   validateResolvedAddresses,
   type SafeFetchRejectReason,
   type UrlPolicy,
-} from './url';
+} from './url.ts';
 
 export type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
 export type DnsResolver = (hostname: string) => Promise<string[]>;

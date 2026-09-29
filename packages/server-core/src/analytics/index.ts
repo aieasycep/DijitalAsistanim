@@ -9,10 +9,10 @@
  */
 import type { AnalyticsEventMap, AnalyticsEventName } from '@da/domain';
 import { ANALYTICS_FORBIDDEN_KEYS } from '@da/domain';
-import { sha256Hex } from '../crypto';
-import type { FetchLike } from '../safefetch';
+import { sha256Hex } from '../crypto/index.ts';
+import type { FetchLike } from '../safefetch/index.ts';
 
-export type { FetchLike } from '../safefetch';
+export type { FetchLike } from '../safefetch/index.ts';
 
 const EVENT_CATALOGUE: Record<AnalyticsEventName, true> = {
   onboarding_started: true,

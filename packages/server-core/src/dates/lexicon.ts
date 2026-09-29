@@ -1,5 +1,5 @@
 /** Month / weekday / time-of-day vocabulary (Turkish + English) and regex building blocks. */
-import { escapeRegex, flexI } from './turkish';
+import { escapeRegex, flexI } from './turkish.ts';
 
 /** Word boundary that also works for non-ASCII letters (ş, ı, ğ …). */
 export const B = '(?<![\\p{L}\\p{N}])';

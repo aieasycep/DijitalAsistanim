@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { isAppError } from '../errors';
-import { estimateTokens } from '../util';
+import { isAppError } from '../errors/index.ts';
+import { estimateTokens } from '../util/index.ts';
 import {
   ANTHROPIC_API_VERSION,
   ANTHROPIC_MESSAGES_URL,
@@ -38,7 +38,7 @@ import {
   type AiFetch,
   type AiUsageRecord,
   type PromptSpec,
-} from './index';
+} from './index.ts';
 
 // ---------------------------------------------------------------------------
 // Fixtures

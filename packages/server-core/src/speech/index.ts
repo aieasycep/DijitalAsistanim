@@ -7,11 +7,11 @@
  * Web APIs only (fetch, FormData, Blob, AbortController); configuration is injected.
  */
 import { z } from 'zod';
-import { parseRetryAfterSec } from '../ai/providerError';
-import type { AiFetch, AiLogger } from '../ai/types';
-import { toArrayBuffer } from '../crypto/encoding';
-import { AppError } from '../errors';
-import { clamp } from '../util';
+import { parseRetryAfterSec } from '../ai/providerError.ts';
+import type { AiFetch, AiLogger } from '../ai/types.ts';
+import { toArrayBuffer } from '../crypto/encoding.ts';
+import { AppError } from '../errors/index.ts';
+import { clamp } from '../util/index.ts';
 
 // ---------------------------------------------------------------------------
 // Contracts

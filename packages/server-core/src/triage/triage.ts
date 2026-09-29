@@ -3,9 +3,9 @@
  * content signals) classification into a TriageBucket. Security mail is never skipped.
  */
 import type { EmailCategory, Importance, Locale } from '@da/domain';
-import { deadlineFromText, formatDeadlinePhrase, hasDeadlineVocabulary } from '../dates';
-import { stripQuotedHistory } from '../util';
-import { isAutomatedSender, isBulkAddress, isNoReplyAddress, isSecuritySender } from './senders';
+import { deadlineFromText, formatDeadlinePhrase, hasDeadlineVocabulary } from '../dates/index.ts';
+import { stripQuotedHistory } from '../util/index.ts';
+import { isAutomatedSender, isBulkAddress, isNoReplyAddress, isSecuritySender } from './senders.ts';
 import {
   RE_AMOUNT,
   RE_ASKS_USER,
@@ -22,9 +22,9 @@ import {
   RE_SUBSCRIPTION,
   RE_TRAVEL,
   normalizeForSignals,
-} from './signals';
-import { matchRules, matchVip } from './rules';
-import type { TriageContext, TriageEmailInput, TriageResult, TriageSignals } from './types';
+} from './signals.ts';
+import { matchRules, matchVip } from './rules.ts';
+import type { TriageContext, TriageEmailInput, TriageResult, TriageSignals } from './types.ts';
 
 const BODY_LIMIT = 4000;
 

@@ -3,8 +3,8 @@
  * step machine mirrored by `first_analysis_runs`, and a remaining-time estimate for the UI.
  */
 import type { FirstAnalysisProgress } from '@da/domain';
-import { gmailQueryForWindow, type GmailCategory } from '../providers/gmail';
-import { HOUR, clamp } from '../util';
+import { gmailQueryForWindow, type GmailCategory } from '../providers/gmail.ts';
+import { HOUR, clamp } from '../util/index.ts';
 
 export const DEFAULT_INITIAL_WINDOW_HOURS = 72;
 export const MIN_INITIAL_WINDOW_HOURS = 24;

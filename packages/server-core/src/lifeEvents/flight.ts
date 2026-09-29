@@ -1,8 +1,13 @@
 /** Flights: airline, flight number, route, departure/arrival with evidence, labelled PNR, check-in link. */
-import { localDateTimeOf, localToUtcIso, parseDateKey, type ExtractedDate } from '../dates';
-import { RE_TRAVEL } from '../triage/signals';
-import { sentenceAround, type Ctx } from './common';
-import type { ExtractedLifeEvent } from './types';
+import {
+  localDateTimeOf,
+  localToUtcIso,
+  parseDateKey,
+  type ExtractedDate,
+} from '../dates/index.ts';
+import { RE_TRAVEL } from '../triage/signals.ts';
+import { sentenceAround, type Ctx } from './common.ts';
+import type { ExtractedLifeEvent } from './types.ts';
 
 const AIRLINE_BY_CODE: Record<string, string> = {
   TK: 'THY',

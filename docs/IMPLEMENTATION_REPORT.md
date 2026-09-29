@@ -95,6 +95,34 @@ bölümler doldurulmalıdır:
 8. **Expo/EAS** projesi (push, build), **Sentry** ve **PostHog** (opsiyonel).
 9. **Google Routes** (opsiyonel, yol süresi; yoksa yol süresi gösterilmez, uydurulmaz).
 
+## Production Supabase kurulumu (2026-09-29)
+
+Proje `dijital-asistan` (`noggfqppppdgbkiotczo`, eu-central-1). Management API üzerinden yapılan kontrol ve düzeltmeler:
+
+- **Secret'lar**: `docs/DEPLOYMENT.md` §1'deki asgari liste tam (`TOKEN_ENCRYPTION_KEY` dahil). API değerleri SHA-256
+  özeti olarak listeler; `AI_PROVIDER`, `SUPABASE_URL`, `GOOGLE_OAUTH_CLIENT_ID` ve `GOOGLE_OAUTH_REDIRECT_URI`
+  beklenen değerlerin özetiyle doğrulandı, `INTERNAL_FUNCTION_SECRET` Vault'taki `internal_secret` ile aynı.
+- **Migration'lar / cron**: 11/11 uygulanmış (46 tablo); pg_cron'un 8 işi `functions_url` + `internal_secret`
+  Vault kayıtlarıyla çalışıyor (`alter database` ayarına gerek yok).
+- **Edge Functions**: deploy edilmiş 42 fonksiyonun tamamı boot'ta düşüyordu (`worker boot error: Module not found:
+…/packages/server-core/src/errors`; pg_cron → `cron-dispatch` her dakika `503 BOOT_ERROR`). Neden:
+  `@da/server-core/<modül>` bir klasöre eşleniyor ve paketler uzantısız göreli import kullanıyordu; ikisi de yalnızca
+  Deno "sloppy imports" ile çözülür, barındırılan runtime bunu uygulamaz. Düzeltme: paketlerdeki 497 import dosya
+  adını açıkça yazıyor, `deno.json` her alt modülü `index.ts`'e eşliyor, sloppy imports kapalı (`deno check`
+  regresyonu yakalar). Deploy `pnpm supabase:deploy` ile (CLI 2.118+ `--import-map` ister). Sonuç: fonksiyonlar
+  `booted` logluyor, cron çağrıları 200.
+- **Auth**: Google sağlayıcısı etkin ve fonksiyon secret'ıyla aynı web client'ı kullanıyor; Google tarafında
+  `…/functions/v1/oauth-google-callback` ve `…/auth/v1/callback` kayıtlı (uydurma bir URI `redirect_uri_mismatch`
+  verdi). Düzeltilenler: SMTP host `smpt.gmail.com` → `smtp.gmail.com`; e-posta OTP 8 → 6 hane (600 sn); Site URL
+  `https://dijitalasistan.app`; redirect listesine `http://localhost:3000/app/auth/callback` ve
+  `exp://127.0.0.1:8081/--/auth/callback` eklendi. Magic Link şablonunda `{{ .Token }}` zaten vardı.
+- **Doğrulama** (proje ağ dışından erişilemediği için pg_net ile içeriden): `cron-dispatch` yanlış secret → 403
+  (önceden 503); `oauth-google-callback` sahte state → doğrulama hatası ve uygulama şemasına yönlendirme;
+  `webhook-gmail` → "Gmail push yapılandırılmamış"; `oauth-start` oturumsuz → gateway 401.
+- **Açık kalan**: gerçek bir kullanıcı oturumuyla `oauth-start` ("Google ile Bağlan"). İlk denemede `bad_key`
+  görülürse `TOKEN_ENCRYPTION_KEY` yenilenmeli (`openssl rand -base64 32`; henüz şifreli token olmadığı için veri
+  kaybı olmaz).
+
 ## Mağaza öncesi aksiyonlar
 
 `docs/APP_STORE_CHECKLIST.md` ve `docs/DEPLOYMENT.md` adım adım anlatır: EAS Build profilleri, Universal Links

@@ -18,9 +18,9 @@ import type {
   NotificationPreferences,
 } from '@da/domain';
 import { DeepLinks } from '@da/domain';
-import { formatDateLabel, formatDeadlinePhrase } from '../dates';
-import { formatTimeSaved } from '../timeSaved';
-import { MINUTE, localDateKey, localHHmm, localIsoWeekday, zonedTimeToUtc } from '../util';
+import { formatDateLabel, formatDeadlinePhrase } from '../dates/index.ts';
+import { formatTimeSaved } from '../timeSaved/index.ts';
+import { MINUTE, localDateKey, localHHmm, localIsoWeekday, zonedTimeToUtc } from '../util/index.ts';
 
 // --- Copy (mirrors packages/i18n/src/locales/{tr,en}.json → notifications.*) ----------------------
 

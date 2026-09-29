@@ -21,10 +21,10 @@ import type {
   TaskItem,
   UUID,
 } from '@da/domain';
-import { MONTHS_TR_TITLE, formatClock, localDateOf, monthIndex } from '../dates';
-import { stripSubjectPrefixes } from '../followups';
-import { sourceLabel } from '../insights';
-import { DAY, estimateTokens, normalizeText, stripQuotedHistory, truncate } from '../util';
+import { MONTHS_TR_TITLE, formatClock, localDateOf, monthIndex } from '../dates/index.ts';
+import { stripSubjectPrefixes } from '../followups/index.ts';
+import { sourceLabel } from '../insights/index.ts';
+import { DAY, estimateTokens, normalizeText, stripQuotedHistory, truncate } from '../util/index.ts';
 
 export const EXCERPT_MAX_CHARS = 600;
 export const CITATION_MAX_CHARS = 280;

@@ -31,7 +31,7 @@ export type {
   TasksSyncInput,
   UpdateEventInput,
   WatchResult,
-} from './types';
+} from './types.ts';
 export type {
   HttpMethod,
   MapProviderErrorInput,
@@ -39,7 +39,7 @@ export type {
   ProviderRawResponse,
   ProviderRequestInit,
   QueryValue,
-} from './http';
+} from './http.ts';
 export {
   DEFAULT_PROVIDER_TIMEOUT_MS,
   encodePathSegment,
@@ -52,8 +52,8 @@ export {
   providerRequestRaw,
   toIsoOrNull,
   withQuery,
-} from './http';
-export type { RawMessageInput } from './mime';
+} from './http.ts';
+export type { RawMessageInput } from './mime.ts';
 export {
   buildRawMessage,
   decodeBase64Url,
@@ -65,9 +65,9 @@ export {
   htmlToText,
   parseAddressList,
   stripQuotedReply,
-} from './mime';
-export type { MeetingLink, MeetingProvider } from './meeting';
-export { detectMeetingLink, meetingProviderFor } from './meeting';
+} from './mime.ts';
+export type { MeetingLink, MeetingProvider } from './meeting.ts';
+export { detectMeetingLink, meetingProviderFor } from './meeting.ts';
 export {
   addCalendarDays,
   dateToInstant,
@@ -75,7 +75,7 @@ export {
   localDateTimeInZone,
   resolveZone,
   zonedDateTimeToUtc,
-} from './datetime';
+} from './datetime.ts';
 export type {
   GmailBody,
   GmailCategory,
@@ -94,7 +94,7 @@ export type {
   GmailSyncInput,
   GmailWatchResult,
   NormalizeGmailOptions,
-} from './gmail';
+} from './gmail.ts';
 export {
   DEFAULT_EXCLUDED_GMAIL_CATEGORIES,
   GMAIL_API_BASE,
@@ -105,7 +105,7 @@ export {
   gmailQueryForWindow,
   gmailWebUrl,
   normalizeGmailMessage,
-} from './gmail';
+} from './gmail.ts';
 export type {
   GoogleAttendee,
   GoogleCalendarClient,
@@ -118,7 +118,7 @@ export type {
   GoogleEventDateTime,
   GoogleEventsListResponse,
   NormalizeGoogleEventOptions,
-} from './gcal';
+} from './gcal.ts';
 export {
   DEFAULT_CALENDAR_ID,
   GOOGLE_CALENDAR_API_BASE,
@@ -126,7 +126,7 @@ export {
   googleEventBody,
   googleEventPatch,
   normalizeGoogleEvent,
-} from './gcal';
+} from './gcal.ts';
 export type {
   GoogleTask,
   GoogleTaskList,
@@ -135,13 +135,13 @@ export type {
   GoogleTasksClient,
   GoogleTasksClientOptions,
   GoogleTasksResponse,
-} from './gtasks';
+} from './gtasks.ts';
 export {
   GOOGLE_DEFAULT_TASK_LIST,
   GOOGLE_TASKS_API_BASE,
   createGoogleTasksClient,
   normalizeGoogleTask,
-} from './gtasks';
+} from './gtasks.ts';
 export type {
   GraphAttachment,
   GraphAttendee,
@@ -167,7 +167,7 @@ export type {
   GraphUser,
   NormalizeGraphEventOptions,
   NormalizeGraphMessageOptions,
-} from './graph';
+} from './graph.ts';
 export {
   DEFAULT_GRAPH_MAIL_FOLDERS,
   GRAPH_API_BASE,
@@ -182,13 +182,13 @@ export {
   normalizeGraphTask,
   parseGraphDateTime,
   textToHtml,
-} from './graph';
+} from './graph.ts';
 
-import { createGmailClient, normalizeGmailMessage } from './gmail';
-import { createGoogleCalendarClient } from './gcal';
-import { createGoogleTasksClient } from './gtasks';
-import { createGraphClient, normalizeGraphMessage } from './graph';
-import type { ProviderClientOptions, ProviderClients, ProviderFetch, ProviderId } from './types';
+import { createGmailClient, normalizeGmailMessage } from './gmail.ts';
+import { createGoogleCalendarClient } from './gcal.ts';
+import { createGoogleTasksClient } from './gtasks.ts';
+import { createGraphClient, normalizeGraphMessage } from './graph.ts';
+import type { ProviderClientOptions, ProviderClients, ProviderFetch, ProviderId } from './types.ts';
 
 /**
  * Uniform `{ mail, calendar, tasks }` clients for a connected account. Reply threading, default

@@ -16,7 +16,7 @@ export type {
   ExpoPushTicketOk,
   GetExpoReceiptsInput,
   SendExpoPushInput,
-} from './expo';
+} from './expo.ts';
 export {
   EXPO_PUSH_RECEIPTS_URL,
   EXPO_PUSH_RECEIPT_CHUNK,
@@ -26,19 +26,19 @@ export {
   getExpoReceipts,
   isExpoPushToken,
   sendExpoPush,
-} from './expo';
-export type { ToExpoMessageOptions } from './messages';
+} from './expo.ts';
+export type { ToExpoMessageOptions } from './messages.ts';
 export {
   HIGH_PRIORITY_PUSH_CATEGORIES,
   PUSH_TTL_SECONDS,
   pushPriorityFor,
   toExpoMessage,
-} from './messages';
+} from './messages.ts';
 export type {
   DeliveryPlan,
   DeliverySkipReason,
   PlanDeliveriesInput,
   PlannedDelivery,
   TicketSummary,
-} from './deliveries';
-export { planDeliveries, summarizeReceipts, summarizeTickets } from './deliveries';
+} from './deliveries.ts';
+export { planDeliveries, summarizeReceipts, summarizeTickets } from './deliveries.ts';

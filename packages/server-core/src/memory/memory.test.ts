@@ -8,7 +8,7 @@ import type {
   EmailThread,
   PostMeetingNote,
 } from '@da/domain';
-import { zonedTimeToUtc } from '../util';
+import { zonedTimeToUtc } from '../util/index.ts';
 import {
   buildFtsQuery,
   buildMemoryChunks,
@@ -20,7 +20,7 @@ import {
   termOverlap,
   toSearchResults,
   type ScoredChunk,
-} from './index';
+} from './index.ts';
 
 const tz = 'Europe/Istanbul';
 const at = (date: string, hhmm: string): string => zonedTimeToUtc(date, hhmm, tz);

@@ -13,8 +13,8 @@ import type {
   TaskItem,
   VipPerson,
 } from '@da/domain';
-import { scoreCandidate, type PriorityCandidate } from '../priority';
-import { zonedTimeToUtc } from '../util';
+import { scoreCandidate, type PriorityCandidate } from '../priority/index.ts';
+import { zonedTimeToUtc } from '../util/index.ts';
 import {
   buildInsights,
   flowFilter,
@@ -24,7 +24,7 @@ import {
   selectTopInsights,
   timeLabel,
   type InsightDraft,
-} from './index';
+} from './index.ts';
 
 const tz = 'Europe/Istanbul';
 const at = (date: string, hhmm: string): string => zonedTimeToUtc(date, hhmm, tz);

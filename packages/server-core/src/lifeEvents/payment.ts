@@ -1,8 +1,8 @@
 /** Bills & payments: explicit amount, deadline cue, payee (sender org or labelled), payment link labelled öde/pay. Never a receipt, never a promotion. */
-import { deadlineFromText } from '../dates';
-import { RE_FINANCE, RE_PERCENT, RE_PROMO } from '../triage/signals';
-import { findAmounts, labelledValue, pickAmount, type Ctx } from './common';
-import type { BillKind, ExtractedLifeEvent } from './types';
+import { deadlineFromText } from '../dates/index.ts';
+import { RE_FINANCE, RE_PERCENT, RE_PROMO } from '../triage/signals.ts';
+import { findAmounts, labelledValue, pickAmount, type Ctx } from './common.ts';
+import type { BillKind, ExtractedLifeEvent } from './types.ts';
 
 const RE_STRONG_FINANCE =
   /(?<![\p{L}])(?:fatura|faturanız|faturası|e-fatura|e-arşiv|invoice|son ödeme|vade|ödeme tarihi|payment due|amount due|ekstre|borcunuz|borç|ödenmemiş|ödeme bekleyen|ödemeniz gereken|hesap özeti|statement|aidat|kira|taksit|tahakkuk)(?![\p{L}])/u;

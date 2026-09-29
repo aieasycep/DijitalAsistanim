@@ -8,7 +8,7 @@
  * part of a cleanup.
  */
 import type { RetentionOption } from '@da/domain';
-import { DAY, HOUR } from '../util';
+import { DAY, HOUR } from '../util/index.ts';
 
 // --- Cutoffs -----------------------------------------------------------------------------------
 

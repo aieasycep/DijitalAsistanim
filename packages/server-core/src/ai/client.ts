@@ -4,13 +4,13 @@
  */
 import type { Locale } from '@da/domain';
 import type { z } from 'zod';
-import { AppError } from '../errors';
-import { estimateTokens } from '../util';
-import { AnthropicProvider } from './anthropic';
-import { fitPromptToBudget } from './inputBudget';
-import { OpenAIProvider } from './openai';
-import { isAiProviderError } from './providerError';
-import { extractJson, formatZodIssues, jsonSchemaFor } from './schema';
+import { AppError } from '../errors/index.ts';
+import { estimateTokens } from '../util/index.ts';
+import { AnthropicProvider } from './anthropic.ts';
+import { fitPromptToBudget } from './inputBudget.ts';
+import { OpenAIProvider } from './openai.ts';
+import { isAiProviderError } from './providerError.ts';
+import { extractJson, formatZodIssues, jsonSchemaFor } from './schema.ts';
 import type {
   AiCacheStore,
   AiFetch,
@@ -24,7 +24,7 @@ import type {
   AiUsageRecord,
   AiUsageSink,
   PromptSpec,
-} from './types';
+} from './types.ts';
 
 export interface AiProviderCredentials {
   apiKey: string;

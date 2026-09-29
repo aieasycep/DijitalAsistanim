@@ -1,6 +1,6 @@
 /** Authorization URL construction (Authorization Code + PKCE S256). */
-import { providerEndpoints } from './providers';
-import { uniqueScopes, type OAuthProvider } from './scopes';
+import { providerEndpoints } from './providers.ts';
+import { uniqueScopes, type OAuthProvider } from './scopes.ts';
 
 export type OAuthPrompt = 'consent' | 'select_account' | 'login' | 'none';
 

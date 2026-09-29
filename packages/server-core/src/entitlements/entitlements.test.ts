@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ReferralCredit, Subscription } from '@da/domain';
 import { FREE_QUOTAS, PRO_QUOTAS } from '@da/domain';
-import { AppError } from '../errors';
+import { AppError } from '../errors/index.ts';
 import {
   applyRevenueCatEvent,
   assertAssistantQuota,
@@ -12,7 +12,7 @@ import {
   resolveEntitlement,
   verifyRevenueCatAuth,
   type RevenueCatEvent,
-} from './index';
+} from './index.ts';
 
 const now = '2026-09-05T08:00:00.000Z';
 const usage = { assistantQueriesToday: 0, capturesToday: 0, emailAccounts: 1, calendarAccounts: 1 };

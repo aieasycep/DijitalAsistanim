@@ -17,9 +17,9 @@ import type {
 } from '@da/domain';
 import { ENTITLEMENT_ID, FEATURE_PLAN, FREE_QUOTAS, PRO_QUOTAS } from '@da/domain';
 import type { revenueCatWebhookSchema, z } from '@da/validation';
-import { timingSafeEqual } from '../crypto';
-import { AppError } from '../errors';
-import { MINUTE } from '../util';
+import { timingSafeEqual } from '../crypto/index.ts';
+import { AppError } from '../errors/index.ts';
+import { MINUTE } from '../util/index.ts';
 
 // --- Resolver ---------------------------------------------------------------------------------
 

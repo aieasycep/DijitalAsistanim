@@ -1,6 +1,6 @@
 /** Shared JSON POST helper for provider adapters (timeouts, network errors, status mapping). */
-import { AiProviderError, parseRetryAfterSec } from './providerError';
-import type { AiFetch, AiProviderName } from './types';
+import { AiProviderError, parseRetryAfterSec } from './providerError.ts';
+import type { AiFetch, AiProviderName } from './types.ts';
 
 export interface JsonPostResult {
   status: number;

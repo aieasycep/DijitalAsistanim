@@ -1,4 +1,4 @@
-import type { SourceType } from './enums';
+import type { SourceType } from './enums.ts';
 
 /**
  * Source traceability. Every important AI insight, briefing row, life event, commitment and

@@ -1,6 +1,6 @@
 /** Timezone-aware calendar arithmetic on local dates (no Node APIs; Intl + Date.UTC only). */
-import { DAY, zonedTimeToUtc } from '../util';
-import { pad2 } from './turkish';
+import { DAY, zonedTimeToUtc } from '../util/index.ts';
+import { pad2 } from './turkish.ts';
 
 export interface LocalDate {
   y: number;

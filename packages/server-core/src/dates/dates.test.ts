@@ -13,7 +13,7 @@ import {
   turkishDative,
   turkishLocative,
   turkishNumberDative,
-} from './index';
+} from './index.ts';
 
 // Friday 4 September 2026, 08:42 in Istanbul (UTC+3)
 const now = '2026-09-04T05:42:00.000Z';
