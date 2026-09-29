@@ -6,6 +6,7 @@ import { oauthStartRequestSchema } from '@da/validation';
 import { AppError } from '@da/server-core/errors';
 import { planOAuthStart, scopeGroupFor } from '@da/server-core/oauth';
 import {
+  adminClient,
   assertMethod,
   audit,
   enforceRateLimit,
@@ -97,7 +98,11 @@ Deno.serve(
       prompt: input.scopeGroup && input.scopeGroup !== 'read' ? 'consent' : undefined,
     });
 
-    const { error: insErr } = await db.from('oauth_states').insert({
+    // oauth_states is service-only (no grants for authenticated: the PKCE verifier must never be readable
+    // through the user's session), so the row is written with the service role; the user client above
+    // already scoped the account lookup to the caller.
+    const admin = adminClient();
+    const { error: insErr } = await admin.from('oauth_states').insert({
       state: plan.nonce,
       user_id: user.id,
       provider: input.provider,
@@ -110,7 +115,7 @@ Deno.serve(
     });
     if (insErr) throw new AppError('internal', `OAuth durumu kaydedilemedi: ${insErr.message}`);
 
-    await audit(db, {
+    await audit(admin, {
       userId: user.id,
       action: input.accountId ? 'oauth.scope_upgrade' : 'oauth.connect',
       actor: 'user',
