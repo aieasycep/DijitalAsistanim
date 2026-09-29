@@ -21,6 +21,17 @@ export const ANTHROPIC_MESSAGES_URL = 'https://api.anthropic.com/v1/messages';
 export const ANTHROPIC_API_VERSION = '2023-06-01';
 /** Name of the forced tool used for structured output. */
 export const STRUCTURED_OUTPUT_TOOL = 'emit';
+
+/**
+ * Claude models from Opus 4.7 onwards (the whole 5 generation included) reject the sampling
+ * parameters — `temperature`, `top_p`, `top_k` — with HTTP 400; Haiku 4.5, Sonnet 4.6, Opus 4.6
+ * and older still accept them. Prompts keep declaring a temperature; it is only sent where valid.
+ */
+const MODELS_WITHOUT_SAMPLING = /^claude-(?:(?:opus|sonnet|fable|mythos)-5|opus-4-[78])(?:-|$)/;
+
+export function anthropicSupportsSampling(model: string): boolean {
+  return !MODELS_WITHOUT_SAMPLING.test(model);
+}
 const DEFAULT_TIMEOUT_MS = 60_000;
 
 export interface AnthropicProviderConfig {
@@ -82,13 +93,15 @@ export class AnthropicProvider implements AiProvider {
   }
 
   buildBody(req: AiRequest): Record<string, unknown> {
+    const model = this.modelFor(req.tier);
     const body: Record<string, unknown> = {
-      model: this.modelFor(req.tier),
+      model,
       max_tokens: req.maxOutputTokens,
       system: req.system,
       messages: req.messages.map((m) => ({ role: m.role, content: m.content })),
     };
-    if (req.temperature !== undefined) body.temperature = req.temperature;
+    if (req.temperature !== undefined && anthropicSupportsSampling(model))
+      body.temperature = req.temperature;
     if (req.jsonSchema) {
       body.tools = [
         {
@@ -106,6 +119,7 @@ export class AnthropicProvider implements AiProvider {
   async complete(req: AiRequest): Promise<AiResponse> {
     const now = this.config.now ?? (() => Date.now());
     const started = now();
+    const model = this.modelFor(req.tier);
     const result = await postJson({
       fetch: this.config.fetch,
       provider: this.name,
@@ -117,9 +131,14 @@ export class AnthropicProvider implements AiProvider {
     const latencyMs = Math.max(0, now() - started);
     if (result.status < 200 || result.status >= 300) {
       const error = httpError(this.name, result, now());
+      // Only the fixed `error.type` is logged (e.g. invalid_request_error); the message can quote
+      // request fields and must never reach the logs.
+      const errorJson = result.json as { error?: { type?: unknown } } | null | undefined;
       this.config.logger?.warn('anthropic request failed', {
         status: result.status,
         purpose: req.metadata.purpose,
+        model,
+        errorType: typeof errorJson?.error?.type === 'string' ? errorJson.error.type : undefined,
       });
       throw error;
     }

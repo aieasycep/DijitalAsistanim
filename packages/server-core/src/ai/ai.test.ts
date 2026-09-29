@@ -38,6 +38,8 @@ import {
   type AiFetch,
   type AiUsageRecord,
   type PromptSpec,
+  AnthropicProvider,
+  anthropicSupportsSampling,
 } from './index.ts';
 
 // ---------------------------------------------------------------------------
@@ -232,6 +234,37 @@ describe('ai · anthropic request shaping', () => {
     });
     expect(calls[0]!.body.model).toBe('claude-sonnet-5');
     expect(result.data).toEqual({ answer: 'Tamam', confidence: 0.5, tags: [] });
+  });
+  it('sends temperature only to models that still accept sampling parameters', () => {
+    expect(anthropicSupportsSampling('claude-haiku-4-5-20251001')).toBe(true);
+    expect(anthropicSupportsSampling('claude-sonnet-4-6')).toBe(true);
+    expect(anthropicSupportsSampling('claude-opus-4-6')).toBe(true);
+    for (const model of [
+      'claude-sonnet-5',
+      'claude-sonnet-5-5',
+      'claude-opus-5',
+      'claude-opus-5-5',
+      'claude-opus-4-7',
+      'claude-opus-4-8',
+      'claude-fable-5-1',
+    ]) {
+      expect(anthropicSupportsSampling(model), model).toBe(false);
+    }
+    const provider = new AnthropicProvider({
+      apiKey: 'k',
+      modelSmall: 'claude-haiku-4-5-20251001',
+      modelLarge: 'claude-sonnet-5',
+      fetch: async () => json({}),
+    });
+    const request = {
+      system: 's',
+      messages: [{ role: 'user' as const, content: 'u' }],
+      maxOutputTokens: 10,
+      temperature: 0.5,
+      metadata: { userId: 'u', purpose: 'briefing' as const },
+    };
+    expect(provider.buildBody({ ...request, tier: 'small' }).temperature).toBe(0.5);
+    expect(provider.buildBody({ ...request, tier: 'large' }).temperature).toBeUndefined();
   });
 });
 
