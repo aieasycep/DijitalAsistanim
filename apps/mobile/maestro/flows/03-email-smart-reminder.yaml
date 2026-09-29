@@ -1,0 +1,29 @@
+# Flow D — Email → Reminder → Smart Reminder → Approval → scheduled
+appId: ${APP_ID}
+tags: [critical, flow-d]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- tapOn:
+    text: 'Ahmet senden bugün 17:00.*'
+- assertVisible:
+    id: 'email-screen'
+- tapOn:
+    id: 'email-action-remind'
+- assertVisible:
+    text: 'Ne zaman hatırlatayım?'
+- assertVisible:
+    id: 'reminder-option-smart'
+- tapOn:
+    id: 'reminder-option-smart'
+- assertVisible:
+    text: 'Takviminde .* boş.*'
+- tapOn:
+    id: 'reminder-confirm'
+- assertVisible:
+    text: 'Hatırlatıcı ayarla'
+- tapOn:
+    id: 'approval-approve'
+- extendedWaitUntil:
+    visible:
+      text: 'Hatırlatıcı kuruldu.*'
+    timeout: 20000

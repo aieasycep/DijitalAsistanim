@@ -1,0 +1,33 @@
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+- runFlow:
+    when:
+      visible:
+        id: 'welcome-start'
+    commands:
+      - tapOn:
+          id: 'welcome-start'
+      - tapOn:
+          id: 'auth-email'
+      - tapOn:
+          id: 'auth-email-input'
+      - inputText: 'yunus@example.com'
+      - tapOn:
+          id: 'auth-email-submit'
+      - tapOn:
+          id: 'auth-otp-input'
+      - inputText: '123456'
+      - tapOn:
+          id: 'auth-otp-submit'
+- runFlow:
+    when:
+      visible:
+        id: 'connect-demo'
+    commands:
+      - runFlow: ./complete-onboarding.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'today-screen'
+    timeout: 30000

@@ -1,0 +1,48 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# env / secrets — never commit real values
+.env
+.env.*
+!.env.example
+supabase/.env.local
+supabase/.temp/
+supabase/.branches/
+
+# build output
+dist/
+build/
+out/
+.next/
+.turbo/
+*.tsbuildinfo
+coverage/
+
+# expo / native
+apps/mobile/.expo/
+apps/mobile/ios/
+apps/mobile/android/
+apps/mobile/web-build/
+apps/mobile/.expo-shared/
+apps/mobile/expo-env.d.ts
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# deno
+.deno/
+deno.lock
+
+# misc
+.DS_Store
+*.log
+npm-debug.log*
+yarn-error.log*
+.vscode/*
+!.vscode/settings.json
+.idea/
+tmp/

@@ -1,0 +1,48 @@
+# Flow G — Universal Capture → text/link → Analyze → action → approval → success
+appId: ${APP_ID}
+tags: [critical, flow-g]
+---
+- runFlow: ../subflows/ensure-signed-in.yaml
+- tapOn:
+    id: 'today-capture'
+- assertVisible:
+    text: "Dijital Asistan'a Ekle"
+- tapOn:
+    id: 'capture-source-text'
+- tapOn:
+    id: 'capture-text-input'
+- inputText: '12 Eylül 20:00 Zorlu PSM konser bileti'
+- tapOn:
+    id: 'capture-analyze'
+- extendedWaitUntil:
+    visible:
+      id: 'capture-result'
+    timeout: 20000
+- assertVisible:
+    text: 'BULUNANLAR'
+- tapOn:
+    id: 'capture-action-add_to_calendar'
+- assertVisible:
+    text: 'Takvim etkinliği oluştur'
+- tapOn:
+    id: 'approval-approve'
+- extendedWaitUntil:
+    visible:
+      text: 'Tamamlandı'
+    timeout: 20000
+- back
+- tapOn:
+    id: 'capture-source-link'
+- tapOn:
+    id: 'capture-link-input'
+- inputText: 'https://example.com/etkinlik'
+- tapOn:
+    id: 'capture-analyze'
+- extendedWaitUntil:
+    visible:
+      id: 'capture-result'
+    timeout: 20000
+- tapOn:
+    id: 'capture-save-note'
+- assertVisible:
+    text: 'Kaydedildi'

@@ -1,0 +1,161 @@
+name: Android APK (demo)
+
+# Builds standalone Android APKs in demo mode on GitHub-hosted runners (no EAS account, no backend):
+# Expo prebuild → Gradle assembleRelease (debug keystore, arm64-v8a + armeabi-v7a), two variants in parallel:
+#   sideload — without the Android NotificationListenerService (ANDROID_NOTIFICATION_LISTENER=0). Installs from
+#              a browser, WhatsApp or a file manager. Play Protect blocks sideloaded APKs that declare a
+#              notification listener, with no user override, so "Telefon Bildirimleri" is hidden in this one.
+#   listener — with the service, for `adb install` (exempt from that block), to test the feature.
+# Runs on demand (Actions → "Android APK (demo)" → Run workflow) or on any push whose commit message contains
+# "[apk]". Artifacts: `dijital-asistan-<mode>-apk` and `dijital-asistan-<mode>-apk-listener`.
+# data_mode=supabase (manual runs) builds against a real Supabase project instead of the demo fixtures: set the
+# repository variable EXPO_PUBLIC_SUPABASE_URL and the secret EXPO_PUBLIC_SUPABASE_ANON_KEY (Settings → Secrets and
+# variables → Actions); the optional variables EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID / EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
+# enable native Google sign-in. Not a store build: the production profile stays on EAS with real signing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      data_mode:
+        description: 'demo = built-in fixtures, no backend · supabase = your Supabase project (repository variable + secret, see header).'
+        type: choice
+        options: [demo, supabase]
+        required: false
+        default: demo
+      demo_now:
+        description: 'Pin the demo clock (ISO instant, e.g. 2026-09-05T06:41:00Z). Empty = device time.'
+        required: false
+        default: ''
+      demo_timezone:
+        description: 'IANA timezone used with demo_now.'
+        required: false
+        default: 'Europe/Istanbul'
+  push:
+    branches: [main, 'claude/**']
+
+permissions:
+  contents: read
+
+env:
+  PNPM_VERSION: 10.33.0
+  NODE_VERSION: 22
+  JAVA_VERSION: 17
+  ANDROID_NDK_VERSION: 27.1.12297006
+
+jobs:
+  apk:
+    name: Build demo APK (${{ matrix.variant }})
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [sideload, listener]
+    # A newer build of the same mode and variant on the same branch supersedes the running one. Runs whose job
+    # is skipped (no [apk] in the message) get a unique key so they never cancel a build in progress.
+    concurrency:
+      group: apk-${{ github.ref }}-${{ github.event.inputs.data_mode || 'demo' }}-${{ matrix.variant }}-${{ (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')) && 'build' || github.run_id }}
+      cancel-in-progress: true
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      # Internal build: app.config.ts embeds isProduction=false; the bundle inlines the EXPO_PUBLIC_* values below.
+      APP_ENV: preview
+      EXPO_PUBLIC_DATA_MODE: ${{ github.event.inputs.data_mode || 'demo' }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ github.event.inputs.data_mode == 'supabase' && vars.EXPO_PUBLIC_SUPABASE_URL || '' }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ github.event.inputs.data_mode == 'supabase' && secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || '' }}
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ github.event.inputs.data_mode == 'supabase' && vars.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '' }}
+      EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: ${{ github.event.inputs.data_mode == 'supabase' && vars.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '' }}
+      EXPO_PUBLIC_DEMO_NOW: ${{ github.event.inputs.demo_now }}
+      EXPO_PUBLIC_DEMO_TIMEZONE: ${{ github.event.inputs.demo_now != '' && github.event.inputs.demo_timezone || '' }}
+      VARIANT: ${{ matrix.variant }}
+      ANDROID_NOTIFICATION_LISTENER: ${{ matrix.variant == 'listener' && '1' || '0' }}
+      # No Sentry credentials on the runner: sentry.gradle skips the source-map upload.
+      SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;${{ env.ANDROID_NDK_VERSION }}'
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Check the Supabase configuration
+        if: env.EXPO_PUBLIC_DATA_MODE == 'supabase'
+        run: |
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "::error::data_mode=supabase needs the repository variable EXPO_PUBLIC_SUPABASE_URL and the secret EXPO_PUBLIC_SUPABASE_ANON_KEY (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          echo "Building against $EXPO_PUBLIC_SUPABASE_URL"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate the native Android project (config plugins, Kotlin module, widgets)
+        working-directory: apps/mobile
+        run: pnpm exec expo prebuild --platform android --no-install
+
+      - name: Build the release APK (debug keystore)
+        working-directory: apps/mobile/android
+        run: |
+          printf '\norg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g\n' >> gradle.properties
+          ./gradlew :app:assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Collect the APK
+        id: collect
+        run: |
+          set -euo pipefail
+          suffix=""
+          listener="not included: install from a browser, WhatsApp or a file manager; the Telefon Bildirimleri feature is hidden in this build"
+          if [ "$VARIANT" = "listener" ]; then
+            suffix="-listener"
+            listener="included: install with \`adb install\` (Play Protect blocks sideloading it)"
+          fi
+          mode="$EXPO_PUBLIC_DATA_MODE"
+          artifact="dijital-asistan-${mode}-apk${suffix}"
+          out="dist/dijital-asistan-${mode}-${GITHUB_SHA::7}${suffix}.apk"
+          mkdir -p dist
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "$out"
+          size=$(du -h "$out" | cut -f1)
+          sha=$(sha256sum "$out" | cut -d' ' -f1)
+          echo "file=$out" >> "$GITHUB_OUTPUT"
+          echo "artifact=$artifact" >> "$GITHUB_OUTPUT"
+          if [ "$mode" = "supabase" ]; then
+            signin="Backend: $EXPO_PUBLIC_SUPABASE_URL. Sign in with the e-mail code (Supabase Auth → Email; the Magic Link template must contain {{ .Token }}), then connect Gmail / Outlook from Settings."
+          else
+            signin="Demo mode: sign in with any e-mail and any 6-digit code; no backend is contacted."
+          fi
+          {
+            echo "## APK ($mode, $VARIANT)"
+            echo
+            echo "| File | Size | SHA-256 |"
+            echo "| --- | --- | --- |"
+            echo "| \`$(basename "$out")\` | $size | \`$sha\` |"
+            echo
+            echo "Download the **$artifact** artifact from this run, unzip it and install the APK on the phone"
+            echo "(allow installs from unknown sources). $signin"
+            echo
+            echo "Notification listener service: $listener."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.collect.outputs.artifact }}
+          path: ${{ steps.collect.outputs.file }}
+          retention-days: 14
+          if-no-files-found: error

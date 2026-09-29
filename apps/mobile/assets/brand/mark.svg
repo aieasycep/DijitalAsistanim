@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Dijital Asistan · original brand mark: indigo tile with a four-point "assistant" spark and a soft dawn glow. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4B4CCB"/>
+      <stop offset="0.55" stop-color="#5B5CE2"/>
+      <stop offset="1" stop-color="#7071EA"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.78" cy="0.22" r="0.6">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="228" fill="url(#bg)"/>
+  <rect width="1024" height="1024" rx="228" fill="url(#glow)"/>
+  <!-- main spark -->
+  <path fill="#FFFFFF" d="M512 236c14 0 26 9 30 22l38 118c8 25 28 45 53 53l118 38c13 4 22 16 22 30s-9 26-22 30l-118 38c-25 8-45 28-53 53l-38 118c-4 13-16 22-30 22s-26-9-30-22l-38-118c-8-25-28-45-53-53l-118-38c-13-4-22-16-22-30s9-26 22-30l118-38c25-8 45-28 53-53l38-118c4-13 16-22 30-22z"/>
+  <!-- small companion spark (the "sen sormadan" moment) -->
+  <path fill="#FFFFFF" fill-opacity="0.92" d="M744 216c6 0 11 4 13 10l12 37c3 9 10 16 19 19l37 12c6 2 10 7 10 13s-4 11-10 13l-37 12c-9 3-16 10-19 19l-12 37c-2 6-7 10-13 10s-11-4-13-10l-12-37c-3-9-10-16-19-19l-37-12c-6-2-10-7-10-13s4-11 10-13l37-12c9-3 16-10 19-19l12-37c2-6 7-10 13-10z"/>
+</svg>

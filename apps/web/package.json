@@ -1,0 +1,26 @@
+{
+  "name": "@da/web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dijital Asistan marketing website — landing, pricing, legal, OAuth disclosure, app-link fallbacks.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@da/design-tokens": "workspace:*",
+    "@da/domain": "workspace:*",
+    "next": "16.3.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "typescript": "5.9.3"
+  }
+}
