@@ -119,9 +119,17 @@ Proje `dijital-asistan` (`noggfqppppdgbkiotczo`, eu-central-1). Management API �
 - **Doğrulama** (proje ağ dışından erişilemediği için pg_net ile içeriden): `cron-dispatch` yanlış secret → 403
   (önceden 503); `oauth-google-callback` sahte state → doğrulama hatası ve uygulama şemasına yönlendirme;
   `webhook-gmail` → "Gmail push yapılandırılmamış"; `oauth-start` oturumsuz → gateway 401.
-- **Açık kalan**: gerçek bir kullanıcı oturumuyla `oauth-start` ("Google ile Bağlan"). İlk denemede `bad_key`
-  görülürse `TOKEN_ENCRYPTION_KEY` yenilenmeli (`openssl rand -base64 32`; henüz şifreli token olmadığı için veri
-  kaybı olmaz).
+- **Gerçek veriyle ilk test (2026-09-30)**: "Google ile Bağlan" uçtan uca çalıştı (Google izin ekranı Testing
+  modunda olduğundan hesabın Cloud Console'da test kullanıcısı olarak eklenmesi gerekti). İlk posta senkronu
+  11 ileti çekti; brifing `claude-sonnet-5` ile üretildi (`produced_by = ai`). Bulunan düzeltmeler:
+  `oauth-start` OAuth state'i servis rolüyle yazıyor; Claude 5 nesline `temperature` gönderilmiyor; senkron hatası
+  sağlayıcı ayrıntısıyla loglanıyor.
+- **Guard trigger'ları servis rolünü tanımıyordu** (migration `…0012_service_role_guards.sql`): guard'lar servis
+  rolünü PostgREST ≤ v9'un `request.jwt.claim.role` ayarından okuyordu; barındırılan PostgREST claim'leri JSON
+  `request.jwt.claims` olarak verip veritabanı rolünü değiştiriyor. Edge Function'ların servis anahtarıyla yaptığı
+  her güncelleme istemci dalından geçiyordu: hesap `syncing`'de kalıyor, `last_sync_at`/`last_error` yazılamıyor,
+  kapsam yükseltmesi `granted_scopes`'a işlenmiyordu. Guard'lar artık `current_user` (postgres / service_role) ve
+  JSON claim'e bakıyor; pgTAP bölüm 13 bu şekli doğruluyor.
 
 ## Mağaza öncesi aksiyonlar
 

@@ -1,7 +1,7 @@
 -- pgTAP · Row Level Security & server-side guards
 -- Runs after seed.sql. User 1 = demo user "Yunus", user 2 = another user; nothing may leak across.
 begin;
-select plan(96);
+select plan(102);
 
 create or replace function pg_temp.as_user(uid uuid) returns void language plpgsql as $$
 begin
@@ -298,6 +298,41 @@ select is((select granted_scopes from public.connected_accounts where id = '0000
 update public.connected_accounts set deleted_at = now() where id = '00000000-0000-4000-8000-0000000000c2';
 update public.connected_accounts set deleted_at = null where id = '00000000-0000-4000-8000-0000000000c2';
 select is((select status::text from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c2'), 'active', 're-registered device account is active again');
+
+-- ---------------------------------------------------------------------------
+-- 13. Guards see the service role the way PostgREST presents it: role switched + JSON claims, no legacy
+--     `request.jwt.claim.role` (PostgREST ≤ v9). Server writes pass; a client with the same claim shape is still guarded.
+-- ---------------------------------------------------------------------------
+create or replace function pg_temp.as_postgrest_service() returns void language plpgsql as $$
+begin
+  execute 'reset role';
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', '', true);
+  perform set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
+  execute 'set local role service_role';
+end $$;
+create or replace function pg_temp.as_postgrest_user(uid uuid) returns void language plpgsql as $$
+begin
+  execute 'reset role';
+  perform set_config('request.jwt.claim.sub', uid::text, true); -- the shim's auth.uid() reads the legacy sub first
+  perform set_config('request.jwt.claim.role', '', true);
+  perform set_config('request.jwt.claims', json_build_object('sub', uid, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+end $$;
+
+select pg_temp.as_postgrest_service();
+update public.connected_accounts set status = 'expired', last_error = 'Bağlantı yenilenmeli' where id = '00000000-0000-4000-8000-0000000000c1';
+select is((select status::text from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), 'expired', 'service role (JSON claims only) can mark an account expired');
+select is((select last_error from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), 'Bağlantı yenilenmeli', 'service role (JSON claims only) can set the account error');
+update public.connected_accounts set status = 'active', last_sync_at = now() + interval '1 hour', last_error = null where id = '00000000-0000-4000-8000-0000000000c1';
+select is((select status::text from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), 'active', 'service role (JSON claims only) can mark an account active after a sync');
+select is((select last_sync_at > now() from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), true, 'service role (JSON claims only) can stamp last_sync_at');
+update public.connected_accounts set granted_scopes = array_append(granted_scopes, 'https://www.googleapis.com/auth/gmail.send') where id = '00000000-0000-4000-8000-0000000000c1';
+select is((select 'https://www.googleapis.com/auth/gmail.send' = any (granted_scopes) from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), true, 'service role (JSON claims only) can record a scope upgrade');
+
+select pg_temp.as_postgrest_user('00000000-0000-4000-8000-000000000001');
+update public.connected_accounts set status = 'expired', last_sync_at = null where id = '00000000-0000-4000-8000-0000000000c1';
+select is((select status::text || ':' || (last_sync_at is not null)::text from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), 'active:true', 'client (JSON claims only) still cannot change status or last_sync_at');
 
 select * from finish();
 rollback;
