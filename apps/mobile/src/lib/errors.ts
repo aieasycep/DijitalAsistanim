@@ -44,6 +44,8 @@ export function describeError(e: unknown, t: TFunction): ErrorCopy {
       };
     case 'not_found':
       return { title: t('errors.notFound'), recovery: 'none' };
+    case 'conflict':
+      return { title: t('errors.conflict'), recovery: 'retry' };
     case 'validation':
       return { title: err.message || t('common.genericError'), recovery: 'none' };
     case 'unauthorized':

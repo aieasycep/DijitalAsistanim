@@ -212,4 +212,28 @@ describe('Settings index', () => {
     expect(await screen.findByText('Bir şeyler ters gitti.')).toBeTruthy();
     expect(useSessionStore.getState().status).toBe('signedIn');
   });
+
+  it('still forgets the user on this device when sign-out fails offline', async () => {
+    mockDs = {
+      ...mockDs,
+      auth: {
+        ...mockDs.auth,
+        signOut: async () => {
+          throw { code: 'offline', message: 'Network request failed' };
+        },
+      },
+    };
+    const clearLocal = jest.spyOn(mockDs, 'clearLocalState');
+    renderSettings(<SettingsIndexScreen />);
+    fireEvent.press(await screen.findByTestId('settings-signout'));
+    const confirmButtons = await screen.findAllByText('Çıkış Yap');
+    const confirm = confirmButtons[confirmButtons.length - 1];
+    if (!confirm) throw new Error('confirm button not found');
+    fireEvent.press(confirm);
+
+    expect(await screen.findByText('Çevrimdışısın.')).toBeTruthy();
+    await waitFor(() => expect(useSessionStore.getState().status).toBe('signedOut'));
+    expect(clearLocal).toHaveBeenCalledTimes(1);
+    expect(notifications.cancelAllLocalNotifications).toHaveBeenCalled();
+  });
 });

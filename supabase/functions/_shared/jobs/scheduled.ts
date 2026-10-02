@@ -135,7 +135,8 @@ export async function runBriefingsJob(admin: Db, now: string): Promise<JobResult
                     nctx,
                   );
         if (kind === 'midday' && !briefing.hasChanges) continue;
-        const res = await sendPush(admin, target, payload);
+        // The user chose this time; the default 07:30 morning briefing sits inside the default 22:00–08:00 quiet window.
+        const res = await sendPush(admin, target, payload, { bypassQuietHours: true });
         if (res.status === 'sent') sent += 1;
       }
     } catch (e) {
@@ -189,6 +190,7 @@ export async function runRemindersJob(admin: Db, now: string): Promise<JobResult
             : r.target_type === 'life_event' && r.target_id
               ? `/life/${r.target_id}`
               : null;
+    let consumed = true;
     if (target) {
       const res = await sendPush(
         admin,
@@ -200,8 +202,11 @@ export async function runRemindersJob(admin: Db, now: string): Promise<JobResult
         { isCritical: true },
       );
       if (res.status === 'sent') sent += 1;
+      // A transient delivery failure keeps the reminder scheduled for the next tick instead of eating it.
+      if (res.status === 'failed') consumed = false;
     }
-    await admin.from('reminders').update({ status: 'fired', fired_at: now }).eq('id', r.id);
+    if (consumed)
+      await admin.from('reminders').update({ status: 'fired', fired_at: now }).eq('id', r.id);
   }
   return { processed: rows.length, details: { sent } };
 }
@@ -270,6 +275,20 @@ export async function runFollowUpsJob(admin: Db, now: string): Promise<JobResult
 
 // --- Sync poll --------------------------------------------------------------------------------------
 
+/** One pipeline run analyses a bounded batch of threads; after a backfill a mailbox needs a few. */
+const PIPELINE_MAX_ROUNDS = 5;
+
+async function drainPipeline(
+  admin: Db,
+  userId: string,
+  opts: Parameters<typeof runPipeline>[2],
+): Promise<void> {
+  for (let round = 0; round < PIPELINE_MAX_ROUNDS; round += 1) {
+    const outcome = await runPipeline(admin, userId, opts);
+    if (!outcome.hasMore) return;
+  }
+}
+
 export async function runSyncPollJob(
   admin: Db,
   now: string,
@@ -301,7 +320,7 @@ export async function runSyncPollJob(
   }
   for (const userId of touchedUsers) {
     try {
-      await runPipeline(admin, userId, { now, reason: 'sync' });
+      await drainPipeline(admin, userId, { now, reason: 'sync' });
     } catch (e) {
       log.warn('pipeline failed after sync', { error: e instanceof Error ? e.message : 'unknown' });
     }
@@ -645,7 +664,7 @@ export async function runBackfillJob(
           .eq('user_id', userId)
           .is('deleted_at', null);
         await setStep('classifying', { emails_found: count ?? 0 });
-        await runPipeline(admin, userId, { now, reason: 'initial' });
+        await drainPipeline(admin, userId, { now, reason: 'initial' });
         const { count: important } = await admin
           .from('email_threads')
           .select('id', { count: 'exact', head: true })
@@ -664,7 +683,7 @@ export async function runBackfillJob(
       .is('deleted_at', null)
       .gte('start_at', now);
     await setStep('open_loops', { upcoming_events: events ?? 0 });
-    await runPipeline(admin, userId, { now, reason: 'initial' });
+    await drainPipeline(admin, userId, { now, reason: 'initial' });
     const { count: followUps } = await admin
       .from('follow_ups')
       .select('id', { count: 'exact', head: true })

@@ -59,6 +59,7 @@ export default function TodayScreen() {
   const toast = useToast();
   const offline = useUiStore((s) => s.offline);
   const setPendingApprovals = useUiStore((s) => s.setPendingApprovals);
+  const setLastAnalyzedAt = useUiStore((s) => s.setLastAnalyzedAt);
   const profile = useSessionStore((s) => s.profile);
   const preferences = useSessionStore((s) => s.preferences);
   const firstName = useSessionStore(selectFirstName);
@@ -99,7 +100,15 @@ export default function TodayScreen() {
     if (typeof pendingQuery.data === 'number') setPendingApprovals(pendingQuery.data);
   }, [pendingQuery.data, setPendingApprovals]);
 
-  const pendingCount = Math.max(pendingQuery.data ?? 0, feed?.pendingApprovals ?? 0);
+  // Other screens' offline banners quote the last analysis time; the Today feed is where it comes from.
+  const feedLastAnalyzedAt = feed?.lastAnalyzedAt ?? null;
+  useEffect(() => {
+    if (feedLastAnalyzedAt) setLastAnalyzedAt(feedLastAnalyzedAt);
+  }, [feedLastAnalyzedAt, setLastAnalyzedAt]);
+
+  // The live count wins; the feed's snapshot only covers the moment before the count query has answered
+  // (after rejecting the last pending item the feed still says 1 until it is refetched).
+  const pendingCount = pendingQuery.data ?? feed?.pendingApprovals ?? 0;
   const noAccounts =
     accountsQuery.isSuccess &&
     accountsQuery.data.filter((a) => !a.deletedAt && a.status !== 'disconnected').length === 0;

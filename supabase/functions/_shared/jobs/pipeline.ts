@@ -64,6 +64,8 @@ import { camelize, localDateKey } from '../rows.ts';
 export interface PipelineOutcome {
   userId: string;
   threadsTriaged: number;
+  /** More unanalysed threads were waiting than one run takes; the caller may run again. */
+  hasMore: boolean;
   aiClassified: number;
   aiDeep: number;
   insights: number;
@@ -136,6 +138,7 @@ export async function runPipeline(
   const outcome: PipelineOutcome = {
     userId,
     threadsTriaged: 0,
+    hasMore: false,
     aiClassified: 0,
     aiDeep: 0,
     insights: 0,
@@ -171,6 +174,7 @@ export async function runPipeline(
       ? []
       : camelize<LearnedPreference[]>(learnedRows ?? []);
   const pending = camelize<EmailThread[]>(pendingRows ?? []);
+  outcome.hasMore = pending.length >= MAX_THREADS_PER_RUN;
   const userEmails = new Set(ctx.userEmails);
 
   // Load messages for pending threads
@@ -271,6 +275,7 @@ export async function runPipeline(
       for (let i = 0; i < toClassify.length; i += EMAIL_BATCH_MAX) {
         const batch = toClassify.slice(i, i + EMAIL_BATCH_MAX);
         try {
+          if (i > 0) await checkAiBudget(aiCtx, 2000); // re-check per call: one run makes many
           const spec = emailBatchClassify({
             now: opts.now,
             locale: ctx.locale,
@@ -343,6 +348,14 @@ export async function runPipeline(
         const key = `deep:${c.thread.fingerprint}`;
         let data = cache.get(key) as ReturnType<typeof emailAnalysisAiSchema.parse> | undefined;
         if (!data) {
+          try {
+            await checkAiBudget(aiCtx, 2000);
+          } catch (e) {
+            log.warn('deep analysis skipped: budget', {
+              code: e instanceof AppError ? e.code : 'unknown',
+            });
+            break;
+          }
           try {
             const previous = c.messages
               .slice(0, -1)
@@ -811,7 +824,7 @@ export async function runPipeline(
     // Never resurrect cards the user completed/dismissed: only insert new keys or update active ones.
     const { data: existingInsights } = await admin
       .from('insights')
-      .select('id, dedupe_key, status')
+      .select('id, dedupe_key, status, for_date')
       .eq('user_id', userId)
       .in(
         'dedupe_key',
@@ -819,7 +832,12 @@ export async function runPipeline(
       );
     const byKey = new Map(
       (
-        (existingInsights ?? []) as { id: string; dedupe_key: string; status: Insight['status'] }[]
+        (existingInsights ?? []) as {
+          id: string;
+          dedupe_key: string;
+          status: Insight['status'];
+          for_date: string;
+        }[]
       ).map((i) => [i.dedupe_key, i]),
     );
     const today = localDateKey(opts.now, ctx.timezone);
@@ -830,8 +848,9 @@ export async function runPipeline(
       })
       .map((d) => {
         const ex = byKey.get(d.dedupeKey);
+        // No `id` on purpose: the conflict target (user_id, dedupe_key) finds the existing row, and a mixed
+        // batch with `id` on some rows would insert `id = null` for the new ones (see for_date below).
         return {
-          ...(ex ? { id: ex.id } : {}),
           user_id: userId,
           kind: d.kind,
           badge: d.badge,
@@ -849,14 +868,15 @@ export async function runPipeline(
           entity_type: d.entityType,
           entity_id: d.entityId,
           tags: d.tags,
-          for_date: ex ? undefined : d.forDate < today ? today : d.forDate,
+          // Existing cards keep their day. Every row must carry the column: supabase-js sends the union of
+          // the rows' keys as `columns`, so a row without for_date would be upserted as null (NOT NULL).
+          for_date: ex ? ex.for_date : d.forDate < today ? today : d.forDate,
           confidence: d.confidence,
           is_low_confidence: d.isLowConfidence,
           dedupe_key: d.dedupeKey,
           deleted_at: null,
         };
-      })
-      .map((r) => (r.for_date === undefined ? (({ for_date: _omit, ...rest }) => rest)(r) : r));
+      });
     if (rows.length) {
       const { error } = await admin
         .from('insights')

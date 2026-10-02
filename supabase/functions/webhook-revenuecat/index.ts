@@ -16,7 +16,15 @@ import {
   json,
   parseInput,
 } from '../_shared/mod.ts';
+import { log } from '../_shared/log.ts';
 import { camelize } from '../_shared/rows.ts';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface ProfileRow {
+  id: string;
+  revenuecat_app_user_id: string | null;
+}
 
 Deno.serve(
   handler(async (req) => {
@@ -36,18 +44,43 @@ Deno.serve(
     const { error: dupErr } = await admin
       .from('webhook_events')
       .insert({ id: eventKey, source: 'revenuecat' });
-    if (dupErr?.code === '23505') return json({ ok: true as const, duplicate: true });
+    if (dupErr?.code === '23505') {
+      // Seen before: skip only when that delivery finished; an unfinished one (failure mid-way) is re-run idempotently.
+      const { data: seen, error: seenErr } = await admin
+        .from('webhook_events')
+        .select('processed_at')
+        .eq('id', eventKey)
+        .maybeSingle();
+      if (seenErr) throw new AppError('internal', `Webhook kaydı okunamadı: ${seenErr.message}`);
+      if ((seen as { processed_at: string | null } | null)?.processed_at)
+        return json({ ok: true as const, duplicate: true });
+    }
 
     const candidates = [event.app_user_id, event.original_app_user_id].filter((v): v is string =>
       Boolean(v),
     );
-    const { data: profile } = await admin
+    // RevenueCat ids ("$RCAnonymousID:…") are not uuids and contain PostgREST delimiters: match the linked id
+    // with `in`, and fall back to profiles.id only for uuid-shaped candidates (app user id = Supabase user id).
+    const { data: linked, error: linkedErr } = await admin
       .from('profiles')
-      .select('id')
-      .or(candidates.map((c) => `revenuecat_app_user_id.eq.${c},id.eq.${c}`).join(','))
+      .select('id, revenuecat_app_user_id')
+      .in('revenuecat_app_user_id', candidates)
       .limit(1)
       .maybeSingle();
-    const userId = (profile as { id: string } | null)?.id ?? null;
+    if (linkedErr) throw new AppError('internal', `Profil sorgulanamadı: ${linkedErr.message}`);
+    let profile = linked as ProfileRow | null;
+    const uuidCandidates = candidates.filter((c) => UUID_RE.test(c));
+    if (!profile && uuidCandidates.length > 0) {
+      const { data: byId, error: byIdErr } = await admin
+        .from('profiles')
+        .select('id, revenuecat_app_user_id')
+        .in('id', uuidCandidates)
+        .limit(1)
+        .maybeSingle();
+      if (byIdErr) throw new AppError('internal', `Profil sorgulanamadı: ${byIdErr.message}`);
+      profile = byId as ProfileRow | null;
+    }
+    const userId = profile?.id ?? null;
     if (!userId) {
       // Unknown app user (e.g. purchase before login): acknowledge so RevenueCat stops retrying; link happens via billing-link-revenuecat.
       await admin
@@ -92,10 +125,22 @@ Deno.serve(
       const grantsPro =
         (s.status === 'active' || s.status === 'trial' || s.status === 'grace') &&
         (!s.expiresAt || Date.parse(s.expiresAt) > Date.now());
-      await admin
+      // Bind the app user id only when the profile is unlinked or already linked to one of this event's ids;
+      // never overwrite a different (foreign) id on a profile matched by uuid.
+      const currentAppUserId = profile?.revenuecat_app_user_id ?? null;
+      const bindAppUserId = currentAppUserId === null || candidates.includes(currentAppUserId);
+      const { error: profileErr } = await admin
         .from('profiles')
-        .update({ plan: grantsPro ? 'pro' : 'free', revenuecat_app_user_id: event.app_user_id })
+        .update({
+          plan: grantsPro ? 'pro' : 'free',
+          ...(bindAppUserId ? { revenuecat_app_user_id: event.app_user_id } : {}),
+        })
         .eq('id', userId);
+      if (profileErr)
+        log.warn('profile plan update failed', {
+          code: profileErr.code,
+          error: profileErr.message,
+        });
       await audit(admin, {
         userId,
         action: 'subscription.change',

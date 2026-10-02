@@ -952,7 +952,8 @@
       "subtitle": "Günde ortalama 3 bildirim. Pazarlama bildirimi yok, “bak bana” bildirimi yok.",
       "exampleTimes": ["14:10", "08:00", "11:30"],
       "deniedToast": "Bildirimleri Ayarlar'dan istediğin zaman açabilirsin.",
-      "enabledToast": "Bildirimler açık"
+      "enabledToast": "Bildirimler açık",
+      "unavailableToast": "Bildirimler bu sürümde kullanılamıyor."
     }
   },
   "settings": {
@@ -1730,6 +1731,7 @@
     "captureFailed": "Yakalama başarısız oldu.",
     "uploadFailed": "Yükleme başarısız oldu.",
     "notFound": "Bu içerik bulunamadı.",
+    "conflict": "Bu kayıt bu arada değişmiş. Yenile ve tekrar dene.",
     "cardFailed": "Bu kart yüklenemedi.",
     "invalidUrl": "Bu bağlantı açılamıyor.",
     "handoffFailed": "Uygulama açılamadı.",

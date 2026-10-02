@@ -34,13 +34,25 @@ export default function NotificationsScreen() {
             userId: session?.user.id ?? null,
             force: true,
           });
-          if (result.status === 'failed')
+          // Only a registered token means "enabled" — say so honestly when push is unavailable or failed.
+          if (result.status === 'registered') {
+            toast.show({
+              message: t('onboarding.notifications.enabledToast'),
+              icon: 'reminder',
+              iconTone: 'success',
+            });
+          } else if (result.status === 'failed') {
             captureError(new Error(result.reason), { where: 'notifications.registerPushToken' });
-          toast.show({
-            message: t('onboarding.notifications.enabledToast'),
-            icon: 'reminder',
-            iconTone: 'success',
-          });
+            toast.show({
+              message: t('common.genericError'),
+              icon: 'warning',
+              iconTone: 'critical',
+            });
+          } else if (result.reason === 'permission') {
+            toast.show({ message: t('onboarding.notifications.deniedToast'), icon: 'info' });
+          } else if (result.reason !== 'unchanged') {
+            toast.show({ message: t('onboarding.notifications.unavailableToast'), icon: 'info' });
+          }
         } else if (permission === 'denied') {
           toast.show({ message: t('onboarding.notifications.deniedToast'), icon: 'info' });
         }

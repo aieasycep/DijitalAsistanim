@@ -94,8 +94,16 @@ export async function insertApproval(
   return { id: approval.id, created: true };
 }
 
-/** Persist the mutable part of an approval after a state transition or edit. */
-export async function persistApproval(admin: Db, approval: ApprovalAction): Promise<void> {
+/**
+ * Persist the mutable part of an approval after a state transition or edit.
+ * `expectStatus` makes the write a compare-and-set: two requests that both loaded the row as `pending`
+ * (double tap, client retry during a slow send) would otherwise both approve and both execute it.
+ */
+export async function persistApproval(
+  admin: Db,
+  approval: ApprovalAction,
+  opts: { expectStatus?: ApprovalAction['status'] } = {},
+): Promise<void> {
   const row = approvalToRow(approval);
   delete row.id;
   delete row.user_id;
@@ -103,8 +111,14 @@ export async function persistApproval(admin: Db, approval: ApprovalAction): Prom
   delete row.original_payload;
   delete row.idempotency_key;
   delete row.requested_by;
-  const { error } = await admin.from('approval_actions').update(row).eq('id', approval.id);
+  let q = admin.from('approval_actions').update(row).eq('id', approval.id);
+  if (opts.expectStatus) q = q.eq('status', opts.expectStatus);
+  const { data, error } = await q.select('id');
   if (error) throw new AppError('internal', `Onay güncellenemedi: ${error.message}`);
+  if (opts.expectStatus && (!Array.isArray(data) || data.length === 0))
+    throw new AppError('conflict', 'Onay bu arada değişti; lütfen listeyi yenile.', {
+      details: { expectedStatus: opts.expectStatus },
+    });
 }
 
 /** The connected account an approval targets (null for internal reminders/commitments and internal tasks). */

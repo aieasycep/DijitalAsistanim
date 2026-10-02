@@ -9,6 +9,7 @@ import { getEnv } from './env.ts';
 
 const MAX_MEDIA_BYTES = 20 * 1024 * 1024;
 const MAX_OUTPUT_CHARS = 20_000;
+const PROVIDER_TIMEOUT_MS = 15_000;
 
 const TRANSCRIBE_INSTRUCTION =
   'Transcribe ALL readable text from this content exactly as written, preserving line breaks and the original language (Turkish or English). ' +
@@ -20,6 +21,27 @@ function toBase64(bytes: Uint8Array): string {
   for (let i = 0; i < bytes.length; i += chunk)
     binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
   return btoa(binary);
+}
+
+/** Provider POST with a timeout; a timeout or network failure is reported like a failed response (`ai_unavailable`). */
+async function providerFetch(url: string, init: RequestInit): Promise<Response> {
+  let res: Response;
+  try {
+    res = await fetch(url, { ...init, signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) });
+  } catch (e) {
+    const name = typeof e === 'object' && e !== null ? (e as { name?: unknown }).name : undefined;
+    const timedOut = name === 'TimeoutError' || name === 'AbortError';
+    throw new AppError('ai_unavailable', 'Görsel içerik okunamadı.', {
+      status: 503,
+      details: { reason: timedOut ? 'timeout' : 'network_error' },
+    });
+  }
+  if (!res.ok)
+    throw new AppError('ai_unavailable', 'Görsel içerik okunamadı.', {
+      status: res.status === 429 ? 429 : 503,
+      details: { status: res.status },
+    });
+  return res;
 }
 
 export type MediaKind = 'image' | 'pdf' | 'text';
@@ -52,7 +74,7 @@ async function anthropicExtract(
           type: 'document',
           source: { type: 'base64', media_type: 'application/pdf', data: toBase64(bytes) },
         };
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await providerFetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -67,11 +89,6 @@ async function anthropicExtract(
       ],
     }),
   });
-  if (!res.ok)
-    throw new AppError('ai_unavailable', 'Görsel içerik okunamadı.', {
-      status: res.status === 429 ? 429 : 503,
-      details: { status: res.status },
-    });
   const body = (await res.json()) as { content?: { type: string; text?: string }[] };
   return (body.content ?? [])
     .filter((c) => c.type === 'text')
@@ -94,7 +111,7 @@ async function openAiExtract(
           type: 'file',
           file: { filename, file_data: `data:application/pdf;base64,${toBase64(bytes)}` },
         };
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const res = await providerFetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
@@ -103,11 +120,6 @@ async function openAiExtract(
       messages: [{ role: 'user', content: [part, { type: 'text', text: TRANSCRIBE_INSTRUCTION }] }],
     }),
   });
-  if (!res.ok)
-    throw new AppError('ai_unavailable', 'Görsel içerik okunamadı.', {
-      status: res.status === 429 ? 429 : 503,
-      details: { status: res.status },
-    });
   const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
   return body.choices?.[0]?.message?.content ?? '';
 }

@@ -119,9 +119,67 @@ Proje `dijital-asistan` (`noggfqppppdgbkiotczo`, eu-central-1). Management API �
 - **Doğrulama** (proje ağ dışından erişilemediği için pg_net ile içeriden): `cron-dispatch` yanlış secret → 403
   (önceden 503); `oauth-google-callback` sahte state → doğrulama hatası ve uygulama şemasına yönlendirme;
   `webhook-gmail` → "Gmail push yapılandırılmamış"; `oauth-start` oturumsuz → gateway 401.
-- **Açık kalan**: gerçek bir kullanıcı oturumuyla `oauth-start` ("Google ile Bağlan"). İlk denemede `bad_key`
-  görülürse `TOKEN_ENCRYPTION_KEY` yenilenmeli (`openssl rand -base64 32`; henüz şifreli token olmadığı için veri
-  kaybı olmaz).
+- **Gerçek veriyle ilk test (2026-09-30)**: "Google ile Bağlan" uçtan uca çalıştı (Google izin ekranı Testing
+  modunda olduğundan hesabın Cloud Console'da test kullanıcısı olarak eklenmesi gerekti). İlk posta senkronu
+  11 ileti çekti; brifing `claude-sonnet-5` ile üretildi (`produced_by = ai`). Bulunan düzeltmeler:
+  `oauth-start` OAuth state'i servis rolüyle yazıyor; Claude 5 nesline `temperature` gönderilmiyor; senkron hatası
+  sağlayıcı ayrıntısıyla loglanıyor.
+- **Guard trigger'ları servis rolünü tanımıyordu** (migration `…0012_service_role_guards.sql`): guard'lar servis
+  rolünü PostgREST ≤ v9'un `request.jwt.claim.role` ayarından okuyordu; barındırılan PostgREST claim'leri JSON
+  `request.jwt.claims` olarak verip veritabanı rolünü değiştiriyor. Edge Function'ların servis anahtarıyla yaptığı
+  her güncelleme istemci dalından geçiyordu: hesap `syncing`'de kalıyor, `last_sync_at`/`last_error` yazılamıyor,
+  kapsam yükseltmesi `granted_scopes`'a işlenmiyordu. Guard'lar artık `current_user` (postgres / service_role) ve
+  JSON claim'e bakıyor; pgTAP bölüm 13 bu şekli doğruluyor.
+
+## Uçtan uca denetim (2026-10-02)
+
+Kapsam: repo'daki tüm kontroller (lint, typecheck, 494 + 77 + 437 birim/bileşen testi, `deno check` 42 fonksiyon,
+web build), production projesinde veri/log/cron/advisor incelemesi (48 saatlik fonksiyon logu, RLS/grant/fonksiyon
+yetkileri, auth ve PostgREST ayarları) ve Edge Function, server-core, mobil/api-client ve veritabanı katmanlarının
+koddan okunarak denetimi. Düzeltilenler (bu PR):
+
+- **Insight upsert her saat düşüyordu** (`null value in column "for_date"`): mevcut kartlar `for_date`/`id` olmadan,
+  yeniler bunlarla gönderiliyordu; supabase-js tüm satırların anahtar birleşimini `columns` olarak yolladığı için
+  PostgREST eksik alanı `null` yazıyor ve toplu upsert reddediliyordu. İlk iki karttan sonra akışa hiç yeni kart
+  girmiyordu. Satırlar artık aynı sütun kümesini taşıyor (`for_date` mevcut değerinden, `id` yok).
+- **Arama ve toplantı hazırlığı uçları kırıktı**: uygulama `search`'e POST, `meeting-prep`'e GET gönderiyor,
+  fonksiyonlar tersini kabul ediyordu (405 "Yöntem desteklenmiyor"). `search` her iki yöntemi kabul ediyor,
+  katalogda `meeting-prep` POST. Arama filtrelerindeki virgül/parantez PostgREST `or` sözdizimini bozuyordu (değer
+  artık tırnaklı), alt sorgu hataları loglanıyor.
+- **Onay iki kez yürütülebiliyordu**: durum yazımları compare-and-set oldu (`persistApproval` `expectStatus`);
+  gönderim sonrası defter işleri onayı `failed`'a düşüremiyor (tekrar denemek maili yeniden gönderirdi).
+- **RevenueCat webhook'u** `$RCAnonymousID:` kimliğini uuid'e cast edip hatayı yutuyordu (satın almalar hiç
+  işlenmezdi); eşleme `in()` ile, hata RevenueCat'in yeniden denemesi için 500; tekrar koruması `processed_at`'a
+  bakıyor; `billing-link-revenuecat` yalnızca kendi uuid'ini veya RevenueCat anonim kimliğini kabul ediyor.
+- **Görev senkronu** kısmi unique index'e `on conflict` yapıyordu (42P10, her çalışmada hata); tam unique index.
+- **Takvim yazımı** `outlook_calendar` (enum'da yok) yerine `microsoft_calendar`; yerel yansıma hatası loglanıyor.
+- **Pipeline açlığı**: 60 iplikten fazlası yalnızca yeni bir senkron deltasında analiz ediliyordu; artık biriken
+  iplikler tükenene kadar (en fazla 5 tur) çalışıyor. Bütçe kontrolü her AI çağrısında yineleniyor; AI token
+  sayacı atomik RPC ile (`increment_usage_for`).
+- **Bülten görünmez karakterleri** (U+034F, sıfır genişlikli boşluk, yumuşak tire) başlık ve özetlerden
+  temizleniyor; brifing senaryosunda "Bugün takvimin oldukça sakin." cümlesi iki kez okunmuyor; `today` akşam
+  brifingini enum sıralaması yüzünden hiç döndürmüyordu.
+- **Gmail**: `sent_at` sunucu damgasından (`internalDate`), ek `message/rfc822` parçaları gövde sayılmıyor,
+  boş ama `nextPageToken` taşıyan history sayfaları takip ediliyor, okundu bilgisi aynı son iletide de güncelleniyor.
+- **Brifing push'u** varsayılan sessiz saatlerin (22:00–08:00) içindeki 07:30'da bastırılıyordu; zamanlanmış
+  brifingler sessiz saati atlıyor. Hatırlatıcılar iletilemediğinde `fired` sayılmıyor. `kickJob` isteği
+  `EdgeRuntime.waitUntil` ile yanıt sonrasına yaşatılıyor.
+- **Güvenlik**: `increment_usage` istemciye açıktı ve negatif miktarla günlük AI bütçesi sıfırlanabiliyordu
+  (yetki kaldırıldı); anon'un `public` fonksiyon/tablo yetkileri ve varsayılan ayrıcalıkları kapatıldı;
+  `captures.storage_path` sahibin klasörüne kısıtlandı (sunucu tarafında da kontrol); link yakalamada DNS çözümü
+  doğrulanıyor (SSRF); `briefing-audio` oran sınırı; sağlayıcı/RevenueCat/medya `fetch`'lerine zaman aşımı;
+  `referrals` sütun düzeyinde okunuyor (davet edilen kullanıcı kimliği ve cihaz özeti gizli); 14 fonksiyonda
+  `search_path` sabit; 21 eksik index; gece temizlik işi (`da_housekeeping`: audit/ai_usage/push/cron geçmişi).
+  Bunlar `…0013_audit_hardening.sql` ile; pgTAP 117 iddia.
+- **Mobil**: AI'dan çıkan URL'ler şema izin listesinden geçiyor; bildirim adımı yalnızca kayıt başarılıysa "açık"
+  diyor; brifing Pro kapısında gereksiz 403 yok; çevrimdışı çıkışta yerel oturum temizleniyor; bekleyen onay rozeti
+  ve "son analiz" bilgisi güncel.
+
+Açık kalan öneriler (ayrı PR): OAuth callback'in bağlantıyı akışı başlatan değil tamamlayan kullanıcıya bağlaması
+(`oauth-complete` adımı); onboarding kapısının profil yüklenmeden karar vermemesi; ilk analiz ekranına süre sınırı;
+OAuth hata kodlarının kullanıcı metnine doğru eşlenmesi; Microsoft butonunun sağlayıcı yapılandırılmadan
+gösterilmemesi; cron işlerine kilit/stagger; `sync_states` due filtresinin SQL'e taşınması; RLS politikalarında
+`(select auth.uid())`; push bildirimleri için EAS proje kimliği + FCM (bkz. `docs/DEPLOYMENT.md` §2).
 
 ## Mağaza öncesi aksiyonlar
 

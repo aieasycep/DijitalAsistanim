@@ -11,7 +11,8 @@ export type RatePolicy =
   | 'sync_trigger'
   | 'search'
   | 'export'
-  | 'feedback';
+  | 'feedback'
+  | 'tts';
 
 const POLICIES: Record<RatePolicy, { limit: number; windowSec: number }> = {
   assistant_query: { limit: 20, windowSec: 60 },
@@ -23,6 +24,7 @@ const POLICIES: Record<RatePolicy, { limit: number; windowSec: number }> = {
   search: { limit: 60, windowSec: 60 },
   export: { limit: 3, windowSec: 86400 },
   feedback: { limit: 10, windowSec: 3600 },
+  tts: { limit: 10, windowSec: 60 },
 };
 
 /**

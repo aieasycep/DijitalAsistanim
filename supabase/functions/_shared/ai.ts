@@ -61,7 +61,7 @@ function cacheStore(admin: Db, userId: string): AiCacheStore {
   };
 }
 
-async function recordUsage(admin: Db, timezone: string, r: AiUsageRecord): Promise<void> {
+async function recordUsage(admin: Db, r: AiUsageRecord): Promise<void> {
   const tokens = r.inputTokens + r.outputTokens;
   const { error } = await admin.from('ai_usage').insert({
     user_id: r.userId,
@@ -77,23 +77,13 @@ async function recordUsage(admin: Db, timezone: string, r: AiUsageRecord): Promi
   });
   if (error) log.warn('ai_usage insert failed', { error: error.message });
   if (tokens > 0 && !r.cached) {
-    const day = localDateKey(new Date(), timezone);
-    const { data } = await admin
-      .from('usage_counters')
-      .select('ai_tokens')
-      .eq('user_id', r.userId)
-      .eq('day', day)
-      .maybeSingle();
-    const current = (data as { ai_tokens: number } | null)?.ai_tokens ?? 0;
-    await admin.from('usage_counters').upsert(
-      {
-        user_id: r.userId,
-        day,
-        ai_tokens: current + tokens,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id,day' },
-    );
+    // Atomic increment (migration 0013): a read-then-upsert lost tokens when calls ran concurrently.
+    const { error: incErr } = await admin.rpc('increment_usage_for', {
+      p_user: r.userId,
+      p_counter: 'ai_tokens',
+      p_amount: tokens,
+    });
+    if (incErr) log.warn('usage counter increment failed', { error: incErr.message });
   }
 }
 
@@ -147,7 +137,7 @@ export function createAi(ctx: AiContext): AiClient {
     fetch: (input, init) => fetch(input, init),
     maxInputTokensPerCall: env.ai.maxInputTokensPerCall,
     logger: aiLogger,
-    onUsage: (r) => recordUsage(admin, ctx.timezone, r),
+    onUsage: (r) => recordUsage(admin, r),
     cache: cacheStore(admin, ctx.userId),
     locale: ctx.locale,
   });

@@ -38,7 +38,7 @@ Deno.serve(
 
     if (input.decision === 'reject') {
       const rejected = transition(approval, 'rejected', { now, locale: ctx.locale });
-      await persistApproval(admin, rejected);
+      await persistApproval(admin, rejected, { expectStatus: 'pending' });
       await audit(admin, {
         userId: user.id,
         action: 'approval.reject',
@@ -61,7 +61,7 @@ Deno.serve(
         locale: ctx.locale,
         provider: account?.provider ?? null,
       });
-      await persistApproval(admin, approval);
+      await persistApproval(admin, approval, { expectStatus: 'pending' });
       await audit(admin, {
         userId: user.id,
         action: 'approval.edit',
@@ -73,7 +73,7 @@ Deno.serve(
     }
 
     const approved = transition(approval, 'approved', { now, locale: ctx.locale });
-    await persistApproval(admin, approved);
+    await persistApproval(admin, approved, { expectStatus: 'pending' });
     await audit(admin, {
       userId: user.id,
       action: 'approval.approve',

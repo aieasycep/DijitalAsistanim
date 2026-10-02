@@ -956,7 +956,8 @@
       "subtitle": "About 3 notifications a day. No marketing, no “look at me” pings.",
       "exampleTimes": ["14:10", "08:00", "11:30"],
       "deniedToast": "You can enable notifications from Settings at any time.",
-      "enabledToast": "Notifications on"
+      "enabledToast": "Notifications on",
+      "unavailableToast": "Notifications aren't available in this build."
     }
   },
   "settings": {
@@ -1734,6 +1735,7 @@
     "captureFailed": "Capture failed.",
     "uploadFailed": "Upload failed.",
     "notFound": "This item wasn't found.",
+    "conflict": "This item changed in the meantime. Refresh and try again.",
     "cardFailed": "This card couldn't load.",
     "invalidUrl": "This link can't be opened.",
     "handoffFailed": "The app couldn't be opened.",

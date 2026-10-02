@@ -4,12 +4,12 @@ import {
   adminClient,
   assertMethod,
   enforceRateLimit,
-  getEnv,
   handler,
   json,
   parseInput,
   requireUser,
 } from '../_shared/mod.ts';
+import { kickJob } from '../_shared/internal.ts';
 import { log } from '../_shared/log.ts';
 
 Deno.serve(
@@ -30,19 +30,8 @@ Deno.serve(
     if (error) log.warn('sync-now update failed', { error: error.message });
     const queued = Array.isArray(data) ? data.length : 0;
 
-    // Best-effort immediate kick of the poller (fire-and-forget; cron covers the rest).
-    const env = getEnv();
-    if (env.internalSecret) {
-      fetch(`${env.supabaseUrl}/functions/v1/cron-dispatch`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-internal-secret': env.internalSecret,
-          apikey: env.supabaseAnonKey,
-        },
-        body: JSON.stringify({ job: 'sync-poll', userId: user.id }),
-      }).catch(() => undefined);
-    }
+    // Best-effort immediate kick of the poller (kept alive past the response; cron covers the rest).
+    kickJob('sync-poll', { userId: user.id });
     return json({ queued });
   }),
 );

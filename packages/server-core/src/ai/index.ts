@@ -50,6 +50,7 @@ export {
   AnthropicProvider,
   STRUCTURED_OUTPUT_TOOL,
   type AnthropicProviderConfig,
+  anthropicSupportsSampling,
 } from './anthropic.ts';
 export {
   OPENAI_CHAT_COMPLETIONS_URL,

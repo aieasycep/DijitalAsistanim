@@ -97,10 +97,19 @@ function safeFromCodePoint(code: number, fallback: string): string {
   return String.fromCodePoint(code);
 }
 
+/**
+ * Invisible code points that newsletters pad previews with (soft hyphen, combining grapheme joiner U+034F,
+ * zero-width space/non-joiner/marks, word joiner, bidi controls, BOM, Hangul fillers). The zero-width joiner
+ * (U+200D) and variation selectors are kept: emoji sequences depend on them.
+ */
+const INVISIBLE_CHARS =
+  /\u034f|\u17b4|\u17b5|[\u00ad\u061c\u115f\u1160\u180e\u200b\u200c\u200e\u200f\u202a-\u202e\u2060-\u2064\u2066-\u206f\u3164\ufeff\uffa0]/g;
+
 export function collapseWhitespace(text: string): string {
   return text
     .replace(/\r/g, '')
-    .replace(/[ \t\f\v\u00a0]+/g, ' ')
+    .replace(INVISIBLE_CHARS, '')
+    .replace(/[ \t\f\v\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+/g, ' ')
     .replace(/ ?\n ?/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();

@@ -108,7 +108,14 @@ export async function runSync(
   } catch (e) {
     const code = e instanceof AppError ? e.code : 'internal';
     const message = e instanceof Error ? e.message : 'unknown';
-    log.warn('sync failed', { accountId: account.id, resource: state.resource, code });
+    // `details` carries only the provider status and its error code/reason (see providers/http.ts).
+    log.warn('sync failed', {
+      accountId: account.id,
+      resource: state.resource,
+      code,
+      message,
+      details: e instanceof AppError ? (e.details ?? null) : null,
+    });
     await admin
       .from('sync_states')
       .update({ error_count: state.errorCount + 1, last_error: code })

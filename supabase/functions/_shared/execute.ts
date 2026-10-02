@@ -94,47 +94,18 @@ export async function executeApproval(
   }
 
   let executing = transition(approval, 'executing', { now, locale: opts.ctx.locale });
-  await persistApproval(admin, executing);
+  // Compare-and-set on the status we loaded: a concurrent approve/retry loses here instead of sending twice.
+  await persistApproval(admin, executing, { expectStatus: approval.status });
 
+  let result: RunOutcome;
   try {
-    const result = await runPlan(
+    result = await runPlan(
       admin,
       executing,
       plan,
       opts,
       account ? { provider: account.provider, id: account.id } : null,
     );
-    if (result.pendingOnDevice) {
-      executing = {
-        ...executing,
-        executionResult: { handler: 'device', kind: plan.kind },
-        updatedAt: new Date().toISOString(),
-      };
-      await persistApproval(admin, executing);
-      return { approval: executing };
-    }
-    const executed = transition(executing, 'executed', {
-      now: new Date().toISOString(),
-      locale: opts.ctx.locale,
-      executionResult: result.executionResult,
-    });
-    await persistApproval(admin, executed);
-    await audit(admin, {
-      userId: approval.userId,
-      action: 'approval.execute',
-      actor: opts.actor,
-      targetType: 'approval_action',
-      targetId: approval.id,
-      metadata: { type: approval.type, kind: plan.kind, attempt: executed.attemptCount },
-    });
-    if (approval.insightId) {
-      await admin
-        .from('insights')
-        .update({ status: 'completed', completed_at: executed.executedAt })
-        .eq('id', approval.insightId)
-        .eq('user_id', approval.userId);
-    }
-    return { approval: executed };
   } catch (e) {
     const reason = failureReasonFor(e);
     const failed = transition(executing, 'failed', {
@@ -158,6 +129,47 @@ export async function executeApproval(
         : null;
     return requiredScope ? { approval: failed, requiredScope } : { approval: failed };
   }
+
+  if (result.pendingOnDevice) {
+    executing = {
+      ...executing,
+      executionResult: { handler: 'device', kind: plan.kind },
+      updatedAt: new Date().toISOString(),
+    };
+    await persistApproval(admin, executing, { expectStatus: 'executing' });
+    return { approval: executing };
+  }
+  // The provider action is done. From here on nothing may turn the approval into `failed`: a retry would
+  // repeat the send. If this write fails the row stays `executing` and the error surfaces to the caller.
+  const executed = transition(executing, 'executed', {
+    now: new Date().toISOString(),
+    locale: opts.ctx.locale,
+    executionResult: result.executionResult,
+  });
+  await persistApproval(admin, executed, { expectStatus: 'executing' });
+  try {
+    await audit(admin, {
+      userId: approval.userId,
+      action: 'approval.execute',
+      actor: opts.actor,
+      targetType: 'approval_action',
+      targetId: approval.id,
+      metadata: { type: approval.type, kind: plan.kind, attempt: executed.attemptCount },
+    });
+    if (approval.insightId) {
+      await admin
+        .from('insights')
+        .update({ status: 'completed', completed_at: executed.executedAt })
+        .eq('id', approval.insightId)
+        .eq('user_id', approval.userId);
+    }
+  } catch (e) {
+    log.warn('approval bookkeeping failed after execution', {
+      approvalId: approval.id,
+      error: e instanceof Error ? e.message : 'unknown',
+    });
+  }
+  return { approval: executed };
 }
 
 interface RunOutcome {
@@ -225,22 +237,30 @@ async function runPlan(
         inReplyToExternalMessageId,
         externalThreadId,
       });
-      await audit(admin, {
-        userId: approval.userId,
-        action: 'email.send',
-        actor: opts.actor,
-        targetType: 'email_thread',
-        targetId: p.threadId ?? undefined,
-        metadata: { provider: creds.provider, recipients: p.to.length },
-      });
-      await afterEmailSent(
-        admin,
-        approval,
-        p.threadId ?? null,
-        p.to[0]?.name ?? p.to[0]?.email ?? '',
-        p.subject,
-        creds.provider,
-      );
+      // Sent. Bookkeeping failures must not fail the approval (a retry would send the mail again).
+      try {
+        await audit(admin, {
+          userId: approval.userId,
+          action: 'email.send',
+          actor: opts.actor,
+          targetType: 'email_thread',
+          targetId: p.threadId ?? undefined,
+          metadata: { provider: creds.provider, recipients: p.to.length },
+        });
+        await afterEmailSent(
+          admin,
+          approval,
+          p.threadId ?? null,
+          p.to[0]?.name ?? p.to[0]?.email ?? '',
+          p.subject,
+          creds.provider,
+        );
+      } catch (e) {
+        log.warn('post-send bookkeeping failed', {
+          approvalId: approval.id,
+          error: e instanceof Error ? e.message : 'unknown',
+        });
+      }
       return {
         executionResult: {
           externalMessageId: sent.externalMessageId,
@@ -263,7 +283,7 @@ async function runPlan(
         attendees: p.attendees ?? [],
         timezone: opts.ctx.timezone,
       });
-      const { data: row } = await admin
+      const { data: row, error: mirrorError } = await admin
         .from('calendar_events')
         .upsert(
           {
@@ -284,7 +304,7 @@ async function runPlan(
             })),
             organizer_is_user: true,
             status: 'confirmed',
-            source: creds.provider === 'google' ? 'google_calendar' : 'outlook_calendar',
+            source: creds.provider === 'google' ? 'google_calendar' : 'microsoft_calendar',
             is_ai_created: true,
             deleted_at: null,
           },
@@ -292,6 +312,9 @@ async function runPlan(
         )
         .select('id')
         .maybeSingle();
+      // The provider event exists at this point; a failed local mirror is picked up by the next calendar sync.
+      if (mirrorError)
+        log.warn('calendar mirror upsert failed', { error: mirrorError.message, kind: plan.kind });
       await audit(admin, {
         userId: approval.userId,
         action: 'calendar.write',

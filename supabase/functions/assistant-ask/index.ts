@@ -305,30 +305,32 @@ Deno.serve(
         });
       }
     }
-    const [{ data: rpcRows }, structured, { data: historyRows }, contactRow] = await Promise.all([
-      db.rpc('search_memory', {
-        query: input.message,
-        match_count: 16,
-        query_embedding: queryEmbedding,
-        contact: input.contactId ?? null,
-      }),
-      structuredContext(admin, ctx, now),
-      admin
-        .from('assistant_messages')
-        .select('role, content')
-        .eq('thread_id', threadId)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(7),
-      input.contactId
-        ? admin
-            .from('contacts')
-            .select('display_name')
-            .eq('id', input.contactId)
-            .eq('user_id', user.id)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
+    const [{ data: rpcRows, error: memoryErr }, structured, { data: historyRows }, contactRow] =
+      await Promise.all([
+        db.rpc('search_memory', {
+          query: input.message,
+          match_count: 16,
+          query_embedding: queryEmbedding,
+          contact: input.contactId ?? null,
+        }),
+        structuredContext(admin, ctx, now),
+        admin
+          .from('assistant_messages')
+          .select('role, content')
+          .eq('thread_id', threadId)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(7),
+        input.contactId
+          ? admin
+              .from('contacts')
+              .select('display_name')
+              .eq('id', input.contactId)
+              .eq('user_id', user.id)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+    if (memoryErr) log.warn('memory retrieval failed', { error: memoryErr.message });
     const retrieved = ((rpcRows ?? []) as RpcChunk[]).map((c) => toChunk(user.id, c));
     const chunks = rankAndTrimContext([...retrieved, ...structured], { maxTokens: 5000, now });
     const contactName = (contactRow.data as { display_name: string } | null)?.display_name ?? null;

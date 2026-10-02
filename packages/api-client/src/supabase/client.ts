@@ -7,7 +7,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { MemoryStorage, type DataSourceConfig, type KeyValueStorage } from '../config';
 import { ClientApiError } from '../errors';
 import { createFunctionsClient, type FunctionsClient } from './functions';
-import { createChunkedSecureStorage } from './secureStorage';
+import { createChunkedSecureStorage, type SessionStorageAdapter } from './secureStorage';
 
 export type SupabaseDataSourceConfig = DataSourceConfig & {
   supabaseUrl: string;
@@ -90,6 +90,9 @@ export interface SupabaseContext {
   readonly call: FunctionsClient['call'];
   /** Plain (non-secure) key-value storage for client-side conveniences (recent searches). */
   readonly storage: KeyValueStorage;
+  /** The adapter supabase-js persists the session through, and the key it uses (see `sessionStorageKey`). */
+  readonly sessionStorage: SessionStorageAdapter;
+  readonly sessionStorageKey: string;
   readonly fetch: typeof fetch;
   readonly now: () => Date;
   readonly locale: 'tr' | 'en';
@@ -101,12 +104,23 @@ export interface SupabaseContext {
   getAccessToken(): Promise<string | null>;
 }
 
+/**
+ * supabase-js's default session key (`sb-<project-ref>-auth-token`), spelled out so logout hygiene can remove
+ * the persisted session (and its PKCE verifier under `<key>-code-verifier`) even when the sign-out call failed.
+ */
+export function sessionStorageKey(supabaseUrl: string): string {
+  const host = /^[a-z][a-z0-9+.-]*:\/\/(?:[^@/?#]*@)?([^:/?#]*)/i.exec(supabaseUrl)?.[1] ?? '';
+  return `sb-${host.split('.')[0]}-auth-token`;
+}
+
 export function createSupabaseContext(config: SupabaseDataSourceConfig): SupabaseContext {
   const fetchFn: typeof fetch = config.fetch ?? ((input, init) => globalThis.fetch(input, init));
   const sessionStorage = createChunkedSecureStorage(config.secureStorage ?? new MemoryStorage());
+  const storageKey = sessionStorageKey(config.supabaseUrl);
   const client: SupabaseClient = createClient(config.supabaseUrl, config.supabaseAnonKey, {
     auth: {
       storage: sessionStorage,
+      storageKey,
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
@@ -134,6 +148,8 @@ export function createSupabaseContext(config: SupabaseDataSourceConfig): Supabas
     anonKey: config.supabaseAnonKey,
     call: functions.call,
     storage: config.storage ?? new MemoryStorage(),
+    sessionStorage,
+    sessionStorageKey: storageKey,
     fetch: fetchFn,
     now: config.now ?? (() => new Date()),
     locale: config.locale ?? 'tr',

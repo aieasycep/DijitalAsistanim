@@ -590,6 +590,8 @@ export interface ShouldSendInput {
   timezone: string;
   /** Overrides everything except the category toggle and the system permission. */
   isCritical?: boolean;
+  /** Scheduled briefings: the user chose the time, so quiet hours do not hold them back. */
+  bypassQuietHours?: boolean;
 }
 
 export type SuppressReason =
@@ -630,7 +632,7 @@ export function shouldSend(input: ShouldSendInput): SendDecision {
     start: prefs.quietHoursStart,
     end: prefs.quietHoursEnd,
   };
-  if (!critical && isQuietHours(input.now, quiet, input.timezone)) {
+  if (!critical && !input.bypassQuietHours && isQuietHours(input.now, quiet, input.timezone)) {
     return {
       send: false,
       reason: 'quiet_hours',

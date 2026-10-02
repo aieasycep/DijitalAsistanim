@@ -94,7 +94,7 @@ export const EDGE_FUNCTIONS = {
   'followups-draft': fn<{ followUpId: UUID }, DraftReplyResponse>('POST'),
   // Plan & meetings
   plan: fn<PlanRequest, PlanResponse>('GET'),
-  'meeting-prep': fn<{ eventId: UUID; regenerate?: boolean }, MeetingPrepResponse>('GET'),
+  'meeting-prep': fn<{ eventId: UUID; regenerate?: boolean }, MeetingPrepResponse>('POST'),
   'post-meeting': fn<PostMeetingRequest, PostMeetingResponse>('POST'),
   // Approvals
   'approvals-create': fn<CreateApprovalRequest, { approvalId: UUID }>('POST'),

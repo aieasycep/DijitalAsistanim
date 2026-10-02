@@ -68,8 +68,15 @@ profile and real signing.
 - `data_mode` = `demo` (default): built-in fixtures, no backend; optional `demo_now` pins the demo clock.
 - `data_mode` = `supabase`: the app talks to your Supabase project. Before the first run add, under **Settings →
   Secrets and variables → Actions**, the repository variable `EXPO_PUBLIC_SUPABASE_URL` and the secret
-  `EXPO_PUBLIC_SUPABASE_ANON_KEY` (optional variables `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` /
-  `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` enable native Google sign-in; e-mail code sign-in needs nothing else).
+  `EXPO_PUBLIC_SUPABASE_ANON_KEY` (the variables `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` /
+  `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` are reserved for native Google sign-in; today sign-in uses the web PKCE
+  flow and e-mail codes, which need nothing else).
+- Push notifications are **not** available in these APKs yet: `registerPushToken` needs the Expo project id
+  (`EXPO_PUBLIC_EAS_PROJECT_ID`) and Android needs Firebase Cloud Messaging (`google-services.json` in the build plus
+  the FCM V1 service-account key uploaded to the Expo project). The workflow injects neither, so the app registers no
+  token (the onboarding step says so) and the server's briefing / reminder pushes have no device to reach. To enable:
+  create the EAS project (`eas init`), add the repository variable `EXPO_PUBLIC_EAS_PROJECT_ID`, add
+  `android.googleServicesFile` to `app.config.ts` and inject the file from a secret in the workflow.
 
 Artifacts (`<mode>` = `demo` or `supabase`):
 
@@ -151,15 +158,26 @@ Set the same variables in the host's environment and point `dijitalasistan.app` 
 
 ## 5. Optional integrations
 
-| Feature             | Variables                                                 | Without it                             |
-| ------------------- | --------------------------------------------------------- | -------------------------------------- |
-| Gmail push          | `GOOGLE_PUBSUB_TOPIC`, `GOOGLE_PUBSUB_VERIFICATION_TOKEN` | polling (mail 15 min Free / 5 min Pro) |
-| Graph notifications | `MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE`                    | polling (same cadence)                 |
-| Server TTS          | `TTS_PROVIDER`, keys                                      | device TTS                             |
-| Server STT          | `STT_PROVIDER`, keys                                      | type-to-ask fallback                   |
-| Embeddings          | `EMBEDDING_PROVIDER`, key                                 | Postgres FTS                           |
-| Travel time         | `ROUTES_PROVIDER=google`, `GOOGLE_ROUTES_API_KEY`         | no travel hints                        |
-| Sentry / PostHog    | DSN / key                                                 | silent no-op                           |
+| Feature             | Variables                                                                                                                                                                         | Without it                                                |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Gmail push          | `GOOGLE_PUBSUB_TOPIC`, `GOOGLE_PUBSUB_VERIFICATION_TOKEN`                                                                                                                         | polling (mail 15 min Free / 5 min Pro)                    |
+| Graph notifications | `MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE`                                                                                                                                            | polling (same cadence)                                    |
+| Server TTS          | `TTS_PROVIDER`, keys                                                                                                                                                              | device TTS                                                |
+| Server STT          | `STT_PROVIDER`, keys                                                                                                                                                              | type-to-ask fallback                                      |
+| Embeddings          | `EMBEDDING_PROVIDER`, key                                                                                                                                                         | Postgres FTS                                              |
+| Travel time         | `ROUTES_PROVIDER=google`, `GOOGLE_ROUTES_API_KEY`                                                                                                                                 | no travel hints                                           |
+| Sentry / PostHog    | `SENTRY_DSN`, `POSTHOG_KEY` (+ `POSTHOG_HOST`)                                                                                                                                    | silent no-op                                              |
+| Microsoft / Outlook | `MICROSOFT_OAUTH_CLIENT_ID`, `MICROSOFT_OAUTH_CLIENT_SECRET`, optional `MICROSOFT_OAUTH_TENANT` (default `common`), `MICROSOFT_OAUTH_REDIRECT_URI`, `MICROSOFT_GRAPH_WEBHOOK_URL` | "Microsoft bağlantısı bu ortamda yapılandırılmamış" (503) |
+| Push delivery       | `EXPO_ACCESS_TOKEN` (Expo Push API), `TIME_SENSITIVE_ENTITLEMENT=true` once Apple grants the entitlement                                                                          | unauthenticated Expo Push API; default interruption level |
+
+Every other variable `supabase/functions/_shared/env.ts` reads has a safe default: `AI_FALLBACK_PROVIDER`,
+`ANTHROPIC_MODEL_SMALL` / `ANTHROPIC_MODEL_LARGE` (`claude-haiku-4-5-20251001` / `claude-sonnet-5`), `OPENAI_MODEL_SMALL` /
+`OPENAI_MODEL_LARGE`, `AI_MAX_INPUT_TOKENS_PER_CALL` (12 000), `AI_DAILY_TOKEN_BUDGET_FREE` / `_PRO` (60 000 /
+1 500 000), `EMBEDDING_MODEL` / `EMBEDDING_DIMENSIONS` (must match `memory_chunks.embedding vector(1536)`),
+`TTS_VOICE`, `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID`, `DEEPGRAM_API_KEY`, `VOYAGE_API_KEY`,
+`REVENUECAT_SECRET_API_KEY` (account deletion unlinks the store customer), `EXPO_PUBLIC_RC_ENTITLEMENT_ID` (`pro`),
+`TOKEN_ENCRYPTION_KEY_PREVIOUS` (key rotation), `WEB_URL`, `APP_SCHEME`, `SUPPORT_EMAIL`, `CRON_SECRET` (legacy
+alias of `INTERNAL_FUNCTION_SECRET`).
 
 ## 6. Rollout checklist
 

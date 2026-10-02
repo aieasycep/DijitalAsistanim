@@ -47,6 +47,13 @@ function fallbackRedirect(provider: OAuthProvider): string {
   return `${getEnv().appScheme}://oauth/${provider}`;
 }
 
+/** Same normalisation as the id-token path: connected_accounts.email is matched lower-cased (webhook-gmail). */
+function normalizeEmail(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const email = value.trim().toLowerCase();
+  return email.length > 0 ? email : null;
+}
+
 async function profileFromProvider(
   provider: OAuthProvider,
   accessToken: string,
@@ -56,18 +63,21 @@ async function profileFromProvider(
       provider === 'google'
         ? 'https://openidconnect.googleapis.com/v1/userinfo'
         : 'https://graph.microsoft.com/v1.0/me';
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10_000),
+    });
     if (!res.ok) return { email: null, sub: null, name: null };
     const body = (await res.json()) as Record<string, unknown>;
     if (provider === 'google') {
       return {
-        email: (body.email as string) ?? null,
+        email: normalizeEmail(body.email),
         sub: (body.sub as string) ?? null,
         name: (body.name as string) ?? null,
       };
     }
     return {
-      email: (body.mail as string) ?? (body.userPrincipalName as string) ?? null,
+      email: normalizeEmail(body.mail) ?? normalizeEmail(body.userPrincipalName),
       sub: (body.id as string) ?? null,
       name: (body.displayName as string) ?? null,
     };

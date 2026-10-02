@@ -95,4 +95,6 @@ All timestamps are `timestamptz` in UTC; the user's IANA timezone lives in `prof
 
 Retention cutoff per user (`internal.retention_cutoff`) applies to messages, threads, memory, captures,
 notifications, assistant messages, briefings and resolved insights — never to connections, approvals or subscriptions.
-Account deletion cascades from `auth.users` → `profiles` → every user table (all FKs `on delete cascade`).
+Account deletion cascades from `auth.users` → `profiles` → every user table (user FKs `on delete cascade`; the
+telemetry rows in `audit_logs`, `ai_usage`, `feedback_submissions` and `referrals.referred_user_id` are
+`on delete set null` so aggregate history survives without a user key).
