@@ -1,7 +1,7 @@
 -- pgTAP · Row Level Security & server-side guards
 -- Runs after seed.sql. User 1 = demo user "Yunus", user 2 = another user; nothing may leak across.
 begin;
-select plan(102);
+select plan(117);
 
 create or replace function pg_temp.as_user(uid uuid) returns void language plpgsql as $$
 begin
@@ -333,6 +333,34 @@ select is((select 'https://www.googleapis.com/auth/gmail.send' = any (granted_sc
 select pg_temp.as_postgrest_user('00000000-0000-4000-8000-000000000001');
 update public.connected_accounts set status = 'expired', last_sync_at = null where id = '00000000-0000-4000-8000-0000000000c1';
 select is((select status::text || ':' || (last_sync_at is not null)::text from public.connected_accounts where id = '00000000-0000-4000-8000-0000000000c1'), 'active:true', 'client (JSON claims only) still cannot change status or last_sync_at');
+
+-- 14. Audit hardening (0013): usage counters are written by the server only; history deletion needs a session
+reset role;
+select is(has_function_privilege('authenticated', 'public.increment_usage(text, int)', 'execute'), false, 'clients cannot call increment_usage (would let them reset their AI budget)');
+select is(has_function_privilege('anon', 'public.increment_usage(text, int)', 'execute'), false, 'anon cannot call increment_usage');
+select is(has_function_privilege('service_role', 'public.increment_usage(text, int)', 'execute'), true, 'the service role keeps increment_usage');
+select is(has_function_privilege('anon', 'public.delete_my_history(int)', 'execute'), false, 'anon cannot call delete_my_history');
+select is(has_function_privilege('authenticated', 'public.delete_my_history(int)', 'execute'), true, 'signed-in users keep delete_my_history');
+
+-- 15. Audit hardening (0013): anon reaches nothing in public, the service gets an atomic counter, the tasks
+--     upsert has a full unique target, captures stay in the owner's folder, referrers do not see who redeemed
+reset role;
+select is((select count(*) from information_schema.role_table_grants where table_schema = 'public' and grantee = 'anon'), 0::bigint, 'anon has no table grants in public (also on tables created after 0007)');
+select is(
+  (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')
+      and p.proname in ('increment_usage', 'increment_usage_for', 'delete_my_history', 'my_entitlement', 'search_memory', 'resolve_insight', 'person_open_loops', 'register_push_token', 'rate_limit_hit', 'upsert_contact', 'expire_approvals', 'run_retention_cleanup', 'set_updated_at', 'immutable_unaccent')),
+  0::bigint, 'anon can execute none of the application functions');
+select is(has_function_privilege('authenticated', 'public.increment_usage_for(uuid, text, int)', 'execute'), false, 'clients cannot call increment_usage_for');
+select is(has_function_privilege('service_role', 'public.increment_usage_for(uuid, text, int)', 'execute'), true, 'the service role can call increment_usage_for');
+select is(has_function_privilege('authenticated', 'public.my_entitlement()', 'execute'), true, 'users keep my_entitlement');
+select has_index('public', 'tasks', 'tasks_account_external_uq', 'tasks has a full unique index for the sync upsert target');
+select is(has_column_privilege('authenticated', 'public.referrals', 'referred_user_id', 'select'), false, 'referrers do not see who redeemed');
+select is(has_column_privilege('authenticated', 'public.referrals', 'status', 'select'), true, 'referrers see the status of their invitations');
+select pg_temp.as_user('00000000-0000-4000-8000-000000000001');
+select throws_ok($$ insert into public.captures (user_id, kind, storage_path) values ('00000000-0000-4000-8000-000000000001', 'image', '00000000-0000-4000-8000-000000000002/photo.jpg') $$, '23514');
+select lives_ok($$ insert into public.captures (user_id, kind, storage_path) values ('00000000-0000-4000-8000-000000000001', 'image', '00000000-0000-4000-8000-000000000001/photo.jpg') $$, 'a capture inside the owner''s folder is accepted');
+reset role;
 
 select * from finish();
 rollback;
