@@ -294,8 +294,10 @@ describe('Briefing screen', () => {
   it('gates the evening close behind Pro with the contextual paywall', async () => {
     await seedSession(null);
     resetParams({ kind: 'evening' });
+    const getBriefing = jest.spyOn(getTestDataSource().briefings, 'getBriefing');
     const screen = renderWithProviders(<BriefingScreen />);
     expect(await screen.findByTestId('briefing-pro-gate', {}, FIND_OPTS)).toBeTruthy();
+    expect(getBriefing).not.toHaveBeenCalled();
     expect(screen.getByText('Akşam kapanışı Pro ile.')).toBeTruthy();
     expect(
       screen.getByText("Akşam kapanışı Pro'da. Sabah brifingin her zaman ücretsiz."),

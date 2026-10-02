@@ -1,10 +1,15 @@
 import { Linking, Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
+import { isSafeHandoffUrl } from '@/services/handoff';
 
-/** Opens an http(s) link in the in-app browser (falls back to the system handler for other schemes). */
+/**
+ * Opens an http(s) link in the in-app browser (falls back to the system handler for other schemes).
+ * Callers pass AI-extracted links from e-mails, so anything outside the hand-off allow-list (unknown schemes,
+ * private hosts, control characters) is refused without touching the system.
+ */
 export async function openExternal(url: string): Promise<boolean> {
   const trimmed = url.trim();
-  if (!trimmed) return false;
+  if (!isSafeHandoffUrl(trimmed)) return false;
   try {
     if (/^https?:\/\//i.test(trimmed)) {
       const result = await WebBrowser.openBrowserAsync(trimmed, {

@@ -16,12 +16,16 @@ const DEFAULT_NOTIFICATION_LIMIT = 50;
 export function createBriefingsApi(ctx: SupabaseContext): BriefingsApi {
   const briefings = () => ctx.table<BriefingRow>('briefings');
 
-  /** The function answers `not_found` when no briefing exists for that day (and none should be generated). */
+  /**
+   * The function answers `not_found` when no briefing exists for that day (and none should be generated) and
+   * `forbidden` for Pro-only kinds on a free plan; both mean "no briefing" here — the screen owns the Pro gate.
+   */
   async function fetchBriefing(req: BriefingRequest): Promise<Briefing | null> {
     try {
       return await ctx.call('briefing', req);
     } catch (e) {
-      if (e instanceof ClientApiError && e.code === 'not_found') return null;
+      if (e instanceof ClientApiError && (e.code === 'not_found' || e.code === 'forbidden'))
+        return null;
       throw e;
     }
   }

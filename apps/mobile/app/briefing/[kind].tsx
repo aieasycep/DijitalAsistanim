@@ -104,6 +104,8 @@ export default function BriefingScreen() {
 
   const ctx = ctxFromPreferences(preferences);
 
+  // Pro-only kinds render the gate below instead of fetching (the server would answer `forbidden` anyway).
+  const gateSpec = FEATURE[kind];
   const queryKey = id ? qk.briefingById(id) : kind === 'weekly' ? qk.weekly() : qk.briefing(kind);
   const query = useQuery({
     queryKey,
@@ -113,6 +115,7 @@ export default function BriefingScreen() {
         : kind === 'weekly'
           ? ds.briefings.getWeekly()
           : ds.briefings.getBriefing({ kind }),
+    enabled: !gateSpec || isPro,
   });
   const briefing = query.data ?? null;
 
@@ -221,7 +224,6 @@ export default function BriefingScreen() {
     [openSource],
   );
 
-  const gateSpec = FEATURE[kind];
   if (gateSpec && !isPro) {
     if (entitlementLoading) {
       return (

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolveMode } from './config';
-import { ClientApiError, errorKey } from './errors';
+import { ClientApiError } from './errors';
 
 describe('data source mode', () => {
   it('never allows demo in production', () => {
@@ -26,10 +26,15 @@ describe('data source mode', () => {
 });
 
 describe('errors', () => {
-  it('maps codes to i18n keys', () => {
-    expect(errorKey(new ClientApiError({ code: 'offline', message: 'x' }))).toBe('errors.offline');
-    expect(errorKey(new TypeError('Network request failed'))).toBe('errors.offline');
-    expect(errorKey(new Error('boom'))).toBe('common.genericError');
-    expect(errorKey({ code: 'scope_required', message: 'x' })).toBe('approvals.scopeNeeded');
+  it('normalises thrown values to ClientApiError codes', () => {
+    expect(ClientApiError.from(new ClientApiError({ code: 'offline', message: 'x' })).code).toBe(
+      'offline',
+    );
+    expect(ClientApiError.from(new TypeError('Network request failed')).code).toBe('offline');
+    expect(ClientApiError.from(new Error('boom')).code).toBe('internal');
+    expect(ClientApiError.from({ code: 'scope_required', message: 'x' }).code).toBe(
+      'scope_required',
+    );
+    expect(ClientApiError.from({ code: 'made_up', message: 'x' }).code).toBe('internal');
   });
 });

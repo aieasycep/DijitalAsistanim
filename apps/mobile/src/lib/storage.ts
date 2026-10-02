@@ -88,14 +88,17 @@ export function removeCache(key: string): void {
   getCache().delete(key);
 }
 
-/** Wipe everything local: cache, session secrets, demo state. Used on logout and account deletion. */
+/**
+ * Wipe everything local: cache, the cache key, demo state. Used on logout and account deletion. The Supabase
+ * session lives under `sb-<project-ref>-auth-token` (chunked) and is removed by `ds.clearLocalState()`.
+ */
 export async function wipeLocalData(): Promise<void> {
   try {
     getCache().clearAll();
   } catch {
     // ignore
   }
-  const keys = ['da.mmkv.key.v1', 'sb-session', 'da.demo.session'];
+  const keys = [MMKV_KEY_NAME, 'da.demo.session'];
   for (const k of keys) {
     try {
       await SecureStore.deleteItemAsync(k);

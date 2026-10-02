@@ -21,7 +21,12 @@ import type {
   PushTokenRow,
   VipPersonRow,
 } from './rows';
-import { createChunkedSecureStorage, utf8ByteLength } from './secureStorage';
+import { createClient } from '@supabase/supabase-js';
+import {
+  createChunkedSecureStorage,
+  utf8ByteLength,
+  type SessionStorageAdapter,
+} from './secureStorage';
 import type { SupabaseDataSourceConfig } from './client';
 import { buildQuery, parseQueryParams } from './url';
 
@@ -610,6 +615,16 @@ describe('functions client', () => {
     ).resolves.toBeNull();
     expect(requestOf().url).toBe(`${BASE}/functions/v1/briefing?kind=morning&date=2026-09-05`);
   });
+
+  it('turns the briefing Pro gate (forbidden) into null so the screen renders its own gate', async () => {
+    fetchMock.mockResolvedValueOnce(fail('forbidden', 403));
+    const ds = createDs();
+    await expect(ds.briefings.getBriefing({ kind: 'evening' })).resolves.toBeNull();
+    fetchMock.mockResolvedValueOnce(fail('internal', 500));
+    await expect(ds.briefings.getBriefing({ kind: 'evening' })).rejects.toMatchObject({
+      code: 'internal',
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -993,6 +1008,27 @@ describe('search history', () => {
     expect(recent.filter((q) => q.toLowerCase() === 'sorgu 9')).toHaveLength(1);
     await ds.clearLocalState();
     await expect(ds.search.recentQueries()).resolves.toEqual([]);
+  });
+
+  it('clears the persisted session (chunks included) under the key supabase-js is configured with', async () => {
+    const secureStorage = new MemoryStorage();
+    const ds = createDs({ secureStorage });
+    const options = vi.mocked(createClient).mock.calls.at(-1)?.[2] as {
+      auth: { storageKey: string; storage: SessionStorageAdapter };
+    };
+    expect(options.auth.storageKey).toBe('sb-proj-auth-token');
+    await options.auth.storage.setItem('sb-proj-auth-token', 'x'.repeat(5000));
+    await options.auth.storage.setItem('sb-proj-auth-token-code-verifier', 'verifier');
+    await secureStorage.setItem('unrelated', 'keep');
+    expect(await secureStorage.getItem('sb-proj-auth-token.1')).not.toBeNull();
+
+    await ds.clearLocalState();
+
+    expect(await secureStorage.getItem('sb-proj-auth-token')).toBeNull();
+    expect(await secureStorage.getItem('sb-proj-auth-token.0')).toBeNull();
+    expect(await secureStorage.getItem('sb-proj-auth-token.1')).toBeNull();
+    expect(await secureStorage.getItem('sb-proj-auth-token-code-verifier')).toBeNull();
+    expect(await secureStorage.getItem('unrelated')).toBe('keep');
   });
 });
 

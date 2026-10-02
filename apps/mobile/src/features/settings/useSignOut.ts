@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { ClientApiError } from '@da/api-client';
 import { useToast } from '@da/ui';
 import { useDataSource } from '@/hooks/useDataSource';
 import { describeError } from '@/lib/errors';
@@ -16,6 +17,7 @@ export interface UseSignOutResult {
 /**
  * Sign-out in order: detach this device's push token (needs a valid session), end the session, then the
  * shared local hygiene (`clearLocalSession`) — the same steps account deletion and a vanished session run.
+ * Offline, the server cannot be told, but the device still forgets the user (the offline toast says why).
  */
 export function useSignOut(): UseSignOutResult {
   const ds = useDataSource();
@@ -28,7 +30,12 @@ export function useSignOut(): UseSignOutResult {
     setBusy(true);
     try {
       await detachDeviceFromAccount(ds);
-      await ds.auth.signOut();
+      try {
+        await ds.auth.signOut();
+      } catch (e) {
+        if (!ClientApiError.from(e).isOffline) throw e;
+        toast.show({ message: describeError(e, t).title, icon: 'conflict', iconTone: 'critical' });
+      }
       await clearLocalSession(ds, qc);
       return true;
     } catch (e) {

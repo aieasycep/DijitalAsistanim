@@ -69,30 +69,3 @@ const KNOWN: ApiError['code'][] = [
 function normalizeCode(code: string): ApiError['code'] {
   return (KNOWN as string[]).includes(code) ? (code as ApiError['code']) : 'internal';
 }
-
-/** Map an i18n key for an error code (screens render `t(errorKey(e))`). */
-export function errorKey(e: unknown): string {
-  const err = ClientApiError.from(e);
-  switch (err.code) {
-    case 'offline':
-      return 'errors.offline';
-    case 'oauth_expired':
-      return 'errors.oauthExpired';
-    case 'scope_required':
-      return 'approvals.scopeNeeded';
-    case 'rate_limited':
-      return 'errors.rateLimited';
-    case 'ai_unavailable':
-      return 'errors.aiUnavailable';
-    case 'provider_unavailable':
-      return 'errors.mailUnavailable';
-    case 'quota_exceeded':
-      return 'assistant.quotaTitle';
-    case 'not_found':
-      return 'errors.notFound';
-    case 'conflict':
-      return 'approvals.conflictRemote';
-    default:
-      return 'common.genericError';
-  }
-}
