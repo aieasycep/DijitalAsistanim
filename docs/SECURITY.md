@@ -44,9 +44,15 @@ leak are **provider credentials** and **message content**. Everything below foll
 - Server-produced tables (threads, insights, briefings, approvals…) are read-only for clients; the few
   client-editable columns are enforced with `BEFORE UPDATE` guard triggers that reset all other columns
   (`internal.guard_*`). The approval state machine is enforced in the database, not just in code.
-- `anon` has no privileges on `public` tables. Storage policies scope every object to `<user_id>/…`.
-- `supabase/tests/rls.test.sql` (pgTAP, 37 assertions) proves cross-user isolation, secret invisibility,
-  guard triggers and storage scoping; it runs in CI against a fresh Postgres.
+- `anon` has no privileges on `public` tables and cannot execute any `public` function; the default privileges
+  keep it that way for objects added later (migration 0013). Storage policies scope every object to
+  `<user_id>/…`, and `captures.storage_path` is constrained to the owner's folder so the server never reads
+  another tenant's file on the client's behalf.
+- Usage counters are written by the server only (`increment_usage_for`, atomic); clients cannot adjust their own
+  daily AI budget.
+- `supabase/tests/rls.test.sql` (pgTAP, 117 assertions) proves cross-user isolation, secret invisibility,
+  guard triggers, the PostgREST role shape, function/column privileges and storage scoping; it runs in CI against
+  a fresh Postgres.
 
 ## Edge Functions
 
