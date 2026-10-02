@@ -63,6 +63,8 @@ export async function sendPush(
   opts: {
     importance?: 'critical' | 'high' | 'normal' | 'low' | null;
     isCritical?: boolean;
+    /** Scheduled briefings: the user picked the time, quiet hours do not apply. */
+    bypassQuietHours?: boolean;
     badge?: number;
   } = {},
 ): Promise<PushOutcome> {
@@ -75,6 +77,7 @@ export async function sendPush(
     now,
     timezone: target.timezone,
     isCritical: opts.isCritical ?? false,
+    bypassQuietHours: opts.bypassQuietHours ?? false,
   });
   if (!decision.send) {
     await admin.from('push_deliveries').upsert(

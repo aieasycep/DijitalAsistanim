@@ -1,5 +1,5 @@
 /**
- * GET /search?query&limit&kinds — Memory search over emails, events, people, life events, promises and
+ * GET /search?query&limit&kinds or POST /search { query, limit, kinds } — Memory search over emails, events, people, life events, promises and
  * captured notes. Semantic (pgvector) when an embedding provider is configured, Turkish full-text
  * otherwise — the app never notices the difference except via `mode`.
  */
@@ -34,13 +34,15 @@ type SearchMode = 'semantic' | 'fts';
 
 Deno.serve(
   handler(async (req) => {
-    assertMethod(req, 'GET');
+    assertMethod(req, 'GET', 'POST'); // the app posts a JSON body (kinds[] does not fit a query string)
     const { user, db } = await requireUser(req);
     const input = await parseInput(req, searchRequestSchema);
     await enforceRateLimit('search', user.id);
     const ctx = await loadUserContext(db, user.id);
     const query = input.query.trim();
     const like = `%${query.replace(/[%_]/g, (m) => `\\${m}`)}%`;
+    // Inside a PostgREST `or=(…)` filter the value is quoted so commas, parentheses and dots stay literal.
+    const orLike = `"${like.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 
     let mode: SearchMode = 'fts';
     let queryEmbedding: string | null = null;
@@ -63,12 +65,12 @@ Deno.serve(
       !input.kinds || input.kinds.includes(kind);
     const [
       { data: chunks, error: chunkErr },
-      { data: threads },
-      { data: events },
-      { data: contacts },
-      { data: lifeEvents },
-      { data: commitments },
-      { data: tasks },
+      { data: threads, error: threadErr },
+      { data: events, error: eventErr },
+      { data: contacts, error: contactErr },
+      { data: lifeEvents, error: lifeEventErr },
+      { data: commitments, error: commitmentErr },
+      { data: tasks, error: taskErr },
     ] = await Promise.all([
       wants('memory') || wants('email')
         ? db.rpc('search_memory', {
@@ -84,29 +86,29 @@ Deno.serve(
             .select('*')
             .eq('user_id', user.id)
             .is('deleted_at', null)
-            .or(`subject.ilike.${like},snippet.ilike.${like}`)
+            .or(`subject.ilike.${orLike},snippet.ilike.${orLike}`)
             .order('last_message_at', { ascending: false })
             .limit(input.limit)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [], error: null }),
       wants('event')
         ? db
             .from('calendar_events')
             .select('*')
             .eq('user_id', user.id)
             .is('deleted_at', null)
-            .or(`title.ilike.${like},location.ilike.${like},description.ilike.${like}`)
+            .or(`title.ilike.${orLike},location.ilike.${orLike},description.ilike.${orLike}`)
             .order('start_at', { ascending: false })
             .limit(input.limit)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [], error: null }),
       wants('person')
         ? db
             .from('contacts')
             .select('*')
             .eq('user_id', user.id)
             .is('deleted_at', null)
-            .or(`display_name.ilike.${like},company.ilike.${like}`)
+            .or(`display_name.ilike.${orLike},company.ilike.${orLike}`)
             .limit(input.limit)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [], error: null }),
       wants('life_event')
         ? db
             .from('life_events')
@@ -115,16 +117,16 @@ Deno.serve(
             .is('deleted_at', null)
             .ilike('title', like)
             .limit(input.limit)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [], error: null }),
       wants('commitment')
         ? db
             .from('commitments')
             .select('*')
             .eq('user_id', user.id)
             .is('deleted_at', null)
-            .or(`text.ilike.${like},counterpart_name.ilike.${like}`)
+            .or(`text.ilike.${orLike},counterpart_name.ilike.${orLike}`)
             .limit(input.limit)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [], error: null }),
       wants('task')
         ? db
             .from('tasks')
@@ -133,9 +135,19 @@ Deno.serve(
             .is('deleted_at', null)
             .ilike('title', like)
             .limit(input.limit)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [], error: null }),
     ]);
     if (chunkErr) throw new AppError('internal', `Arama başarısız: ${chunkErr.message}`);
+    for (const [kind, err] of [
+      ['email', threadErr],
+      ['event', eventErr],
+      ['person', contactErr],
+      ['life_event', lifeEventErr],
+      ['commitment', commitmentErr],
+      ['task', taskErr],
+    ] as const) {
+      if (err) log.warn('search query failed', { kind, error: err.message });
+    }
 
     const chunkRows = (
       (chunks ?? []) as {

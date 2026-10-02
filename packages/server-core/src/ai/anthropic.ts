@@ -155,6 +155,13 @@ export class AnthropicProvider implements AiProvider {
         status: result.status,
       });
     }
+    if (stopReason === 'max_tokens' && req.jsonSchema) {
+      // The structured reply was cut off: retrying or repairing with the same limit cannot fit it either.
+      throw new AiProviderError(this.name, 'parse', 'Yanıt uzunluk sınırında kesildi.', {
+        status: result.status,
+        retryable: false,
+      });
+    }
     const textParts: string[] = [];
     let json: unknown;
     for (const block of message.content) {

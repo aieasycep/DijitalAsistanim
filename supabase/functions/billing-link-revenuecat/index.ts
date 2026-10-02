@@ -12,12 +12,17 @@ import {
 } from '../_shared/mod.ts';
 
 const schema = z.object({ appUserId: z.string().min(3).max(200) });
+/** RevenueCat anonymous app user ids; the only other acceptable id is the caller's own Supabase user id. */
+const RC_ANONYMOUS_PREFIX = '$RCAnonymousID:';
 
 Deno.serve(
   handler(async (req) => {
     assertMethod(req, 'POST');
     const { user } = await requireUser(req);
     const { appUserId } = await parseInput(req, schema);
+    // Never let a user pre-claim another user's uuid (webhooks would then credit purchases to the wrong profile).
+    if (appUserId !== user.id && !appUserId.startsWith(RC_ANONYMOUS_PREFIX))
+      throw new AppError('validation', 'Mağaza hesabı kimliği geçersiz.');
     const admin = adminClient();
     const { data: clash } = await admin
       .from('profiles')

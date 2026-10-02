@@ -1337,7 +1337,14 @@ export function composeBriefingFallback(
           : weeklyNarrative(weekly, candidates, ctx);
   const outlook = kind === 'weekly' ? weeklyOutlook(weekly, candidates, ctx) : null;
   const greeting = greetingFor(ctx.now, ctx.timezone, input.userName, ctx.locale).replace(',', '');
-  const overview = `${greeting}. ${mood} ${narrative}`.trim();
+  // The mood and the narrative may describe a calm calendar with the same sentence: say it once.
+  const narrativeAfterMood = narrative.includes(mood)
+    ? narrative
+        .replace(mood, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim()
+    : narrative;
+  const overview = `${greeting}. ${mood} ${narrativeAfterMood}`.trim();
   const chapters = buildChapters(kind, candidates, overview, ctx);
   const { audio, sectionChapter } = toAudio(chapters, ctx.locale);
   const items: BriefingItemDraft[] = [];

@@ -11,7 +11,7 @@ import { captureAnalysisAiSchema } from '@da/validation';
 import { captureAnalysis } from '@da/server-core/ai';
 import { AppError } from '@da/server-core/errors';
 import { extractReadableText, safeFetchOrThrow } from '@da/server-core/safefetch';
-import { aiConfigured, checkAiBudget, createAi, createStt } from '../_shared/ai.ts';
+import { aiConfigured, checkAiBudget, createAi, createStt, type AiContext } from '../_shared/ai.ts';
 import { loadUserContext } from '../_shared/context.ts';
 import { extractTextFromMedia } from '../_shared/media.ts';
 import { upsertMemory } from '../_shared/memory.ts';
@@ -32,10 +32,29 @@ import { camelize } from '../_shared/rows.ts';
 const schema = z.object({ captureId: uuidParam });
 const MAX_TEXT = 20_000;
 
+/**
+ * A + AAAA lookup so safeFetch can validate the addresses behind a public hostname before connecting
+ * (DNS rebinding to a private range). A missing record type is not an error; other failures propagate.
+ */
+async function resolveHost(hostname: string): Promise<string[]> {
+  const lookups = await Promise.all(
+    (['A', 'AAAA'] as const).map(async (recordType) => {
+      try {
+        return await Deno.resolveDns(hostname, recordType);
+      } catch (e) {
+        if (e instanceof Deno.errors.NotFound) return [];
+        throw e;
+      }
+    }),
+  );
+  return lookups.flat();
+}
+
 async function extractText(
   admin: ReturnType<typeof adminClient>,
   capture: Capture,
   locale: 'tr' | 'en',
+  userId: string,
 ): Promise<string> {
   switch (capture.kind) {
     case 'text':
@@ -44,6 +63,7 @@ async function extractText(
       if (!capture.url) throw new AppError('validation', 'Bağlantı eksik.');
       const page = await safeFetchOrThrow(capture.url, {
         fetch: (input, init) => fetch(input, init),
+        resolve: resolveHost,
       });
       if (page.mimeType === 'application/pdf')
         return extractTextFromMedia({
@@ -60,6 +80,9 @@ async function extractText(
     case 'file':
     case 'audio': {
       if (!capture.storagePath) throw new AppError('validation', 'Dosya eksik.');
+      // The service role bypasses storage RLS: only ever read from the caller's own prefix.
+      if (!capture.storagePath.startsWith(`${userId}/`))
+        throw new AppError('forbidden', 'Bu dosyaya erişim yok.');
       const { data, error } = await admin.storage.from('captures').download(capture.storagePath);
       if (error || !data) throw new AppError('not_found', 'Dosya bulunamadı.');
       const bytes = new Uint8Array(await data.arrayBuffer());
@@ -184,22 +207,26 @@ Deno.serve(
       .update({ status: 'analyzing', failure_reason: null })
       .eq('id', capture.id);
     try {
-      const text = (await extractText(admin, capture, ctx.locale)).trim();
-      if (!text)
-        throw new AppError(
-          'validation',
-          ctx.locale === 'en' ? 'No readable text was found.' : 'Okunabilir bir metin bulunamadı.',
-        );
-      let analysis: CaptureAnalysis;
+      // Budget first: extraction (vision / STT / fetch) is the expensive step and must not run for an exhausted quota.
+      let aiCtx: AiContext | null = null;
       if (aiConfigured()) {
         const plan = await resolvePlan(admin, user.id);
-        const aiCtx = {
+        aiCtx = {
           userId: user.id,
           plan: plan.plan,
           timezone: ctx.timezone,
           locale: ctx.locale,
         };
         await checkAiBudget(aiCtx, 2000);
+      }
+      const text = (await extractText(admin, capture, ctx.locale, user.id)).trim();
+      if (!text)
+        throw new AppError(
+          'validation',
+          ctx.locale === 'en' ? 'No readable text was found.' : 'Okunabilir bir metin bulunamadı.',
+        );
+      let analysis: CaptureAnalysis;
+      if (aiCtx) {
         const spec = captureAnalysis({
           now: new Date().toISOString(),
           locale: ctx.locale,

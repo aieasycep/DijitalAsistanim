@@ -718,6 +718,8 @@ describe('briefing · fallback composition', () => {
       'Bugün takvimin oldukça sakin. Gelen 12 mail arasında dikkat gerektiren bir konu yok.',
     );
     expect(b.audio?.chapters).toHaveLength(1);
+    // mood and narrative both describe the calm calendar; the spoken script says it once
+    expect(b.audio?.script.match(/Bugün takvimin oldukça sakin\./g)).toHaveLength(1);
   });
   it('midday and evening headlines', () => {
     const mid = ctx({

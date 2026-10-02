@@ -353,6 +353,17 @@ function gmailFixture(overrides: Partial<GmailMessage> = {}): GmailMessage {
 }
 
 describe('providers/gmail', () => {
+  it('drops the invisible padding newsletters put in the preview', () => {
+    // Gmail's snippet of a marketing mail: preheader text padded with U+034F (combining grapheme joiner),
+    // zero-width spaces and soft hyphens so the preview looks short in mail clients.
+    const padded =
+      '5 minutes can help build a better Internet \u034f \u034f \u034f \u200b\u200b \u00ad\u034f \u034f 5 minutes can help build a better Internet \u034f \u034f';
+    const draft = normalizeGmailMessage(gmailFixture({ snippet: padded }), { userEmail: USER });
+    expect(draft.snippet).toBe(
+      '5 minutes can help build a better Internet 5 minutes can help build a better Internet',
+    );
+    expect(draft.snippet).not.toMatch(/[\u034f\u200b\u00ad]/);
+  });
   it('normalises a full-format message', () => {
     const draft = normalizeGmailMessage(gmailFixture(), { userEmail: USER });
     expect(draft.externalMessageId).toBe('18f3a2b1c9d0e7f6');

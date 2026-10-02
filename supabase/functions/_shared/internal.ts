@@ -16,22 +16,41 @@ export type CronJob =
   | 'backfill'
   | 'pipeline';
 
+/**
+ * Keep a fire-and-forget promise alive after the response is returned. The Edge Runtime may tear the
+ * worker down right after `Response` is sent; `EdgeRuntime.waitUntil` holds it until the task settles.
+ */
+export function inBackground(task: Promise<unknown>): void {
+  const settled = task.catch(() => undefined);
+  const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } })
+    .EdgeRuntime;
+  runtime?.waitUntil?.(settled);
+}
+
 export function kickJob(job: CronJob, payload: Record<string, unknown> = {}): void {
   const env = getEnv();
   if (!env.internalSecret) {
     log.debug('kickJob skipped: INTERNAL_FUNCTION_SECRET not configured', { job });
     return;
   }
-  fetch(`${env.supabaseUrl}/functions/v1/cron-dispatch`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-internal-secret': env.internalSecret,
-      apikey: env.supabaseAnonKey,
-    },
-    body: JSON.stringify({ job, ...payload }),
-  }).catch((e: unknown) =>
-    log.warn('kickJob failed', { job, error: e instanceof Error ? e.message : 'unknown' }),
+  inBackground(
+    fetch(`${env.supabaseUrl}/functions/v1/cron-dispatch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': env.internalSecret,
+        apikey: env.supabaseAnonKey,
+      },
+      body: JSON.stringify({ job, ...payload }),
+      signal: AbortSignal.timeout(60_000),
+    })
+      .then((res) => {
+        if (!res.ok) log.warn('kickJob rejected', { job, status: res.status });
+        return res.body?.cancel();
+      })
+      .catch((e: unknown) =>
+        log.warn('kickJob failed', { job, error: e instanceof Error ? e.message : 'unknown' }),
+      ),
   );
 }
 

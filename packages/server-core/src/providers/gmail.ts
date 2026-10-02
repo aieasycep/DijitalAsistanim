@@ -163,7 +163,9 @@ function collectBodies(part: GmailPart | undefined, acc: Bodies): void {
   if (!part) return;
   const mime = part.mimeType?.toLowerCase() ?? '';
   const isAttachment = Boolean(part.filename) || Boolean(part.body?.attachmentId);
-  if (!isAttachment && part.body?.data) {
+  // An attached message (message/rfc822) carries its own text parts: they are not this mail's body.
+  if (isAttachment) return;
+  if (part.body?.data) {
     if (mime === 'text/plain' && acc.text === null) {
       acc.text = decodeBase64Url(part.body.data, charsetOf(part));
     } else if (mime === 'text/html' && acc.html === null) {
@@ -221,8 +223,10 @@ export function normalizeGmailMessage(
   const snippet = truncate(snippetRaw || collapseWhitespace(bodyText), SNIPPET_LENGTH);
   const receivedAt =
     toIsoOrNull(Number(raw.internalDate)) ?? toIsoOrNull(headerValue(headers, 'date'));
+  // Gmail's server stamp first: the Date header is sender-controlled and a wrong one would misplace the
+  // message in the thread, skew relative-date extraction ("yarın") and retention. Header only as fallback.
   const sentAt =
-    toIsoOrNull(headerValue(headers, 'date')) ?? receivedAt ?? new Date(0).toISOString();
+    receivedAt ?? toIsoOrNull(headerValue(headers, 'date')) ?? new Date(0).toISOString();
   const attachments = gmailAttachmentMeta(raw);
   return {
     externalMessageId: raw.id,
@@ -554,10 +558,26 @@ export function createGmailClient(
     const maxMessages = clamp(input.maxMessages ?? DEFAULT_MAX_MESSAGES, 1, 500);
     let history: GmailHistoryResponse;
     try {
-      history = await listHistory({
-        startHistoryId: cursor,
-        historyTypes: ['messageAdded', 'messageDeleted', 'labelAdded', 'labelRemoved'],
-      });
+      const historyTypes = [
+        'messageAdded',
+        'messageDeleted',
+        'labelAdded',
+        'labelRemoved',
+      ] as const;
+      history = await listHistory({ startHistoryId: cursor, historyTypes: [...historyTypes] });
+      // Gmail may answer with no records but a next page (the scan window held nothing of these types).
+      // Without records the cursor cannot move, so follow a few pages before giving up on this run.
+      for (
+        let hops = 0;
+        (history.history ?? []).length === 0 && history.nextPageToken && hops < 5;
+        hops += 1
+      ) {
+        history = await listHistory({
+          startHistoryId: cursor,
+          historyTypes: [...historyTypes],
+          pageToken: history.nextPageToken,
+        });
+      }
     } catch (e) {
       if (isProviderStatus(e, 404)) return { ...EMPTY_DELTA, fullResyncRequired: true };
       throw e;

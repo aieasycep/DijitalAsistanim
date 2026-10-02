@@ -12,6 +12,7 @@ import { loadUserContext } from '../_shared/context.ts';
 import {
   adminClient,
   assertMethod,
+  enforceRateLimit,
   handler,
   json,
   parseInput,
@@ -26,6 +27,7 @@ Deno.serve(
   handler(async (req) => {
     assertMethod(req, 'POST');
     const { user } = await requireUser(req);
+    await enforceRateLimit('tts', user.id);
     const { briefingId } = await parseInput(req, briefingAudioRequestSchema);
     const admin = adminClient();
     const [ctx, { data: row }] = await Promise.all([

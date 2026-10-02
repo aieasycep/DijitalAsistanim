@@ -36,7 +36,8 @@ Deno.serve(
         .eq('user_id', user.id)
         .eq('for_date', date)
         .in('kind', evening ? ['evening', 'morning'] : ['morning'])
-        .order('kind', { ascending: evening ? true : false })
+        // briefing_kind_t orders morning < midday < evening: descending puts the evening briefing first
+        .order('kind', { ascending: false })
         .order('version', { ascending: false })
         .limit(1)
         .maybeSingle(),

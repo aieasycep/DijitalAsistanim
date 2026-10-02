@@ -203,6 +203,9 @@ export function mergeThreadUpdate(
     if (fromOthers && existing.userDismissed) patch.userDismissed = false;
   } else if (incoming.unreadCount > 0 && existing.isRead) {
     patch.isRead = false;
+  } else if (incomingLast === existingLast && incoming.isRead !== existing.isRead) {
+    // Same last message refetched after a label change (UNREAD removed in the mail client): follow it.
+    patch.isRead = incoming.isRead;
   }
   return patch;
 }

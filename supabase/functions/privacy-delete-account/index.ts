@@ -45,6 +45,7 @@ async function unlinkRevenueCat(appUserId: string | null): Promise<void> {
     await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${env.revenuecat.secretApiKey}` },
+      signal: AbortSignal.timeout(10_000),
     });
   } catch (e) {
     log.warn('revenuecat unlink failed', { error: e instanceof Error ? e.message : 'unknown' });
